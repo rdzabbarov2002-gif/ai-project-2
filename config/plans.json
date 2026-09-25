@@ -1,0 +1,41 @@
+{
+  "_comment": "Mirrors `plans` + `plan_limits` once DB exists (Stage 3). Values are placeholders to be tuned before launch.",
+  "plans": [
+    {
+      "slug": "free",
+      "name": "Free",
+      "price_month": 0,
+      "limits": {
+        "max_generations_per_month": 20,
+        "max_saved_results": 20,
+        "max_company_profiles": 1,
+        "allowed_tool_ids": ["ad-generator", "email-generator", "social-generator"],
+        "allowed_ai_models": ["claude"]
+      }
+    },
+    {
+      "slug": "pro",
+      "name": "Pro",
+      "price_month": 29,
+      "limits": {
+        "max_generations_per_month": 500,
+        "max_saved_results": "unlimited",
+        "max_company_profiles": 3,
+        "allowed_tool_ids": "all",
+        "allowed_ai_models": ["claude", "openai", "gemini"]
+      }
+    },
+    {
+      "slug": "enterprise",
+      "name": "Enterprise",
+      "price_month": null,
+      "limits": {
+        "max_generations_per_month": "unlimited",
+        "max_saved_results": "unlimited",
+        "max_company_profiles": "unlimited",
+        "allowed_tool_ids": "all",
+        "allowed_ai_models": "all"
+      }
+    }
+  ]
+}

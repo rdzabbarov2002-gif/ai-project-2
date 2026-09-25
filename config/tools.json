@@ -1,0 +1,8 @@
+{
+  "_comment": "Registry of AI tools. Mirrors the `tools` table once DB exists (Stage 3). Minimal seed data for Stage 1 — real config_schema per tool arrives Stage 8-10.",
+  "tools": [
+    { "slug": "ad-generator", "name": "AI Ad Generator", "is_active": false },
+    { "slug": "email-generator", "name": "AI Email Generator", "is_active": false },
+    { "slug": "social-generator", "name": "AI Social Media Generator", "is_active": false }
+  ]
+}

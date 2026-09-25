@@ -1,0 +1,10 @@
+{
+  "_comment": "Seed categories for the Templates Library (populated in Stage 10). Structure only.",
+  "categories": [
+    "Facebook Ads", "Google Ads", "Instagram Ads", "LinkedIn", "X",
+    "Product Launch", "SaaS", "Ecommerce", "B2B", "Cold Email",
+    "Newsletter", "Landing Page", "SEO Article", "Blog Post",
+    "YouTube Script", "Product Description"
+  ],
+  "templates": []
+}

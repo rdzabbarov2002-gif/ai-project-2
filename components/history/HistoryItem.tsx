@@ -1,0 +1,54 @@
+import Link from "next/link";
+import { Card } from "@/components/ui/Card";
+
+const PREVIEW_LENGTH = 140;
+
+/**
+ * One row's presentation — same role as ToolCard/TemplateCard (Stage
+ * 7/10): a small, single-purpose component the list page maps over,
+ * owning none of the data-fetching itself. No "status" field: the task
+ * asks for one only "if already stored," and `generations` has no such
+ * column (confirmed against migration 0008 before writing this) — there
+ * is nothing to display, so nothing is rendered for it, rather than a
+ * hardcoded "completed" that would just be decorative.
+ *
+ * Links to `/history/{id}` — a read-only detail view (this stage), not a
+ * route back into ToolRunner: Part 3 of this stage's brief is explicit
+ * that "open" means viewing the record, not reopening the editor, and no
+ * mechanism for the latter exists anywhere in the project to reuse.
+ */
+export function HistoryItem({
+  generation,
+}: {
+  generation: {
+    id: string;
+    toolName: string;
+    templateName: string | null;
+    createdAt: string;
+    output: string;
+  };
+}) {
+  const preview =
+    generation.output.length > PREVIEW_LENGTH
+      ? `${generation.output.slice(0, PREVIEW_LENGTH)}…`
+      : generation.output;
+
+  return (
+    <Link href={`/history/${generation.id}`} className="block">
+      <Card className="space-y-1 transition-colors hover:border-accent">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="font-medium text-ink-950">{generation.toolName}</h3>
+          <time className="shrink-0 text-xs text-ink-600" dateTime={generation.createdAt}>
+            {new Date(generation.createdAt).toLocaleDateString()}
+          </time>
+        </div>
+        {generation.templateName && (
+          <span className="inline-block rounded-sm bg-accent-subtle px-2 py-0.5 text-xs text-accent">
+            {generation.templateName}
+          </span>
+        )}
+        <p className="text-sm text-ink-600">{preview || "(empty result)"}</p>
+      </Card>
+    </Link>
+  );
+}
