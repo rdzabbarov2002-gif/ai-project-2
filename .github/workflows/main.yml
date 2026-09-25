@@ -1,0 +1,43 @@
+name: Unpack project export
+
+on:
+  push:
+    paths:
+      - project-export.xml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rebuild files from project-export.xml
+        run: |
+          python3 - <<'PY'
+          import os, xml.etree.ElementTree as ET
+          root = ET.parse("project-export.xml").getroot()
+          count = 0
+          for f in root.findall("file"):
+              path = f.get("path")
+              if path.startswith("/") or ".." in path.split("/"):
+                  raise SystemExit(f"Unsafe path in export: {path}")
+              if os.path.dirname(path):
+                  os.makedirs(os.path.dirname(path), exist_ok=True)
+              with open(path, "wb") as fh:
+                  fh.write((f.text or "").encode("utf-8"))
+              count += 1
+          print(f"Rebuilt {count} files")
+          PY
+          git rm --quiet project-export.xml
+
+      - name: Commit unpacked project
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Unpack project from project-export.xml"
+          git push
