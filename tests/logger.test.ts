@@ -68,16 +68,17 @@ describe("logger", () => {
     expect(sentry.scope.setExtras).toHaveBeenCalledWith({ route: "/api/generate" });
   });
 
-  it("keeps a PostgREST error's code and reports it as a message", () => {
+  it("keeps a PostgREST error's message and code (not its row details), reported as a message", () => {
     logger.error("profile: save failed", {
-      error: { message: "duplicate key", code: "23505", details: "Key exists", hint: null },
+      error: {
+        message: "duplicate key",
+        code: "23505",
+        details: "Key (email)=(someone@example.com) already exists.",
+        hint: null,
+      },
     });
 
-    expect(lastLine(errorSpy).error).toEqual({
-      message: "duplicate key",
-      code: "23505",
-      details: "Key exists",
-    });
+    expect(lastLine(errorSpy).error).toEqual({ message: "duplicate key", code: "23505" });
     expect(sentry.captureMessage).toHaveBeenCalledWith(
       "profile: save failed: duplicate key",
       "error",

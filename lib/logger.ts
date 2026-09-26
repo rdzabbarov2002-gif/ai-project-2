@@ -32,8 +32,10 @@ function serializeError(error: unknown): Record<string, unknown> {
   }
   if (error && typeof error === "object") {
     // PostgREST errors are plain objects: { message, code, details, hint }.
-    const { message, code, details } = error as Record<string, unknown>;
-    return { message: String(message ?? JSON.stringify(error)), code, details };
+    // `details` is left out on purpose — it can quote row values (e.g.
+    // "Key (email)=(…) already exists").
+    const { message, code } = error as Record<string, unknown>;
+    return { message: String(message ?? "unknown error"), code };
   }
   return { message: String(error) };
 }
