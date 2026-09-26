@@ -3,10 +3,21 @@
  * the codebase reads `process.env` directly (keeps Stage 1's "config not
  * code" principle consistent for non-JSON settings too).
  */
+function positiveIntFromEnv(value: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt(value ?? "", 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export const appSettings = {
   defaultAIProvider: process.env.DEFAULT_AI_PROVIDER ?? "claude",
   defaultAIModel: process.env.DEFAULT_AI_MODEL ?? "claude-sonnet-5",
   guestSessionTtlDays: 30,
+  /** Architecture doc §8: a guest gets this many generations in total
+   *  (not per month — a guest session is TTL'd anyway) before being asked
+   *  to register. Enforced server-side (lib/generation/plan.ts caps the
+   *  Free plan for guests); the sign-up prompt in ToolRunner is only the
+   *  explanation. */
+  guestGenerationLimit: positiveIntFromEnv(process.env.GUEST_GENERATION_LIMIT, 3),
   /** Cap on AI response length (billed per token actually produced, so
    *  this is a ceiling, not a cost). Raised from 2048 in Phase 1: current
    *  Claude models think adaptively by default and thinking tokens count

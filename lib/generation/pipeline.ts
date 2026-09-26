@@ -90,7 +90,14 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
     admin: adminClient,
   });
   if (!usage.allowed) {
-    const rejection = USAGE_REJECTIONS[usage.reason ?? "monthly_limit_reached"];
+    const reason = usage.reason ?? "monthly_limit_reached";
+    // A guest out of generations is asked to register, not to upgrade —
+    // its own code, so the client can show the sign-up prompt without
+    // having to know whether the caller is signed in.
+    const rejection =
+      identity.type === "guest" && reason === "monthly_limit_reached"
+        ? GUEST_LIMIT_REJECTION
+        : USAGE_REJECTIONS[reason];
     throw new GenerationError(rejection.code, rejection.status, rejection.message);
   }
 
@@ -184,6 +191,12 @@ const USAGE_REJECTIONS: Record<
     status: 429,
     message: "You've reached your generation limit for this period.",
   },
+};
+
+const GUEST_LIMIT_REJECTION = {
+  code: "guest_limit_reached",
+  status: 429,
+  message: "You've used all your free guest generations. Create a free account to keep going.",
 };
 
 /**

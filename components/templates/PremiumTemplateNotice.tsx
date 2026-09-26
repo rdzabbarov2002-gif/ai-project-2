@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+import { buttonClasses } from "@/components/ui/Button";
 
 /**
  * Shown on a tool page in place of the form when the requested template
@@ -28,17 +29,11 @@ export function PremiumTemplateNotice({
         &ldquo;{templateName}&rdquo; is part of the Pro plan&apos;s template library. Your
         current plan includes the standard template for this tool.
       </p>
-      <div className="flex flex-wrap gap-3 text-sm">
-        <Link
-          href="/settings/billing"
-          className="rounded-md bg-upgrade px-4 py-2 font-medium text-white hover:bg-upgrade-hover"
-        >
+      <div className="flex flex-wrap gap-3">
+        <Link href="/settings/billing" className={buttonClasses("upgrade")}>
           View plans
         </Link>
-        <Link
-          href={`/tools/${toolSlug}`}
-          className="rounded-md border border-ink-200 px-4 py-2 font-medium text-ink-950 hover:bg-ink-200"
-        >
+        <Link href={`/tools/${toolSlug}`} className={buttonClasses("secondary")}>
           Use the standard template
         </Link>
       </div>

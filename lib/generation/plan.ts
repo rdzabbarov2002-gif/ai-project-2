@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { AIProviderName } from "@/lib/ai-provider";
+import { appSettings } from "@/config/settings";
 
 /**
  * Resolved, ready-to-use view of a plan's limits — the app-facing shape
@@ -87,7 +88,7 @@ export async function resolvePlanLimits(
   // same fail-closed answer as above, not a crash on `limits.…` below.
   if (!limits) return FAIL_CLOSED_LIMITS;
 
-  return {
+  const resolved: PlanLimits = {
     planSlug: data.slug as "free" | "pro" | "enterprise",
     maxGenerationsPerMonth: limits.max_generations_per_month,
     maxSavedResults: limits.max_saved_results,
@@ -95,6 +96,20 @@ export async function resolvePlanLimits(
     allowedAiModels: normalizeSlugList(limits.allowed_ai_models) as "all" | AIProviderName[],
     premiumTemplates: limits.premium_templates === true,
   };
+
+  // Stage 11: a guest is on the Free plan, capped at the guest allowance
+  // (architecture doc §8 — "more than 3 generations → registration").
+  // Capped here, once, so checkUsage and every other consumer see one
+  // consistent number instead of each re-deriving the guest rule.
+  if (identity.type === "guest") {
+    const guestLimit = appSettings.guestGenerationLimit;
+    resolved.maxGenerationsPerMonth =
+      resolved.maxGenerationsPerMonth === null
+        ? guestLimit
+        : Math.min(resolved.maxGenerationsPerMonth, guestLimit);
+  }
+
+  return resolved;
 }
 
 async function resolveUserPlanSlug(

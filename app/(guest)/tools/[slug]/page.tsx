@@ -5,6 +5,8 @@ import { resolvePlanLimits } from "@/lib/generation/plan";
 import { parseToolConfigSchema } from "@/lib/tool-config/validate";
 import { ToolRunner } from "@/components/tools/ToolRunner";
 import { PremiumTemplateNotice } from "@/components/templates/PremiumTemplateNotice";
+import { GuestProfileDraftCard } from "@/components/profile/GuestProfileDraftCard";
+import { appSettings } from "@/config/settings";
 
 /**
  * Reuses Stage 5's `resolveTool` (lib/generation/catalog.ts) rather than
@@ -32,6 +34,11 @@ import { PremiumTemplateNotice } from "@/components/templates/PremiumTemplateNot
  * `premium_templates` shows an explanation instead of a form; the plan
  * lookup only happens in that case, so ordinary tool pages cost no extra
  * queries. /api/generate enforces the same rule regardless.
+ *
+ * Stage 11: signed out = guest, decided here once (`getUser()`, the same
+ * check every (auth) page uses) and handed down — guests get the short
+ * profile-draft card and ToolRunner's sign-up prompts. Presentation only;
+ * the API resolves identity for itself.
  */
 export default async function ToolPage({
   params,
@@ -51,14 +58,18 @@ export default async function ToolPage({
     );
   }
 
-  const template = searchParams.template
-    ? await resolveTemplate(supabase, searchParams.template, tool.id)
-    : await resolveDefaultTemplate(supabase, tool.id);
+  // Independent lookups — run together so the auth check adds no latency.
+  const [template, user] = await Promise.all([
+    searchParams.template
+      ? resolveTemplate(supabase, searchParams.template, tool.id)
+      : resolveDefaultTemplate(supabase, tool.id),
+    getUser(),
+  ]);
   const schema = parseToolConfigSchema(template?.configSchema ?? tool.configSchema);
+  const isGuest = !user;
 
   let premiumLocked = false;
   if (template?.isPremium) {
-    const user = await getUser();
     const planLimits = await resolvePlanLimits(
       supabase,
       user ? { type: "user", userId: user.id } : { type: "guest" },
@@ -77,11 +88,16 @@ export default async function ToolPage({
       {template && premiumLocked ? (
         <PremiumTemplateNotice toolSlug={tool.slug} templateName={template.name} />
       ) : (
-        <ToolRunner
-          tool={{ slug: tool.slug, name: tool.name }}
-          templateSlug={template?.slug}
-          schema={schema}
-        />
+        <>
+          {isGuest && <GuestProfileDraftCard />}
+          <ToolRunner
+            tool={{ slug: tool.slug, name: tool.name }}
+            templateSlug={template?.slug}
+            schema={schema}
+            isGuest={isGuest}
+            guestGenerationLimit={appSettings.guestGenerationLimit}
+          />
+        </>
       )}
     </main>
   );
