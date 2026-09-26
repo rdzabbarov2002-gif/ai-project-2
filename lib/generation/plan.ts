@@ -63,11 +63,9 @@ export async function resolvePlanLimits(
     return FAIL_CLOSED_LIMITS;
   }
 
-  // Cast rather than lean on inferred typing: database.types.ts is still
-  // hand-written (it gained `Relationships` in Phase 1, but wasn't
-  // generated from a live project), so both embed shapes — object for
-  // the one-to-one `plan_limits.plan_id unique`, array otherwise — are
-  // accepted here. Re-verify once `supabase gen types` replaces the file.
+  // Cast rather than lean on inferred typing: both embed shapes — object
+  // for the one-to-one `plan_limits.plan_id unique`, array otherwise — are
+  // accepted here.
   const rawLimits = data.plan_limits as unknown as
     | {
         max_generations_per_month: number | null;

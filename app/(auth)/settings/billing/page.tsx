@@ -53,7 +53,8 @@ export default async function BillingSettingsPage() {
         }>,
       );
       return {
-        slug: plan.slug,
+        // plans.slug is limited to these three by its CHECK constraint (0002).
+        slug: plan.slug as PlanOption["slug"],
         name: plan.name,
         priceMonth: plan.price_month,
         // null is meaningful here (unlimited) — only a missing limits row

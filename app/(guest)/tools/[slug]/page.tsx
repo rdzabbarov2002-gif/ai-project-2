@@ -89,7 +89,10 @@ export default async function ToolPage({
           .eq("id", fromId)
           .eq("user_id", user.id)
           .maybeSingle()
-          .then(({ data }) => (data && data.tool_id === tool.id ? data.input_params : null))
+          .then(({ data }) =>
+            // Always an object — written by lib/generation/save.ts.
+            data && data.tool_id === tool.id ? (data.input_params as Record<string, unknown>) : null,
+          )
       : null,
   ]);
 

@@ -105,7 +105,7 @@ function toResolvedTemplate(row: {
   name: string;
   prompt_template: string;
   required_fields: unknown;
-  config_schema: Record<string, unknown> | null;
+  config_schema: unknown;
   is_premium: boolean;
 }): ResolvedTemplate {
   return {
@@ -116,7 +116,7 @@ function toResolvedTemplate(row: {
     requiredFields: Array.isArray(row.required_fields)
       ? row.required_fields.filter((f): f is string => typeof f === "string")
       : [],
-    configSchema: row.config_schema ?? null,
+    configSchema: (row.config_schema as Record<string, unknown> | null) ?? null,
     isPremium: row.is_premium,
   };
 }

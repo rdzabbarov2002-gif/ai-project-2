@@ -5,6 +5,7 @@ import type { Identity } from "./identity";
 import type { UsagePeriod } from "./period";
 import type { AIGenerateResult } from "@/lib/ai-provider";
 import type { ResolvedTool, ResolvedTemplate } from "./catalog";
+import type { TablesInsert } from "@/lib/supabase/database.types";
 import { logger } from "@/lib/logger";
 
 export interface SaveGenerationParams {
@@ -54,7 +55,7 @@ export async function saveGeneration(
     template_id: params.template?.id ?? null,
     ai_provider: params.result.provider,
     ai_model: params.result.model,
-    input_params: params.inputParams,
+    input_params: params.inputParams as TablesInsert<"generations">["input_params"],
     output: params.result.text,
   };
 
