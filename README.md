@@ -77,6 +77,7 @@ naming the variable. `.env.example` describes each.
 | `MAX_GENERATIONS_PER_MINUTE` | no | Burst limit per user/guest, default 6 |
 | `NEXT_PUBLIC_SENTRY_DSN` | no | Error tracking; off when unset |
 | `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | no, build only | Source map upload to Sentry |
+| `POSTHOG_KEY` / `POSTHOG_HOST` | no | Product analytics (PostHog project key; host defaults to the US cloud) |
 
 `OPENAI_API_KEY`, `GOOGLE_AI_API_KEY`, `MISTRAL_API_KEY`, `XAI_API_KEY`
 are reserved for providers that are still stubs and aren't read yet.
@@ -160,6 +161,11 @@ timeout — on the Hobby plan 60s is the maximum.
   crashing (a failed save, a merge error).
 - **Security headers** — every response carries HSTS, `nosniff`,
   `Referrer-Policy` and `frame-ancestors 'none'` (`next.config.js`).
+- **Product analytics** — with `POSTHOG_KEY` set, the server sends five
+  events to PostHog: `signed_up`, `generation_completed` (tool, template,
+  guest or not), `generation_blocked` (which limit), `account_deleted`,
+  and an alias linking a guest's events to the account they sign up
+  for. No cookies and nothing in the browser (`lib/analytics.ts`).
 - **Cost and speed of generations** — every generation stores its token
   counts and how long the AI call took (`generations.input_tokens`,
   `output_tokens`, `duration_ms`). In the Supabase SQL Editor (prices:

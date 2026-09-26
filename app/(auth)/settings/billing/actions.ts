@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
+import { track } from "@/lib/analytics";
 
 export interface DeleteAccountState {
   error: string | null;
@@ -26,6 +27,8 @@ export async function deleteAccount(): Promise<DeleteAccountState> {
     logger.error("account: delete failed", { error });
     return { error: "We couldn't delete your account. Please try again." };
   }
+
+  await track("account_deleted", user.id);
 
   // Clears the session cookies; the session itself died with the account.
   await createClient().auth.signOut();

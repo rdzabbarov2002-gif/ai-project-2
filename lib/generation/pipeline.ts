@@ -3,7 +3,7 @@ import { createClient as createUserClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider, AIProviderError, type AIProviderName } from "@/lib/ai-provider";
 import { appSettings } from "@/config/settings";
-import { resolveIdentity } from "./identity";
+import { resolveIdentity, type Identity } from "./identity";
 import { resolveTool, resolveTemplate } from "./catalog";
 import { resolvePlanLimits } from "./plan";
 import { checkUsage, type UsageCheckResult } from "@/lib/limits/checkUsage";
@@ -13,6 +13,7 @@ import { buildSystemPrompt, buildUserPrompt } from "./prompt";
 import { saveGeneration, incrementUsage } from "./save";
 import { currentMonthPeriod } from "./period";
 import { GenerationError } from "./errors";
+import { track } from "@/lib/analytics";
 import type { GenerateRequestBody } from "./validate";
 
 export interface GenerateResult {
@@ -115,6 +116,7 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
       identity.type === "guest" && reason === "monthly_limit_reached"
         ? GUEST_LIMIT_REJECTION
         : USAGE_REJECTIONS[reason];
+    await track("generation_blocked", distinctId(identity), { reason: rejection.code, tool: tool.slug });
     throw new GenerationError(rejection.code, rejection.status, rejection.message);
   }
 
@@ -175,6 +177,12 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
   // 11. Usage counters — user-only; guest usage is derived on read.
   await incrementUsage(adminClient, identity, period);
 
+  await track("generation_completed", distinctId(identity), {
+    tool: tool.slug,
+    template: template?.slug ?? null,
+    guest: identity.type === "guest",
+  });
+
   // 12. Unified response shape regardless of guest vs. authenticated.
   return {
     id: outcome.id,
@@ -188,6 +196,11 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
     remaining: usage.remaining,
     guestSessionToken: identity.type === "guest" ? body.guestSessionToken : undefined,
   };
+}
+
+/** Who an analytics event belongs to: the user, or the guest session. */
+function distinctId(identity: Identity): string {
+  return identity.type === "user" ? identity.userId : identity.guestSessionId;
 }
 
 /** checkUsage's rejection reasons → the error the route returns. */

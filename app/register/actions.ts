@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
+import { track } from "@/lib/analytics";
 
 export interface AuthFormState {
   error: string | null;
@@ -32,6 +33,8 @@ export async function signUp(
   if (error) {
     return { error: error.message };
   }
+
+  if (data.user) await track("signed_up", data.user.id);
 
   // With email confirmations ON (Supabase's default), signUp succeeds but
   // returns no session yet — the user must click the emailed link first,

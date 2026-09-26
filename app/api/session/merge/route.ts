@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { GuestCompanyProfileDraft } from "@/lib/guest-session/types";
 import { logger } from "@/lib/logger";
+import { track } from "@/lib/analytics";
 
 /**
  * Guest → User merge endpoint. Stage 2 built the auth check, request
@@ -98,6 +99,10 @@ export async function POST(request: Request) {
     user.id,
     guestSession.company_profile_draft as GuestCompanyProfileDraft | null,
   );
+
+  // Links the guest's analytics events to the account: guest → sign-up
+  // conversion is the funnel's key step (lib/analytics.ts).
+  await track("$create_alias", user.id, { alias: guestSession.id });
 
   return NextResponse.json({
     status: "merged",

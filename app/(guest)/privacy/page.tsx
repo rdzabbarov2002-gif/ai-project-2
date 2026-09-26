@@ -59,8 +59,8 @@ export default function PrivacyPage() {
         <h2 className="font-medium text-ink-950">How we use it</h2>
         <p className="text-ink-600">
           Only to provide the service: to sign you in, generate content for you, keep your
-          history, apply plan limits, send account emails (confirmation, password reset) and fix
-          errors. We don&apos;t sell your data, show ads, or use your content to train AI models.
+          history, apply plan limits, send account emails (confirmation, password reset), fix
+          errors and see which features people use. We don&apos;t sell your data, show ads, or use your content to train AI models.
         </p>
       </section>
 
@@ -74,6 +74,10 @@ export default function PrivacyPage() {
             for each generation.
           </li>
           <li>Sentry — error reports.</li>
+          <li>
+            PostHog — usage statistics (for example, which tools are used), sent from our
+            servers with no cookies.
+          </li>
           <li>[Email provider] — sends account emails.</li>
         </ul>
       </section>

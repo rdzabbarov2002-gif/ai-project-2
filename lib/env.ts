@@ -43,6 +43,8 @@ const envSchema = z.object({
   GUEST_GENERATION_LIMIT: optional(positiveInt),
   MAX_GENERATIONS_PER_MINUTE: optional(positiveInt),
   NEXT_PUBLIC_SENTRY_DSN: optional(url),
+  POSTHOG_KEY: optional(z.string()),
+  POSTHOG_HOST: optional(url),
 });
 
 type EnvSource = Record<string, string | undefined>;
