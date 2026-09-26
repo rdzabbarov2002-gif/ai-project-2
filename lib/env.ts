@@ -45,6 +45,20 @@ const envSchema = z.object({
   NEXT_PUBLIC_SENTRY_DSN: optional(url),
   POSTHOG_KEY: optional(z.string()),
   POSTHOG_HOST: optional(url),
+  // Payments (Phase 6): on when the secret key is set — see the check below.
+  STRIPE_SECRET_KEY: optional(z.string()),
+  STRIPE_WEBHOOK_SECRET: optional(z.string()),
+  STRIPE_API_BASE: optional(url),
+  CRON_SECRET: optional(z.string()),
+}).superRefine((env, ctx) => {
+  // Payments half set up would take money without ever hearing back.
+  if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["STRIPE_WEBHOOK_SECRET"],
+      message: "is required when STRIPE_SECRET_KEY is set",
+    });
+  }
 });
 
 type EnvSource = Record<string, string | undefined>;

@@ -26,6 +26,13 @@ describe("checkEnv", () => {
     ).toEqual([]);
   });
 
+  it("wants the webhook secret whenever payments are on", () => {
+    expect(checkEnv({ ...valid, STRIPE_SECRET_KEY: "sk_test_x" })).toEqual([
+      "STRIPE_WEBHOOK_SECRET: is required when STRIPE_SECRET_KEY is set",
+    ]);
+    expect(checkEnv({ ...valid, STRIPE_SECRET_KEY: "sk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x" })).toEqual([]);
+  });
+
   it("names every missing required variable", () => {
     expect(checkEnv({})).toEqual([
       "NEXT_PUBLIC_SUPABASE_URL: is required",

@@ -78,6 +78,8 @@ naming the variable. `.env.example` describes each.
 | `NEXT_PUBLIC_SENTRY_DSN` | no | Error tracking; off when unset |
 | `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | no, build only | Source map upload to Sentry |
 | `POSTHOG_KEY` / `POSTHOG_HOST` | no | Product analytics (PostHog project key; host defaults to the US cloud) |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | no (both or neither) | Payments; off when unset (`docs/billing.md`) |
+| `CRON_SECRET` | with payments | Protects the nightly subscription check |
 
 `OPENAI_API_KEY`, `GOOGLE_AI_API_KEY`, `MISTRAL_API_KEY`, `XAI_API_KEY`
 are reserved for providers that are still stubs and aren't read yet.
