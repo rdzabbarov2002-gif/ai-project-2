@@ -75,8 +75,9 @@ export default function PrivacyPage() {
           </li>
           <li>Sentry — error reports.</li>
           <li>
-            PostHog — usage statistics (for example, which tools are used), sent from our
-            servers with no cookies.
+            PostHog — usage statistics: events such as &quot;signed up&quot; or &quot;generated
+            an ad&quot;, tied to a random account or session ID — never your email or what you
+            enter. Sent from our servers with no cookies.
           </li>
           <li>[Email provider] — sends account emails.</li>
         </ul>
@@ -95,7 +96,7 @@ export default function PrivacyPage() {
         <h2 className="font-medium text-ink-950">Your rights</h2>
         <p className="text-ink-600">
           You can see and edit your company profile at any time, and delete your account and
-          all its data yourself under Billing &amp; Plan → Delete account. For a copy of your
+          its data yourself under Billing &amp; Plan → Delete account. For a copy of your
           data or any other request, contact [contact email].
         </p>
       </section>
@@ -103,7 +104,10 @@ export default function PrivacyPage() {
       <section className="space-y-3">
         <h2 className="font-medium text-ink-950">How long we keep it</h2>
         <p className="text-ink-600">
-          For as long as your account exists. Deleting your account deletes your data.
+          For as long as your account exists. Deleting your account deletes your account,
+          company profile and generations. Usage statistics, error reports and server logs
+          contain no email or content and stay with the processors above for up to [retention
+          period].
         </p>
       </section>
     </main>
