@@ -4,6 +4,7 @@ import { resolveUsageSummary } from "@/lib/limits/usageSummary";
 import { firstEmbed, type Embed } from "@/lib/supabase/embed";
 import { UsageCard } from "@/components/usage/UsageCard";
 import { PlanComparison, type PlanOption } from "@/components/usage/PlanComparison";
+import { DeleteAccountForm } from "@/components/account/DeleteAccountForm";
 
 const PLAN_ORDER: PlanOption["slug"][] = ["free", "pro", "enterprise"];
 
@@ -92,6 +93,15 @@ export default async function BillingSettingsPage() {
           </p>
         </section>
       )}
+
+      <section className="max-w-2xl space-y-3">
+        <h2 className="font-medium text-ink-950">Delete account</h2>
+        <p className="text-sm text-ink-600">
+          Permanently deletes your account, company profile and generation history. This
+          can&apos;t be undone.
+        </p>
+        <DeleteAccountForm />
+      </section>
     </main>
   );
 }
