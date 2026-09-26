@@ -9,6 +9,17 @@ usage-counter RPC and its `anon` revoke, and the RLS policies were
 exercised there too. Applying it to your own Supabase project is still a
 from-scratch setup.
 
+## Local development — Supabase CLI + Docker
+
+`npx supabase start` from the project root runs Postgres, Auth and the
+API locally (settings in `config.toml`) and applies every file in
+`migrations/`, data included — `seed.sql` is deliberately not run on top
+(`[db.seed] enabled = false`), since it only repeats the data migrations.
+`npx supabase db reset` rebuilds the local database from scratch. The
+root README has the full local setup.
+
+The options below are for a hosted Supabase project (staging, prod).
+
 ## Option A — Supabase Dashboard SQL Editor (recommended, zero setup)
 
 1. Open your Supabase project at supabase.com in your phone's browser →
