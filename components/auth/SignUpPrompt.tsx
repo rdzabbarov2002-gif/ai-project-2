@@ -42,7 +42,7 @@ export function SignUpPrompt({
       ref={ref}
       onClose={onClose}
       aria-labelledby={titleId}
-      className="w-[calc(100%-2rem)] max-w-sm rounded-lg border border-ink-200 bg-white p-6 text-ink-950 backdrop:bg-ink-950/50"
+      className="w-[calc(100%-2rem)] max-w-sm rounded-lg border border-ink-200 bg-surface p-6 text-ink-950 backdrop:bg-ink-950/50"
     >
       <div className="space-y-4">
         <h2 id={titleId} className="font-display text-lg font-semibold">

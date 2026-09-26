@@ -37,6 +37,6 @@ export const config = {
      * those never need a session refresh and skipping them keeps
      * navigation fast.
      */
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons/).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png|manifest.json|sw.js|offline.html|icons/).*)",
   ],
 };

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 
 const PREVIEW_LENGTH = 140;
 
@@ -42,11 +43,7 @@ export function HistoryItem({
             {new Date(generation.createdAt).toLocaleDateString()}
           </time>
         </div>
-        {generation.templateName && (
-          <span className="inline-block rounded-sm bg-accent-subtle px-2 py-0.5 text-xs text-accent">
-            {generation.templateName}
-          </span>
-        )}
+        {generation.templateName && <Badge>{generation.templateName}</Badge>}
         <p className="text-sm text-ink-600">{preview || "(empty result)"}</p>
       </Card>
     </Link>

@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { FavoriteButton } from "@/components/history/FavoriteButton";
 import { firstEmbed, type Embed } from "@/lib/supabase/embed";
 import { buttonClasses } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { CopyButton } from "@/components/ui/CopyButton";
 
 /**
  * One saved generation (Stage 14). Scoped to the owner by the same RLS
@@ -21,6 +23,10 @@ import { buttonClasses } from "@/components/ui/Button";
  * again" links to the tool page with `?from=<id>` (plus the template, if
  * one was used); the tool page loads the saved inputs itself, through
  * the same owner-scoped read. This page stays read-only.
+ *
+ * Stage 14's own note here said copy-to-clipboard was left out because it
+ * needs a Client Component; the shared CopyButton (components/ui) is that
+ * component now, so a saved result copies the same way a fresh one does.
  */
 export default async function HistoryDetailPage({ params }: { params: { id: string } }) {
   const user = await requireUser();
@@ -58,11 +64,7 @@ export default async function HistoryDetailPage({ params }: { params: { id: stri
           </h1>
           <div className="flex items-center gap-2 text-xs text-ink-600">
             <time dateTime={data.created_at}>{new Date(data.created_at).toLocaleString()}</time>
-            {template?.name && (
-              <span className="rounded-sm bg-accent-subtle px-2 py-0.5 text-accent">
-                {template.name}
-              </span>
-            )}
+            {template?.name && <Badge>{template.name}</Badge>}
           </div>
         </div>
         <FavoriteButton id={data.id} isFavorite={data.is_favorite} />
@@ -70,14 +72,17 @@ export default async function HistoryDetailPage({ params }: { params: { id: stri
 
       <p className="whitespace-pre-wrap text-sm text-ink-950">{data.output || "(empty result)"}</p>
 
-      {tool?.slug && (
-        <Link
-          href={`/tools/${tool.slug}?${repeatParams.toString()}`}
-          className={buttonClasses("secondary")}
-        >
-          Use these inputs again
-        </Link>
-      )}
+      <div className="flex flex-wrap gap-3">
+        {data.output && <CopyButton text={data.output} />}
+        {tool?.slug && (
+          <Link
+            href={`/tools/${tool.slug}?${repeatParams.toString()}`}
+            className={buttonClasses("secondary")}
+          >
+            Use these inputs again
+          </Link>
+        )}
+      </div>
     </main>
   );
 }

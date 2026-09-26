@@ -6,6 +6,7 @@ import { signIn, type AuthFormState } from "./actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { Logo } from "@/components/layout/Logo";
 
 const initialState: AuthFormState = { error: null };
 
@@ -35,7 +36,10 @@ export default function LoginPage({
       : null;
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
+      {/* Way back to the rest of the app — these pages sit outside the
+          (guest)/(auth) layouts and their navigation (Stage 14). */}
+      <Logo />
       <Card className="w-full max-w-sm space-y-4">
         <h1 className="font-display text-xl font-semibold">Sign in</h1>
         {linkError && <p className="text-sm text-danger">{linkError}</p>}

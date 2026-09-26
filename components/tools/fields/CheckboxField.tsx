@@ -12,8 +12,19 @@ export function CheckboxField({
   error,
 }: FieldComponentProps<CheckboxFieldConfig>) {
   return (
-    <FieldWrapper label={field.label} required={field.required} helpText={field.helpText} error={error}>
-      <Checkbox checked={value === true} onChange={(e) => onChange(e.target.checked)} />
+    <FieldWrapper
+      label={field.label}
+      required={field.required}
+      helpText={field.helpText}
+      error={error}
+      htmlFor={`field-${field.name}`}
+    >
+      <Checkbox
+        id={`field-${field.name}`}
+        aria-invalid={error ? true : undefined}
+        checked={value === true}
+        onChange={(e) => onChange(e.target.checked)}
+      />
     </FieldWrapper>
   );
 }

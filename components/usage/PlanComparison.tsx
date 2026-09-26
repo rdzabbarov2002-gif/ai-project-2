@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
 export interface PlanOption {
@@ -43,11 +44,7 @@ export function PlanComparison({
             <div className="space-y-1">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-medium text-ink-950">{plan.name}</h3>
-                {isCurrent && (
-                  <span className="rounded-sm bg-accent-subtle px-2 py-0.5 text-xs font-medium text-accent">
-                    Current plan
-                  </span>
-                )}
+                {isCurrent && <Badge>Current plan</Badge>}
               </div>
               <p className="text-lg font-semibold text-ink-950">
                 {plan.priceMonth === null

@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { GuestSessionProvider } from "@/lib/guest-session/context";
 import { AuthSyncListener } from "@/components/auth/AuthSyncListener";
+import { ToastProvider } from "@/components/ui/Toast";
 
 /**
  * Single mount point for all client-side, app-wide providers. Root
@@ -13,8 +14,10 @@ import { AuthSyncListener } from "@/components/auth/AuthSyncListener";
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <GuestSessionProvider>
-      <AuthSyncListener />
-      {children}
+      <ToastProvider>
+        <AuthSyncListener />
+        {children}
+      </ToastProvider>
     </GuestSessionProvider>
   );
 }

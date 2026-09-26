@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 
 /**
@@ -22,9 +23,7 @@ export function PremiumTemplateNotice({
 }) {
   return (
     <Card className="space-y-3 border-upgrade">
-      <span className="inline-block rounded-sm bg-upgrade-subtle px-2 py-0.5 text-xs font-medium text-ink-950">
-        Pro template
-      </span>
+      <Badge tone="upgrade">Pro template</Badge>
       <p className="text-sm text-ink-800">
         &ldquo;{templateName}&rdquo; is part of the Pro plan&apos;s template library. Your
         current plan includes the standard template for this tool.

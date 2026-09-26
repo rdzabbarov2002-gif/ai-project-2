@@ -1,11 +1,20 @@
-/** Independent from components/tools/gallery/LoadingState.tsx — that
- *  component's text is hardcoded to "Loading tools…", not a prop, so
- *  reusing it here would show the wrong word. Used by
- *  app/(guest)/templates/loading.tsx. */
+import { Skeleton } from "@/components/ui/Skeleton";
+
+/** Independent from components/tools/gallery/LoadingState.tsx (its
+ *  screen-reader text says "tools"). Stage 14: skeleton cards in the
+ *  library's grid. Used by app/(guest)/templates/loading.tsx. */
 export function LoadingState() {
   return (
-    <div className="rounded-md border border-ink-200 p-8 text-center text-sm text-ink-600">
-      Loading templates…
+    <div className="space-y-4">
+      <p className="sr-only" role="status">
+        Loading templates…
+      </p>
+      <Skeleton className="h-10 w-full sm:max-w-xs" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <Skeleton key={i} className="h-24" />
+        ))}
+      </div>
     </div>
   );
 }

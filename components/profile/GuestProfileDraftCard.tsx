@@ -32,10 +32,11 @@ export function GuestProfileDraftCard() {
   const { session, setProfileDraft } = useGuestSession();
   const draft = session?.companyProfileDraft ?? null;
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "local-only">("idle");
-  // null = automatic: open until a draft with a name exists, collapsed
-  // after that; any manual toggle takes over from there.
-  const [expanded, setExpanded] = useState<boolean | null>(null);
-  const isOpen = expanded ?? !draft?.name;
+  // Collapsed until the guest opens it: the tool itself comes first
+  // (architecture doc §10 — value before anything else), and the summary
+  // line is the invitation. It also collapses again after a save.
+  const [expanded, setExpanded] = useState(false);
+  const isOpen = expanded;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,6 +56,7 @@ export function GuestProfileDraftCard() {
       toneOfVoice: value("toneOfVoice"),
     });
     setStatus(synced ? "saved" : "local-only");
+    setExpanded(false);
   }
 
   return (
@@ -73,21 +75,42 @@ export function GuestProfileDraftCard() {
           onSubmit={handleSubmit}
           className="mt-4 space-y-3"
         >
-          <FieldWrapper label="Business name" required>
-            <Input name="name" defaultValue={draft?.name ?? ""} required maxLength={200} />
-          </FieldWrapper>
-          <FieldWrapper label="Niche / industry">
-            <Input name="niche" defaultValue={draft?.niche ?? ""} maxLength={200} />
-          </FieldWrapper>
-          <FieldWrapper label="Target audience">
+          <FieldWrapper label="Business name" required htmlFor="draft-name">
             <Input
+              id="draft-name"
+              name="name"
+              defaultValue={draft?.name ?? ""}
+              required
+              maxLength={200}
+            />
+          </FieldWrapper>
+          <FieldWrapper label="Niche / industry" htmlFor="draft-niche">
+            <Input
+              id="draft-niche"
+              name="niche"
+              defaultValue={draft?.niche ?? ""}
+              maxLength={200}
+            />
+          </FieldWrapper>
+          <FieldWrapper label="Target audience" htmlFor="draft-targetAudience">
+            <Input
+              id="draft-targetAudience"
               name="targetAudience"
               defaultValue={draft?.targetAudience ?? ""}
               maxLength={500}
             />
           </FieldWrapper>
-          <FieldWrapper label="Tone of voice" helpText="e.g. friendly, professional, bold.">
-            <Input name="toneOfVoice" defaultValue={draft?.toneOfVoice ?? ""} maxLength={200} />
+          <FieldWrapper
+            label="Tone of voice"
+            helpText="e.g. friendly, professional, bold."
+            htmlFor="draft-toneOfVoice"
+          >
+            <Input
+              id="draft-toneOfVoice"
+              name="toneOfVoice"
+              defaultValue={draft?.toneOfVoice ?? ""}
+              maxLength={200}
+            />
           </FieldWrapper>
 
           <Button type="submit" variant="secondary" disabled={status === "saving"}>

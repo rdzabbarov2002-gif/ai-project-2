@@ -100,20 +100,36 @@ export function CompanyProfileForm({
       <form key={formKey} ref={formRef} action={formAction} className="space-y-4">
         {initialProfile?.id && <input type="hidden" name="id" value={initialProfile.id} />}
 
-        <FieldWrapper label="Company name" required>
-          <Input name="name" defaultValue={valueOf("name")} required maxLength={200} />
+        <FieldWrapper label="Company name" required htmlFor="profile-name">
+          <Input
+            id="profile-name"
+            name="name"
+            defaultValue={valueOf("name")}
+            required
+            maxLength={200}
+          />
         </FieldWrapper>
 
-        <FieldWrapper label="Niche / industry">
-          <Input name="niche" defaultValue={valueOf("niche")} maxLength={200} />
+        <FieldWrapper label="Niche / industry" htmlFor="profile-niche">
+          <Input id="profile-niche" name="niche" defaultValue={valueOf("niche")} maxLength={200} />
         </FieldWrapper>
 
-        <FieldWrapper label="Tone of voice" helpText="e.g. friendly, professional, bold.">
-          <Input name="toneOfVoice" defaultValue={valueOf("toneOfVoice")} maxLength={200} />
+        <FieldWrapper
+          label="Tone of voice"
+          helpText="e.g. friendly, professional, bold."
+          htmlFor="profile-toneOfVoice"
+        >
+          <Input
+            id="profile-toneOfVoice"
+            name="toneOfVoice"
+            defaultValue={valueOf("toneOfVoice")}
+            maxLength={200}
+          />
         </FieldWrapper>
 
-        <FieldWrapper label="Target audience">
+        <FieldWrapper label="Target audience" htmlFor="profile-targetAudience">
           <Textarea
+            id="profile-targetAudience"
             name="targetAudience"
             defaultValue={valueOf("targetAudience")}
             maxLength={500}
@@ -121,12 +137,23 @@ export function CompanyProfileForm({
           />
         </FieldWrapper>
 
-        <FieldWrapper label="Unique selling point">
-          <Textarea name="usp" defaultValue={valueOf("usp")} maxLength={500} rows={3} />
+        <FieldWrapper label="Unique selling point" htmlFor="profile-usp">
+          <Textarea
+            id="profile-usp"
+            name="usp"
+            defaultValue={valueOf("usp")}
+            maxLength={500}
+            rows={3}
+          />
         </FieldWrapper>
 
-        <FieldWrapper label="Website URL">
-          <Input name="websiteUrl" defaultValue={valueOf("websiteUrl")} maxLength={300} />
+        <FieldWrapper label="Website URL" htmlFor="profile-websiteUrl">
+          <Input
+            id="profile-websiteUrl"
+            name="websiteUrl"
+            defaultValue={valueOf("websiteUrl")}
+            maxLength={300}
+          />
         </FieldWrapper>
 
         {state.error && <p className="text-sm text-danger">{state.error}</p>}

@@ -44,7 +44,10 @@ export default async function DashboardPage() {
     <main className="mx-auto max-w-4xl space-y-8 p-6">
       <div className="flex items-center justify-between gap-3">
         <h1 className="font-display text-xl font-semibold text-ink-950">Dashboard</h1>
-        <SignOutButton />
+        {/* Desktop has sign-out in the sidebar (Stage 14); phones get it here. */}
+        <div className="md:hidden">
+          <SignOutButton />
+        </div>
       </div>
 
       {!profileCount && (
@@ -61,12 +64,15 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      <div className="max-w-2xl">
+      <div className="max-w-2xl space-y-2">
         <UsageCard
           planSlug={summary.planLimits.planSlug}
           used={summary.used}
           limit={summary.planLimits.maxGenerationsPerMonth}
         />
+        <Link href="/settings/billing" className="text-sm text-accent hover:underline">
+          Plans & billing →
+        </Link>
       </div>
 
       <section className="space-y-3">

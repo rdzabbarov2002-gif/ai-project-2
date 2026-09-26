@@ -2,9 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Design tokens as RGB channels (see tailwind.config.ts and
+ * config/design-tokens.md). Light is the default; `.dark` on <html> is set
+ * before first paint by the inline script in app/layout.tsx, from the
+ * saved preference or, failing that, the system setting.
+ * Every text/background pair used in the UI meets WCAG AA (4.5:1) in both
+ * themes — the table is in config/design-tokens.md.
+ */
 :root {
   --font-sans: "Inter", system-ui, sans-serif;
   --font-display: "Inter", system-ui, sans-serif;
+
+  --ink-950: 14 15 18;
+  --ink-800: 35 38 46;
+  --ink-600: 75 79 88;
+  --ink-400: 138 142 150;
+  --ink-200: 216 218 222;
+  --ink-50: 247 247 248;
+  --surface: 255 255 255;
+
+  --accent: 55 48 224;
+  --accent-hover: 44 36 184;
+  --accent-subtle: 238 237 252;
+  --accent-contrast: 255 255 255;
+
+  --upgrade: 245 166 35;
+  --upgrade-hover: 216 144 26;
+  --upgrade-subtle: 253 243 225;
+  --upgrade-contrast: 14 15 18;
+  --upgrade-ink: 122 74 0;
+
+  --success: 23 127 86;
+  --danger: 194 52 52;
+
+  color-scheme: light;
+}
+
+.dark {
+  --ink-950: 240 241 243;
+  --ink-800: 214 216 221;
+  --ink-600: 163 167 175;
+  --ink-400: 120 124 132;
+  --ink-200: 52 55 65;
+  --ink-50: 14 15 18;
+  --surface: 26 28 34;
+
+  --accent: 165 161 255;
+  --accent-hover: 189 186 255;
+  --accent-subtle: 38 36 77;
+  --accent-contrast: 14 15 18;
+
+  --upgrade: 245 166 35;
+  --upgrade-hover: 255 184 77;
+  --upgrade-subtle: 58 42 12;
+  --upgrade-contrast: 14 15 18;
+  --upgrade-ink: 248 201 119;
+
+  --success: 76 199 148;
+  --danger: 240 122 122;
+
+  color-scheme: dark;
 }
 
 body {

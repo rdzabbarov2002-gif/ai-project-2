@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppProviders } from "@/components/providers/AppProviders";
+import { THEME_STORAGE_KEY } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: "AI Marketing Workspace",
@@ -17,8 +18,18 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#3730E0",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F7F7F8" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E0F12" },
+  ],
 };
+
+/**
+ * Runs before first paint (Stage 14): applies the saved theme, or the
+ * system one, so a dark-mode visitor never sees a flash of the light UI.
+ * Kept tiny and dependency-free; ThemeToggle takes over after hydration.
+ */
+const themeScript = `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark")}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -26,10 +37,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: the theme script above may add `dark` to
+    // this element before React hydrates — an expected, one-attribute
+    // difference, not a mismatch worth warning about.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>
         <AppProviders>{children}</AppProviders>
-        {/* Service worker registration — foundation only, no offline logic yet (Stage 1 scope). */}
+        {/* Service worker registration (Stage 1); the worker's caching is Stage 14's (public/sw.js). */}
         <script
           dangerouslySetInnerHTML={{
             __html: `

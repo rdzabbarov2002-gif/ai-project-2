@@ -1,16 +1,22 @@
+import { Skeleton } from "@/components/ui/Skeleton";
+
 /**
- * Inline, not a separate LoadingState component: the existing
- * Tools/Templates galleries (Stage 7/10) each have their own
- * near-identical LoadingState/ErrorState pair already — a third and
- * fourth pair here would compound a duplication this stage's brief asks
- * to flag, not add to (see Stage 13 audit §4). One line of markup with no
- * other consumer doesn't earn a file of its own.
+ * Inline, not a separate LoadingState component — the Tools/Templates
+ * galleries (Stage 7/10) each have their own; Stage 13 chose not to add
+ * more. Stage 14 swaps the text for skeletons shaped like the page.
  */
 export default function DashboardLoading() {
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <div className="rounded-md border border-ink-200 p-8 text-center text-sm text-ink-600">
+    <main className="mx-auto max-w-4xl space-y-8 p-6">
+      <p className="sr-only" role="status">
         Loading dashboard…
+      </p>
+      <Skeleton className="h-7 w-40" />
+      <Skeleton className="h-32 max-w-2xl" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }, (_, i) => (
+          <Skeleton key={i} className="h-28" />
+        ))}
       </div>
     </main>
   );

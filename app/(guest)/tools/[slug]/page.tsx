@@ -101,7 +101,7 @@ export default async function ToolPage({
   }
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-6">
+    <main className="mx-auto max-w-5xl space-y-6 p-6">
       <div className="space-y-1">
         <h1 className="font-display text-xl font-semibold text-ink-950">{tool.name}</h1>
         {template && searchParams.template && (
@@ -120,10 +120,16 @@ export default async function ToolPage({
         )}
       </div>
       {template && premiumLocked ? (
-        <PremiumTemplateNotice toolSlug={tool.slug} templateName={template.name} />
+        <div className="max-w-2xl">
+          <PremiumTemplateNotice toolSlug={tool.slug} templateName={template.name} />
+        </div>
       ) : (
         <>
-          {isGuest && <GuestProfileDraftCard />}
+          {isGuest && (
+            <div className="max-w-2xl">
+              <GuestProfileDraftCard />
+            </div>
+          )}
           <ToolRunner
             tool={{ slug: tool.slug, name: tool.name }}
             templateSlug={template?.slug}

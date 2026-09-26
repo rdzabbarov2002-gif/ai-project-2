@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { FieldWrapper } from "@/components/tools/fields/FieldWrapper";
@@ -27,6 +27,8 @@ export function WebsiteAutofill({
   const [url, setUrl] = useState(defaultUrl);
   const [message, setMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+  // useId: the component appears in two different forms (wizard, /profile).
+  const inputId = useId();
 
   function handleAutofill() {
     setMessage(null);
@@ -52,9 +54,11 @@ export function WebsiteAutofill({
       <FieldWrapper
         label="Your website"
         helpText="We'll read your homepage and suggest a profile — you can edit everything."
+        htmlFor={inputId}
       >
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
+            id={inputId}
             // text, not "url": native URL validation would reject a bare
             // "example.com" and, since this sits inside the parent form,
             // block that form's submit too. fetchWebsite.ts normalizes it.
@@ -72,7 +76,6 @@ export function WebsiteAutofill({
             }}
             placeholder="example.com"
             maxLength={300}
-            aria-label="Website to autofill from"
           />
           <Button
             type="button"

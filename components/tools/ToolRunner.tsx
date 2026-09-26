@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useGuestSession } from "@/lib/guest-session/context";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { CopyButton } from "@/components/ui/CopyButton";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { SignUpPrompt } from "@/components/auth/SignUpPrompt";
 import { FieldRenderer } from "./FieldRenderer";
 import { buildInitialValues } from "@/lib/tool-config/initialValues";
@@ -88,9 +90,11 @@ export function ToolRunner({
   }));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<{ code: string; message: string } | null>(null);
+  const [submitError, setSubmitError] = useState<{
+    code: string;
+    message: string;
+  } | null>(null);
   const [result, setResult] = useState<GenerateSuccess | null>(null);
-  const [copied, setCopied] = useState(false);
   const [signUpOpen, setSignUpOpen] = useState(false);
 
   function setValue(name: string, value: unknown) {
@@ -103,19 +107,25 @@ export function ToolRunner({
     });
   }
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    void generate();
+  }
 
+  // Shared by the form's submit and the result's "Regenerate" (Stage 14),
+  // which re-runs the same inputs.
+  async function generate() {
     const missing = findMissingRequiredFields(schema, values);
     if (missing.length > 0) {
-      setFieldErrors(Object.fromEntries(missing.map((name) => [name, "This field is required."])));
+      setFieldErrors(
+        Object.fromEntries(missing.map((name) => [name, "This field is required."])),
+      );
       return;
     }
 
     setSubmitting(true);
     setSubmitError(null);
     setResult(null);
-    setCopied(false);
 
     try {
       const response = await fetch("/api/generate", {
@@ -131,7 +141,9 @@ export function ToolRunner({
           toolSlug: tool.slug,
           templateSlug,
           inputParams: values,
-          guestSessionToken: isGuest ? ensureSession().sessionToken : session?.sessionToken,
+          guestSessionToken: isGuest
+            ? ensureSession().sessionToken
+            : session?.sessionToken,
         }),
       });
 
@@ -163,24 +175,15 @@ export function ToolRunner({
     }
   }
 
-  async function handleCopy() {
-    if (!result) return;
-    try {
-      await navigator.clipboard.writeText(result.output);
-      setCopied(true);
-    } catch {
-      // Clipboard API unavailable (non-HTTPS origin, denied permission,
-      // older mobile browsers) — previously an unhandled rejection. The
-      // text stays selectable for a manual copy.
-      setCopied(false);
-    }
-  }
-
+  // Architecture doc §9: "form on the left, result on the right (stacked
+  // on mobile)" — two columns from `lg`, one below it.
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-8">
       <form onSubmit={handleSubmit} className="space-y-4">
         {schema.fields.length === 0 ? (
-          <p className="text-sm text-ink-600">This tool has no configurable inputs — just generate.</p>
+          <p className="text-sm text-ink-600">
+            This tool has no configurable inputs — just generate.
+          </p>
         ) : (
           schema.fields.map((field) => (
             <FieldRenderer
@@ -238,41 +241,68 @@ export function ToolRunner({
         message="Guest mode includes a few generations to try things out. A free account gives you a monthly allowance, your history, and a company profile that tailors every result."
       />
 
-      {result && (
-        <Card className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-medium text-ink-950">Result</h2>
-            <Button variant="secondary" onClick={handleCopy}>
-              {copied ? "Copied" : "Copy"}
-            </Button>
+      <section
+        aria-label="Result"
+        aria-live="polite"
+        aria-busy={submitting}
+        className="lg:sticky lg:top-6"
+      >
+        {submitting ? (
+          <Card className="space-y-3">
+            <p className="sr-only">Generating…</p>
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-11/12" />
+            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-4 w-2/3" />
+          </Card>
+        ) : !result ? (
+          <div className="hidden rounded-lg border border-dashed border-ink-200 p-8 text-center text-sm text-ink-600 lg:block">
+            Your result will appear here.
           </div>
-          <p className="whitespace-pre-wrap text-sm text-ink-950">{result.output}</p>
-          {!result.saved && (
-            <p className="text-xs text-upgrade">
-              This result wasn&apos;t saved to your history — copy it now if you want to keep it.
-            </p>
-          )}
-          {result.remaining !== "unlimited" && (
-            <p className="text-xs text-ink-600">
-              {isGuest
-                ? `${result.remaining} free guest generations left.`
-                : `${result.remaining} generations left this period.`}
-            </p>
-          )}
-          {isGuest && (
-            // The "save to history" value trigger (architecture doc §8):
-            // offered right where the result is, not as a blocking modal.
-            <div className="rounded-md bg-accent-subtle p-3 text-sm text-ink-950">
-              Want to keep this?{" "}
-              <Link href="/register" className="font-medium text-accent hover:underline">
-                Sign up free
-              </Link>{" "}
-              to save it to your history — everything you&apos;ve created as a guest carries
-              over.
+        ) : (
+          <Card className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-medium text-ink-950">Result</h2>
+              <div className="flex gap-2">
+                <Button type="button" variant="secondary" onClick={() => void generate()}>
+                  Regenerate
+                </Button>
+                <CopyButton text={result.output} />
+              </div>
             </div>
-          )}
-        </Card>
-      )}
+            <p className="whitespace-pre-wrap text-sm text-ink-950">{result.output}</p>
+            {!result.saved && (
+              <p className="text-xs text-upgrade-ink">
+                This result wasn&apos;t saved to your history — copy it now if you want to
+                keep it.
+              </p>
+            )}
+            {result.remaining !== "unlimited" && (
+              <p className="text-xs text-ink-600">
+                {isGuest
+                  ? `${result.remaining} free guest generations left.`
+                  : `${result.remaining} generations left this period.`}
+              </p>
+            )}
+            {isGuest && (
+              // The "save to history" value trigger (architecture doc §8):
+              // offered right where the result is, not as a blocking modal.
+              <div className="rounded-md bg-accent-subtle p-3 text-sm text-ink-950">
+                Want to keep this?{" "}
+                <Link
+                  href="/register"
+                  className="font-medium text-accent hover:underline"
+                >
+                  Sign up free
+                </Link>{" "}
+                to save it to your history — everything you&apos;ve created as a guest
+                carries over.
+              </div>
+            )}
+          </Card>
+        )}
+      </section>
     </div>
   );
 }

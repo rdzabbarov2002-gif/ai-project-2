@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import type { TemplateListItem } from "@/lib/templates/types";
 
 /**
@@ -16,14 +17,12 @@ export function TemplateCard({ template }: { template: TemplateListItem }) {
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-medium text-ink-950">{template.name}</h3>
           {template.isPremium && (
-            <span className="shrink-0 rounded-sm bg-upgrade-subtle px-2 py-0.5 text-xs font-medium text-ink-950">
+            <Badge tone="upgrade" className="shrink-0">
               Pro
-            </span>
+            </Badge>
           )}
         </div>
-        <span className="inline-block rounded-sm bg-accent-subtle px-2 py-0.5 text-xs text-accent">
-          {template.category}
-        </span>
+        <Badge>{template.category}</Badge>
         <p className="text-xs text-ink-600">{template.toolName}</p>
       </Card>
     </Link>

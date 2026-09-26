@@ -117,14 +117,27 @@ export function OnboardingWizard() {
         </section>
 
         <section hidden={step !== 1} className="space-y-4">
-          <FieldWrapper label="Company name" required>
-            <Input name="name" value={values.name} onChange={set("name")} maxLength={200} />
-          </FieldWrapper>
-          <FieldWrapper label="Niche / industry">
-            <Input name="niche" value={values.niche} onChange={set("niche")} maxLength={200} />
-          </FieldWrapper>
-          <FieldWrapper label="Website URL">
+          <FieldWrapper label="Company name" required htmlFor="onboarding-name">
             <Input
+              id="onboarding-name"
+              name="name"
+              value={values.name}
+              onChange={set("name")}
+              maxLength={200}
+            />
+          </FieldWrapper>
+          <FieldWrapper label="Niche / industry" htmlFor="onboarding-niche">
+            <Input
+              id="onboarding-niche"
+              name="niche"
+              value={values.niche}
+              onChange={set("niche")}
+              maxLength={200}
+            />
+          </FieldWrapper>
+          <FieldWrapper label="Website URL" htmlFor="onboarding-websiteUrl">
+            <Input
+              id="onboarding-websiteUrl"
               name="websiteUrl"
               value={values.websiteUrl}
               onChange={set("websiteUrl")}
@@ -134,8 +147,9 @@ export function OnboardingWizard() {
         </section>
 
         <section hidden={step !== 2} className="space-y-4">
-          <FieldWrapper label="Target audience">
+          <FieldWrapper label="Target audience" htmlFor="onboarding-targetAudience">
             <Textarea
+              id="onboarding-targetAudience"
               name="targetAudience"
               value={values.targetAudience}
               onChange={set("targetAudience")}
@@ -143,16 +157,28 @@ export function OnboardingWizard() {
               rows={3}
             />
           </FieldWrapper>
-          <FieldWrapper label="Tone of voice" helpText="e.g. friendly, professional, bold.">
+          <FieldWrapper
+            label="Tone of voice"
+            helpText="e.g. friendly, professional, bold."
+            htmlFor="onboarding-toneOfVoice"
+          >
             <Input
+              id="onboarding-toneOfVoice"
               name="toneOfVoice"
               value={values.toneOfVoice}
               onChange={set("toneOfVoice")}
               maxLength={200}
             />
           </FieldWrapper>
-          <FieldWrapper label="Unique selling point">
-            <Textarea name="usp" value={values.usp} onChange={set("usp")} maxLength={500} rows={3} />
+          <FieldWrapper label="Unique selling point" htmlFor="onboarding-usp">
+            <Textarea
+              id="onboarding-usp"
+              name="usp"
+              value={values.usp}
+              onChange={set("usp")}
+              maxLength={500}
+              rows={3}
+            />
           </FieldWrapper>
         </section>
 

@@ -1,14 +1,17 @@
-/** Inline text, not a separate LoadingState component — same reasoning
- *  as app/(auth)/dashboard/loading.tsx (Stage 13): this project already
- *  has two near-identical LoadingState/ErrorState pairs (Tools,
- *  Templates); a fifth and sixth one-line component would compound that
- *  rather than help. */
+import { Skeleton } from "@/components/ui/Skeleton";
+
+/** Inline, not a separate LoadingState component (Stage 13's reasoning);
+ *  Stage 14 swaps the text for skeleton rows shaped like the list. */
 export default function HistoryLoading() {
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <div className="rounded-md border border-ink-200 p-8 text-center text-sm text-ink-600">
+    <main className="mx-auto max-w-2xl space-y-3 p-6">
+      <p className="sr-only" role="status">
         Loading history…
-      </div>
+      </p>
+      <Skeleton className="h-7 w-32" />
+      {Array.from({ length: 4 }, (_, i) => (
+        <Skeleton key={i} className="h-20" />
+      ))}
     </main>
   );
 }
