@@ -45,6 +45,11 @@ if (process.env.VERCEL) {
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Title and description in <head> for every visitor, as on Next.js 14.
+  // Next.js 15 streams them into <body> unless the user agent is a known
+  // bot; the metadata here is static, so blocking on it costs nothing, and
+  // link previews and Lighthouse always find it.
+  htmlLimitedBots: /.*/,
   // PWA service worker is registered manually (see app/layout.tsx + public/sw.js)
   // rather than via a bundler plugin, to keep the build simple and phone-editable.
   async headers() {
