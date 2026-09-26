@@ -28,14 +28,17 @@ With the local database running:
   `tests/account-deletion.test.sql`: deleting an account leaves none of
   its rows in any table.
 - `npx supabase db advisors --local` — Supabase's Security and
-  Performance Advisors.
+  Performance Advisors. CI fails on any warning, and on a foreign key
+  without an index.
 - `npm run db:types` — regenerates `lib/supabase/database.types.ts`.
   Run it after every schema change and commit the result; CI fails if
   the committed file doesn't match the migrations.
 
 A new table needs its client privileges granted explicitly (see
 `migrations/0019_client_privileges.sql`) and a line in the RLS test —
-the test fails until it has both.
+the test fails until it has both. In a policy, write
+`(select auth.uid()) = user_id`, not `auth.uid() = user_id` — the
+Performance Advisor flags the per-row form (migration 0023).
 
 The options below are for a hosted Supabase project (staging, prod).
 
@@ -120,9 +123,10 @@ schema.
   them to a guest session) and `migrations/0020_foreign_key_indexes.sql`
   (indexes on three foreign keys), then
   `migrations/0021_generation_usage.sql` (token counts and duration per
-  generation) and `migrations/0022_feedback.sql` (the in-app feedback
-  form's table).
+  generation), `migrations/0022_feedback.sql` (the in-app feedback
+  form's table) and `migrations/0023_rls_auth_uid_once.sql` (the same
+  row-level security rules, evaluated once per query instead of per row).
 
 Stages 11–14 (guest merge, Company Profile, Usage/Billing UI, History)
-were built as pure application code on top of these; `0022` is the last
+were built as pure application code on top of these; `0023` is the last
 migration.

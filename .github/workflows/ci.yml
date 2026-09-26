@@ -72,10 +72,13 @@ jobs:
       - name: Security Advisor
         run: $SUPABASE db advisors --local --type security --fail-on warn
 
-      - name: Performance Advisor — no unindexed foreign keys
+      # No warnings, and no unindexed foreign keys (reported as INFO). With
+      # nothing to report the command prints nothing at all, hence -s.
+      - name: Performance Advisor
         run: |
           $SUPABASE db advisors --local --type performance -o json > performance.json
-          jq -e '[.[] | select(.name == "unindexed_foreign_keys")] | length == 0' performance.json
+          jq -s -e '[.[][] | select(.level != "INFO" or .name == "unindexed_foreign_keys")] | length == 0' performance.json \
+            || { cat performance.json; exit 1; }
 
       - name: Generated types are up to date
         run: |
