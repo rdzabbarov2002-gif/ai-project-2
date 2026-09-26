@@ -8,8 +8,8 @@ import { logger } from "@/lib/logger";
 /**
  * Vercel's default serverless timeout (10s on Hobby, 15s on Pro) is shorter
  * than a typical Claude generation, which would cut requests off mid-call
- * in production. 60s is the Hobby ceiling and matches ClaudeProvider's own
- * per-attempt timeout; raise it on plans that allow more.
+ * in production. 60s is the Hobby ceiling; ClaudeProvider keeps a whole
+ * call, its retry included, within 50s of it (lib/ai-provider/claude.ts).
  */
 export const maxDuration = 60;
 
