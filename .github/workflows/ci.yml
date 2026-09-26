@@ -92,7 +92,8 @@ jobs:
     env:
       SUPABASE: npx --yes supabase@2.118.0
       NEXT_TELEMETRY_DISABLED: "1"
-      # Required at server start (lib/env.ts); these flows never call the AI.
+      # Required at server start (lib/env.ts); generations go to the local
+      # stand-in (e2e/mock-anthropic.mjs), never to the real API.
       ANTHROPIC_API_KEY: e2e-not-used
     steps:
       - uses: actions/checkout@v4
