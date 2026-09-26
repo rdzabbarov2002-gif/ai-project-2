@@ -12,7 +12,15 @@ import { updateSession } from "@/lib/supabase/middleware";
  * fetches to a Server Action/Route Handler in edge cases, the layout check
  * cannot.
  */
-const PROTECTED_PATHS = ["/dashboard", "/onboarding", "/profile", "/history", "/settings"];
+const PROTECTED_PATHS = [
+  "/dashboard",
+  "/onboarding",
+  "/profile",
+  "/history",
+  "/settings",
+  // Reached signed in, from the reset link (app/auth/callback).
+  "/reset-password",
+];
 
 export async function middleware(request: NextRequest) {
   const { response, user } = await updateSession(request);

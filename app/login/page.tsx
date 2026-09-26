@@ -53,6 +53,11 @@ export default function LoginPage({
             required
             autoComplete="current-password"
           />
+          <p className="text-right text-sm">
+            <Link href="/forgot-password" className="text-accent hover:underline">
+              Forgot password?
+            </Link>
+          </p>
           {state.error && <p className="text-sm text-danger">{state.error}</p>}
           <SubmitButton />
         </form>
