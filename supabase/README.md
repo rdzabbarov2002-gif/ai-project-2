@@ -124,9 +124,11 @@ schema.
   (indexes on three foreign keys), then
   `migrations/0021_generation_usage.sql` (token counts and duration per
   generation), `migrations/0022_feedback.sql` (the in-app feedback
-  form's table) and `migrations/0023_rls_auth_uid_once.sql` (the same
-  row-level security rules, evaluated once per query instead of per row).
+  form's table), `migrations/0023_rls_auth_uid_once.sql` (the same
+  row-level security rules, evaluated once per query instead of per row)
+  and `migrations/0024_billing.sql` (payments: the plan comes from the
+  subscription rows only; drops `users.plan_id`).
 
 Stages 11–14 (guest merge, Company Profile, Usage/Billing UI, History)
-were built as pure application code on top of these; `0023` is the last
+were built as pure application code on top of these; `0024` is the last
 migration.

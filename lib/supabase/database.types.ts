@@ -5,7 +5,39 @@ export type Database = {
   
   "public": {
           Tables: {
-            "company_profiles": {
+            "billing_customers": {
+                  Row: {
+                    "created_at": string,"stripe_customer_id": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"stripe_customer_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"stripe_customer_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "billing_customers_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"billing_reconciliations": {
+                  Row: {
+                    "checked": number,"created_at": string,"fixed": number,"id": string
+                  }
+                  Insert: {
+                    "checked": number,"created_at"?: string,"fixed": number,"id"?: string
+                  }
+                  Update: {
+                    "checked"?: number,"created_at"?: string,"fixed"?: number,"id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"company_profiles": {
                   Row: {
                     "created_at": string,"id": string,"logo_url": string | null,"name": string,"niche": string | null,"target_audience": string | null,"tone_of_voice": string | null,"updated_at": string,"user_id": string,"usp": string | null,"website_url": string | null
                   }
@@ -131,15 +163,28 @@ isOneToOne: true
                   Relationships: [
                     
                   ]
-                },"subscriptions": {
+                },"stripe_events": {
                   Row: {
-                    "created_at": string,"id": string,"period_end": string | null,"plan_id": string,"provider_ref": string | null,"status": string,"updated_at": string,"user_id": string
+                    "created_at": string,"id": string,"type": string
                   }
                   Insert: {
-                    "created_at"?: string,"id"?: string,"period_end"?: string | null,"plan_id": string,"provider_ref"?: string | null,"status"?: string,"updated_at"?: string,"user_id": string
+                    "created_at"?: string,"id": string,"type": string
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"period_end"?: string | null,"plan_id"?: string,"provider_ref"?: string | null,"status"?: string,"updated_at"?: string,"user_id"?: string
+                    "created_at"?: string,"id"?: string,"type"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"subscriptions": {
+                  Row: {
+                    "cancel_at_period_end": boolean,"created_at": string,"id": string,"period_end": string | null,"plan_id": string,"provider_ref": string | null,"status": string,"trial_end": string | null,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "cancel_at_period_end"?: boolean,"created_at"?: string,"id"?: string,"period_end"?: string | null,"plan_id": string,"provider_ref"?: string | null,"status"?: string,"trial_end"?: string | null,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "cancel_at_period_end"?: boolean,"created_at"?: string,"id"?: string,"period_end"?: string | null,"plan_id"?: string,"provider_ref"?: string | null,"status"?: string,"trial_end"?: string | null,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -209,22 +254,16 @@ isOneToOne: false
                   ]
                 },"users": {
                   Row: {
-                    "created_at": string,"email": string,"id": string,"plan_id": string | null,"updated_at": string
+                    "created_at": string,"email": string,"id": string,"updated_at": string
                   }
                   Insert: {
-                    "created_at"?: string,"email": string,"id": string,"plan_id"?: string | null,"updated_at"?: string
+                    "created_at"?: string,"email": string,"id": string,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"email"?: string,"id"?: string,"plan_id"?: string | null,"updated_at"?: string
+                    "created_at"?: string,"email"?: string,"id"?: string,"updated_at"?: string
                   }
                   Relationships: [
-                    {
-      foreignKeyName: "users_plan_id_fkey"
-      columns: ["plan_id"]
-isOneToOne: false
-      referencedRelation: "plans"
-      referencedColumns: ["id"]
-    }
+                    
                   ]
                 }
           }

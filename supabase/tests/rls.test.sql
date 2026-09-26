@@ -6,7 +6,7 @@
 -- `anon`, and `authenticated` with A's JWT claims.
 
 begin;
-select plan(43);
+select plan(49);
 
 -- ---------------------------------------------------------------- setup
 insert into auth.users (id, email) values
@@ -107,6 +107,7 @@ select throws_ok('select 1 from public.guest_sessions', '42501', null, 'anon can
 select throws_ok('select 1 from public.usage_counters', '42501', null, 'anon cannot read usage_counters');
 select throws_ok('select 1 from public.subscriptions', '42501', null, 'anon cannot read subscriptions');
 select throws_ok('select 1 from public.feedback', '42501', null, 'anon cannot read feedback');
+select throws_ok('select 1 from public.billing_customers', '42501', null, 'anon cannot read billing customers');
 select throws_ok('update public.plans set name = name', '42501', null, 'anon cannot change plans');
 
 reset role;
@@ -118,8 +119,8 @@ set local request.jwt.claims = '{"sub": "aaaaaaaa-0000-4000-8000-000000000001", 
 -- users
 select results_eq('select id from public.users',
   $$ values ('aaaaaaaa-0000-4000-8000-000000000001'::uuid) $$, 'A sees only their own users row');
-select throws_ok('update public.users set plan_id = null', '42501', null,
-  'A cannot change their own plan');
+select throws_ok('update public.users set email = ''x@rls.test''', '42501', null,
+  'A cannot change their users row');
 
 -- company_profiles
 select results_eq('select name from public.company_profiles', $$ values ('A Co') $$,
@@ -175,6 +176,16 @@ select results_eq('select user_id from public.subscriptions',
   $$ values ('aaaaaaaa-0000-4000-8000-000000000001'::uuid) $$, 'A sees only their own subscription');
 select throws_ok('update public.subscriptions set status = ''active''', '42501', null,
   'A cannot change their subscription');
+-- The plan comes from these rows (migration 0024): a client can't make one.
+select throws_ok('update public.subscriptions set plan_id = (select id from public.plans where slug = ''enterprise'')',
+  '42501', null, 'A cannot switch their subscription to another plan');
+select throws_ok(
+  $$ insert into public.subscriptions (user_id, plan_id, status)
+     select 'aaaaaaaa-0000-4000-8000-000000000001', id, 'active' from public.plans where slug = 'enterprise' $$,
+  '42501', null, 'A cannot give themselves a subscription');
+select throws_ok('delete from public.subscriptions', '42501', null, 'A cannot delete their subscription');
+select throws_ok('select 1 from public.billing_customers', '42501', null, 'A cannot read billing customers');
+select throws_ok('select 1 from public.stripe_events', '42501', null, 'A cannot read Stripe events');
 
 -- guest_sessions
 select throws_ok('select 1 from public.guest_sessions', '42501', null, 'A cannot read guest_sessions');

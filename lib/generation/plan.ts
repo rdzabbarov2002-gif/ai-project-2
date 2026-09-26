@@ -110,20 +110,36 @@ export async function resolvePlanLimits(
   return resolved;
 }
 
+const PLAN_RANK: Record<PlanLimits["planSlug"], number> = { free: 0, pro: 1, enterprise: 2 };
+
+/**
+ * The plan a user's subscriptions give them right now (migration 0024):
+ * the best plan among the rows that are `active` or `trialing`. The Free
+ * row from sign-up is always among them, so a paid subscription that is
+ * past due, unpaid or canceled falls back to Free. Rows are written only by
+ * the server, from Stripe (app/api/stripe/webhook); the user's own client
+ * can read them (RLS), which is all this needs.
+ */
 async function resolveUserPlanSlug(
   supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<"free" | "pro" | "enterprise"> {
   const { data } = await supabase
-    .from("users")
+    .from("subscriptions")
     .select("plans(slug)")
-    .eq("id", userId)
-    .single();
+    .eq("user_id", userId)
+    .in("status", ["active", "trialing"]);
 
-  // Same caveat as above: cast, not inferred — see comment in resolvePlanLimits.
-  const rawPlan = data?.plans as unknown as { slug: string } | { slug: string }[] | null;
-  const plan = rawPlan ? (Array.isArray(rawPlan) ? rawPlan[0] : rawPlan) : null;
-  return (plan?.slug as "free" | "pro" | "enterprise" | undefined) ?? FREE_PLAN_SLUG;
+  let best: PlanLimits["planSlug"] = FREE_PLAN_SLUG;
+  for (const row of data ?? []) {
+    // Same caveat as above: cast, not inferred — see comment in resolvePlanLimits.
+    const rawPlan = row.plans as unknown as { slug: string } | { slug: string }[] | null;
+    const slug = (Array.isArray(rawPlan) ? rawPlan[0] : rawPlan)?.slug;
+    if (slug && slug in PLAN_RANK && PLAN_RANK[slug as PlanLimits["planSlug"]] > PLAN_RANK[best]) {
+      best = slug as PlanLimits["planSlug"];
+    }
+  }
+  return best;
 }
 
 function normalizeSlugList(value: unknown): "all" | string[] {
