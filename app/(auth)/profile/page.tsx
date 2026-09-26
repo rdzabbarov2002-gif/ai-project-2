@@ -2,6 +2,10 @@ import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { CompanyProfileForm } from "@/components/profile/CompanyProfileForm";
 
+/** The form's "Autofill from website" server action fetches a website and
+ *  calls the AI gateway — longer than Vercel's default function limit. */
+export const maxDuration = 60;
+
 /**
  * Own direct read via the existing Supabase server client — deliberately
  * not `lib/generation/company-context.ts`'s `resolveCompanyContext()`,

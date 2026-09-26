@@ -39,8 +39,11 @@ export async function signUp(
   // back immediately and we can send them straight in. Branching on
   // `data.session` (rather than assuming one behavior) means this doesn't
   // silently break if that project setting changes later.
+  // With a session straight away, new accounts start at onboarding
+  // (Stage 12) — which forwards to the Dashboard if the guest→user merge
+  // already created a profile from their guest draft.
   if (data.session) {
-    redirect("/dashboard");
+    redirect("/onboarding");
   }
   redirect("/register/check-email");
 }

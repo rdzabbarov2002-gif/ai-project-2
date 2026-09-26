@@ -4,6 +4,8 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
+import { fetchWebsiteSummary, WebsiteFetchError } from "@/lib/profile-autofill/fetchWebsite";
+import { extractProfile, type SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
 
 /**
  * The only validation layer for this form — no parallel check in the
@@ -108,4 +110,42 @@ export async function saveCompanyProfile(
   revalidatePath("/profile");
 
   return { error: null, success: true };
+}
+
+export interface AutofillResult {
+  error: string | null;
+  profile: SuggestedProfile | null;
+  /** "metadata" = the AI step failed and only the page's own title and
+   *  description could be used — the form says so. */
+  source?: "ai" | "metadata";
+}
+
+/**
+ * Stage 12 — "autofill by URL" (architecture doc §9). Returns suggested
+ * values only; nothing is written here. The form (onboarding wizard or
+ * /profile) shows them for review and saves through saveCompanyProfile
+ * above, so that action stays the one validated write path.
+ *
+ * Signed-in only (requireUser): it makes an outbound request and an AI
+ * call on the server's behalf. The URL is untrusted input — see
+ * lib/profile-autofill/fetchWebsite.ts for the SSRF handling.
+ */
+export async function autofillCompanyProfile(url: string): Promise<AutofillResult> {
+  await requireUser();
+
+  if (typeof url !== "string" || url.trim().length === 0 || url.length > 300) {
+    return { error: "Enter your website address.", profile: null };
+  }
+
+  try {
+    const site = await fetchWebsiteSummary(url);
+    const { profile, source } = await extractProfile(site);
+    return { error: null, profile, source };
+  } catch (error) {
+    if (error instanceof WebsiteFetchError) {
+      return { error: error.message, profile: null };
+    }
+    console.error("[profile] autofill failed:", error);
+    return { error: "We couldn't read that website. Please try again.", profile: null };
+  }
 }

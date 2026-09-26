@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -7,6 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldWrapper } from "@/components/tools/fields/FieldWrapper";
 import { saveCompanyProfile, type CompanyProfileFormState } from "@/app/(auth)/profile/actions";
+import { WebsiteAutofill } from "./WebsiteAutofill";
+import type { SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
 
 /**
  * Shape matches GuestCompanyProfileDraft (lib/guest-session/types.ts) —
@@ -49,46 +52,81 @@ function SubmitButton() {
  * chrome — that component was already fully generic (no dependency on the
  * tool-config field system beyond the props it takes), so nothing about
  * it needed to change to fit here, unlike SearchBar in Stage 10.
+ *
+ * Stage 12 completion — autofill by URL: WebsiteAutofill's suggestions
+ * are applied by remounting the (still uncontrolled) form with them as
+ * new defaults (`formKey`), merged over whatever is currently typed in,
+ * so a half-edited form doesn't lose manual changes to fields the
+ * website said nothing about. Nothing is saved until Save.
  */
+type EditableField = Exclude<keyof CompanyProfileFormValues, "id">;
+const EDITABLE_FIELDS: EditableField[] = [
+  "name",
+  "niche",
+  "toneOfVoice",
+  "targetAudience",
+  "usp",
+  "websiteUrl",
+];
+
 export function CompanyProfileForm({
   initialProfile,
 }: {
   initialProfile: CompanyProfileFormValues | null;
 }) {
   const [state, formAction] = useFormState(saveCompanyProfile, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [formKey, setFormKey] = useState(0);
+  const [overrides, setOverrides] = useState<Partial<Record<EditableField, string>>>({});
+
+  const valueOf = (name: EditableField) => overrides[name] ?? initialProfile?.[name] ?? "";
+
+  function applySuggestions(suggested: SuggestedProfile) {
+    const current = formRef.current ? new FormData(formRef.current) : null;
+    const next: Partial<Record<EditableField, string>> = {};
+    for (const name of EDITABLE_FIELDS) {
+      const typed = current?.get(name);
+      const suggestion = suggested[name];
+      next[name] = suggestion ? suggestion : typeof typed === "string" ? typed : valueOf(name);
+    }
+    setOverrides(next);
+    setFormKey((key) => key + 1);
+  }
 
   return (
-    <Card>
-      <form action={formAction} className="space-y-4">
+    <Card className="space-y-6">
+      <WebsiteAutofill defaultUrl={initialProfile?.websiteUrl ?? ""} onFill={applySuggestions} />
+
+      <form key={formKey} ref={formRef} action={formAction} className="space-y-4">
         {initialProfile?.id && <input type="hidden" name="id" value={initialProfile.id} />}
 
         <FieldWrapper label="Company name" required>
-          <Input name="name" defaultValue={initialProfile?.name ?? ""} required maxLength={200} />
+          <Input name="name" defaultValue={valueOf("name")} required maxLength={200} />
         </FieldWrapper>
 
         <FieldWrapper label="Niche / industry">
-          <Input name="niche" defaultValue={initialProfile?.niche ?? ""} maxLength={200} />
+          <Input name="niche" defaultValue={valueOf("niche")} maxLength={200} />
         </FieldWrapper>
 
         <FieldWrapper label="Tone of voice" helpText="e.g. friendly, professional, bold.">
-          <Input name="toneOfVoice" defaultValue={initialProfile?.toneOfVoice ?? ""} maxLength={200} />
+          <Input name="toneOfVoice" defaultValue={valueOf("toneOfVoice")} maxLength={200} />
         </FieldWrapper>
 
         <FieldWrapper label="Target audience">
           <Textarea
             name="targetAudience"
-            defaultValue={initialProfile?.targetAudience ?? ""}
+            defaultValue={valueOf("targetAudience")}
             maxLength={500}
             rows={3}
           />
         </FieldWrapper>
 
         <FieldWrapper label="Unique selling point">
-          <Textarea name="usp" defaultValue={initialProfile?.usp ?? ""} maxLength={500} rows={3} />
+          <Textarea name="usp" defaultValue={valueOf("usp")} maxLength={500} rows={3} />
         </FieldWrapper>
 
         <FieldWrapper label="Website URL">
-          <Input name="websiteUrl" defaultValue={initialProfile?.websiteUrl ?? ""} maxLength={300} />
+          <Input name="websiteUrl" defaultValue={valueOf("websiteUrl")} maxLength={300} />
         </FieldWrapper>
 
         {state.error && <p className="text-sm text-danger">{state.error}</p>}

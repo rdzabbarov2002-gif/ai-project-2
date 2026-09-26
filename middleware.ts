@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 /**
- * Protects the `(auth)` route group (Dashboard, Company Profile, History,
- * Billing) at the edge, before any Server Component renders — avoids a
+ * Protects the `(auth)` route group (Dashboard, Onboarding, Company
+ * Profile, History, Billing) at the edge, before any Server Component renders — avoids a
  * flash of protected content and keeps the redirect-to-login decision in
  * one place rather than duplicated per page.
  *
@@ -12,7 +12,7 @@ import { updateSession } from "@/lib/supabase/middleware";
  * fetches to a Server Action/Route Handler in edge cases, the layout check
  * cannot.
  */
-const PROTECTED_PATHS = ["/dashboard", "/profile", "/history", "/settings"];
+const PROTECTED_PATHS = ["/dashboard", "/onboarding", "/profile", "/history", "/settings"];
 
 export async function middleware(request: NextRequest) {
   const { response, user } = await updateSession(request);
