@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const create = vi.fn();
+const clientOptions: unknown[] = [];
 vi.mock("@anthropic-ai/sdk", () => {
   class APIError extends Error {}
   class APIConnectionError extends APIError {}
@@ -13,6 +14,9 @@ vi.mock("@anthropic-ai/sdk", () => {
     static APIConnectionError = APIConnectionError;
     static APIConnectionTimeoutError = APIConnectionTimeoutError;
     messages = { create };
+    constructor(options: unknown) {
+      clientOptions.push(options);
+    }
   }
   return { default: Anthropic };
 });
@@ -57,6 +61,25 @@ describe("ClaudeProvider", () => {
     create.mockReset();
     create.mockRejectedValue(new Anthropic.RateLimitError!("slow down"));
     await expect(new ClaudeProvider().generate(params)).rejects.toMatchObject({ kind: "rate_limited" });
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps both attempts inside one time budget, with no SDK retries on top", async () => {
+    create.mockRejectedValueOnce(new Anthropic.InternalServerError!("overloaded")).mockResolvedValueOnce({
+      content: [{ type: "text", text: "ok" }], usage: { input_tokens: 1, output_tokens: 1 }, model: "m", stop_reason: "end_turn",
+    });
+    await new ClaudeProvider().generate({ ...params, timeoutMs: 10_000 });
+
+    expect(clientOptions.at(-1)).toMatchObject({ maxRetries: 0 });
+    const [first, second] = create.mock.calls.map((call) => call[1].timeout as number);
+    expect(first).toBeLessThanOrEqual(10_000);
+    // The retry gets what's left after the first attempt and the back-off.
+    expect(second).toBeLessThanOrEqual(10_000 - 500);
+  });
+
+  it("doesn't retry once the budget is spent", async () => {
+    create.mockRejectedValue(new Anthropic.APIConnectionTimeoutError!("timed out"));
+    await expect(new ClaudeProvider().generate({ ...params, timeoutMs: 300 })).rejects.toMatchObject({ kind: "timeout" });
     expect(create).toHaveBeenCalledTimes(1);
   });
 

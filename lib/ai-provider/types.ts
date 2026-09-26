@@ -17,7 +17,9 @@ export interface AIGenerateParams {
    *  parameters — ClaudeProvider ignores it (current Claude models reject
    *  `temperature` outright; see claude.ts). */
   temperature?: number;
-  /** Defaults to a per-provider sane value if omitted (see each provider). */
+  /** Total time the call may take, retries included — the caller's
+   *  serverless time limit has to fit it. Defaults to a per-provider value
+   *  if omitted (see each provider). */
   timeoutMs?: number;
   /** Lets the caller (Stage 5's /api/generate) cancel an in-flight call, e.g. on client disconnect. */
   signal?: AbortSignal;

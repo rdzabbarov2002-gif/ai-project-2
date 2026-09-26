@@ -8,7 +8,13 @@ import type {
 } from "./types";
 import { AIProviderError } from "./types";
 
-const DEFAULT_TIMEOUT_MS = 60_000;
+// Total budget for one generate() call, both attempts included: the routes
+// that call Claude declare maxDuration = 60 (Vercel ends the function
+// there), and the rest of the request — auth, limits, saving — needs a few
+// seconds of it. Without a budget, a slow call plus its retry could run far
+// past that limit and the user would get a dropped connection instead of a
+// clear error.
+const DEFAULT_TIMEOUT_MS = 50_000;
 const MAX_ATTEMPTS = 2; // 1 initial call + 1 retry, transient failures only.
 const RETRY_DELAY_MS = 500;
 
@@ -57,13 +63,15 @@ export class ClaudeProvider implements AIProvider {
       );
     }
 
-    this.client = new Anthropic({ apiKey });
+    // The retry loop in generate() is the only one: the SDK's own retries
+    // (2 by default, timeouts included) would multiply the time budget.
+    this.client = new Anthropic({ apiKey, maxRetries: 0 });
     return this.client;
   }
 
   async generate(params: AIGenerateParams): Promise<AIGenerateResult> {
     const client = this.getClient();
-    const timeoutMs = params.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    const deadline = Date.now() + (params.timeoutMs ?? DEFAULT_TIMEOUT_MS);
 
     let lastError: unknown;
 
@@ -83,7 +91,8 @@ export class ClaudeProvider implements AIProvider {
             system: params.systemPrompt,
             messages: [{ role: "user", content: params.userPrompt }],
           },
-          { timeout: timeoutMs, signal: params.signal },
+          // Whatever is left of the budget — a retry never gets a fresh one.
+          { timeout: Math.max(deadline - Date.now(), 1), signal: params.signal },
         );
       } catch (error) {
         lastError = error;
@@ -95,7 +104,11 @@ export class ClaudeProvider implements AIProvider {
           error,
         );
 
-        if (!wrapped.retryable || attempt === MAX_ATTEMPTS) {
+        if (
+          !wrapped.retryable ||
+          attempt === MAX_ATTEMPTS ||
+          deadline - Date.now() <= RETRY_DELAY_MS
+        ) {
           throw wrapped;
         }
         // Transient (overloaded/network/timeout) and attempts remain — back
