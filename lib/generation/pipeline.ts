@@ -6,7 +6,7 @@ import { appSettings } from "@/config/settings";
 import { resolveIdentity } from "./identity";
 import { resolveTool, resolveTemplate } from "./catalog";
 import { resolvePlanLimits } from "./plan";
-import { checkUsage } from "@/lib/limits/checkUsage";
+import { checkUsage, type UsageCheckResult } from "@/lib/limits/checkUsage";
 import { resolveCompanyContext } from "./company-context";
 import { buildSystemPrompt, buildUserPrompt } from "./prompt";
 import { saveGeneration, incrementUsage } from "./save";
@@ -76,27 +76,22 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
   // 4. Resolve the caller's plan limits (free plan for every guest).
   const planLimits = await resolvePlanLimits(userClient, identity);
 
-  // 5. Usage limits — tool-in-plan and monthly-count in one check
-  // (lib/limits/checkUsage.ts owns both, per its Stage 1 contract).
+  // 5. Usage limits — tool-in-plan, premium-template-in-plan and
+  // monthly-count in one check (lib/limits/checkUsage.ts owns all three,
+  // per its Stage 1 contract, extended in Stage 10).
   const period = currentMonthPeriod();
   const usage = await checkUsage({
     userId: identity.type === "user" ? identity.userId : undefined,
     guestSessionId: identity.type === "guest" ? identity.guestSessionId : undefined,
     toolSlug: tool.slug,
+    templateIsPremium: template?.isPremium ?? false,
     planLimits,
     period,
     admin: adminClient,
   });
   if (!usage.allowed) {
-    const message =
-      usage.reason === "tool_not_in_plan"
-        ? "This tool isn't included in your current plan."
-        : "You've reached your generation limit for this period.";
-    throw new GenerationError(
-      usage.reason === "tool_not_in_plan" ? "tool_not_in_plan" : "usage_limit_reached",
-      usage.reason === "tool_not_in_plan" ? 403 : 429,
-      message,
-    );
+    const rejection = USAGE_REJECTIONS[usage.reason ?? "monthly_limit_reached"];
+    throw new GenerationError(rejection.code, rejection.status, rejection.message);
   }
 
   // 6. Company context — real profile for a user, draft for a guest.
@@ -168,6 +163,28 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
     guestSessionToken: identity.type === "guest" ? body.guestSessionToken : undefined,
   };
 }
+
+/** checkUsage's rejection reasons → the error the route returns. */
+const USAGE_REJECTIONS: Record<
+  NonNullable<UsageCheckResult["reason"]>,
+  { code: string; status: number; message: string }
+> = {
+  tool_not_in_plan: {
+    code: "tool_not_in_plan",
+    status: 403,
+    message: "This tool isn't included in your current plan.",
+  },
+  template_not_in_plan: {
+    code: "template_not_in_plan",
+    status: 403,
+    message: "This template is part of the Pro plan.",
+  },
+  monthly_limit_reached: {
+    code: "usage_limit_reached",
+    status: 429,
+    message: "You've reached your generation limit for this period.",
+  },
+};
 
 /**
  * Exactly one provider is actually implemented today (Stage 4 — Claude;

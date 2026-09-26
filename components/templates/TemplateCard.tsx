@@ -13,7 +13,14 @@ export function TemplateCard({ template }: { template: TemplateListItem }) {
   return (
     <Link href={`/tools/${template.toolSlug}?template=${template.slug}`} className="block h-full">
       <Card className="h-full space-y-2 transition-colors hover:border-accent">
-        <h3 className="font-medium text-ink-950">{template.name}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-medium text-ink-950">{template.name}</h3>
+          {template.isPremium && (
+            <span className="shrink-0 rounded-sm bg-upgrade-subtle px-2 py-0.5 text-xs font-medium text-ink-950">
+              Pro
+            </span>
+          )}
+        </div>
         <span className="inline-block rounded-sm bg-accent-subtle px-2 py-0.5 text-xs text-accent">
           {template.category}
         </span>

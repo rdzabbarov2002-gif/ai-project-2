@@ -15,6 +15,8 @@ export interface PlanLimits {
   maxSavedResults: number | null;
   allowedToolSlugs: "all" | string[];
   allowedAiModels: "all" | AIProviderName[];
+  /** Whether templates flagged `is_premium` are included (migration 0016). */
+  premiumTemplates: boolean;
 }
 
 const FREE_PLAN_SLUG = "free";
@@ -30,6 +32,7 @@ const FAIL_CLOSED_LIMITS: PlanLimits = {
   maxSavedResults: 0,
   allowedToolSlugs: [],
   allowedAiModels: [],
+  premiumTemplates: false,
 };
 
 /**
@@ -49,7 +52,9 @@ export async function resolvePlanLimits(
 
   const { data, error } = await supabase
     .from("plans")
-    .select("slug, plan_limits(max_generations_per_month, max_saved_results, allowed_tool_ids, allowed_ai_models)")
+    .select(
+      "slug, plan_limits(max_generations_per_month, max_saved_results, allowed_tool_ids, allowed_ai_models, premium_templates)",
+    )
     .eq("slug", planSlug)
     .single();
 
@@ -68,12 +73,14 @@ export async function resolvePlanLimits(
         max_saved_results: number | null;
         allowed_tool_ids: unknown;
         allowed_ai_models: unknown;
+        premium_templates: boolean | null;
       }
     | Array<{
         max_generations_per_month: number | null;
         max_saved_results: number | null;
         allowed_tool_ids: unknown;
         allowed_ai_models: unknown;
+        premium_templates: boolean | null;
       }>;
   const limits = Array.isArray(rawLimits) ? rawLimits[0] : rawLimits;
   // An embed can also come back as an empty array (no plan_limits row) —
@@ -86,6 +93,7 @@ export async function resolvePlanLimits(
     maxSavedResults: limits.max_saved_results,
     allowedToolSlugs: normalizeSlugList(limits.allowed_tool_ids),
     allowedAiModels: normalizeSlugList(limits.allowed_ai_models) as "all" | AIProviderName[],
+    premiumTemplates: limits.premium_templates === true,
   };
 }
 

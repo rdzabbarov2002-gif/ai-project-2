@@ -9,8 +9,9 @@
         "max_generations_per_month": 20,
         "max_saved_results": 20,
         "max_company_profiles": 1,
-        "allowed_tool_ids": ["ad-generator", "email-generator", "social-generator"],
-        "allowed_ai_models": ["claude"]
+        "allowed_tool_ids": ["ad-generator", "email-generator", "social-generator", "content-generator"],
+        "allowed_ai_models": ["claude"],
+        "premium_templates": false
       }
     },
     {
@@ -22,7 +23,8 @@
         "max_saved_results": "unlimited",
         "max_company_profiles": 3,
         "allowed_tool_ids": "all",
-        "allowed_ai_models": ["claude", "openai", "gemini"]
+        "allowed_ai_models": ["claude", "openai", "gemini"],
+        "premium_templates": true
       }
     },
     {
@@ -34,7 +36,8 @@
         "max_saved_results": "unlimited",
         "max_company_profiles": "unlimited",
         "allowed_tool_ids": "all",
-        "allowed_ai_models": "all"
+        "allowed_ai_models": "all",
+        "premium_templates": true
       }
     }
   ]

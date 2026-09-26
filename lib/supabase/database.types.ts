@@ -142,6 +142,9 @@ export type Database = {
           prompt_template: string;
           required_fields: unknown[];
           is_premium: boolean;
+          /** Optional per-template form (migration 0016); null = use the tool's. */
+          config_schema: Record<string, unknown> | null;
+          is_default: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -154,6 +157,8 @@ export type Database = {
           prompt_template?: string;
           required_fields?: unknown[];
           is_premium?: boolean;
+          config_schema?: Record<string, unknown> | null;
+          is_default?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -199,6 +204,8 @@ export type Database = {
           max_company_profiles: number | null;
           allowed_tool_ids: "all" | string[];
           allowed_ai_models: "all" | string[];
+          /** May this plan use `templates.is_premium` templates (migration 0016). */
+          premium_templates: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -210,6 +217,7 @@ export type Database = {
           max_company_profiles?: number | null;
           allowed_tool_ids?: "all" | string[];
           allowed_ai_models?: "all" | string[];
+          premium_templates?: boolean;
           created_at?: string;
           updated_at?: string;
         };

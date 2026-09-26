@@ -13,13 +13,17 @@ import type { UsagePeriod } from "@/lib/generation/period";
 export interface UsageCheckResult {
   allowed: boolean;
   remaining: number | "unlimited";
-  reason?: "monthly_limit_reached" | "tool_not_in_plan";
+  reason?: "monthly_limit_reached" | "tool_not_in_plan" | "template_not_in_plan";
 }
 
 export async function checkUsage(params: {
   userId?: string;
   guestSessionId?: string;
   toolSlug: string;
+  /** Stage 10: whether the requested template is flagged `is_premium` —
+   *  an entitlement check of the same kind as tool-in-plan, so it lives
+   *  here with it rather than as a separate gate in the pipeline. */
+  templateIsPremium?: boolean;
   planLimits: PlanLimits;
   period: UsagePeriod;
   /** Service-role client — required because usage_counters has no
@@ -36,6 +40,10 @@ export async function checkUsage(params: {
 
   if (!toolAllowed) {
     return { allowed: false, remaining: 0, reason: "tool_not_in_plan" };
+  }
+
+  if (params.templateIsPremium && !planLimits.premiumTemplates) {
+    return { allowed: false, remaining: 0, reason: "template_not_in_plan" };
   }
 
   if (planLimits.maxGenerationsPerMonth === null) {

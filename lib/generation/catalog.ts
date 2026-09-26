@@ -15,7 +15,15 @@ export interface ResolvedTemplate {
   name: string;
   promptTemplate: string;
   requiredFields: string[];
+  /** The template's own form (migration 0016), or null to use the tool's
+   *  — the tool page renders `template.configSchema ?? tool.configSchema`. */
+  configSchema: Record<string, unknown> | null;
+  /** Gated by the plan's `premium_templates` (checkUsage, Stage 10). */
+  isPremium: boolean;
 }
+
+const TEMPLATE_COLUMNS =
+  "id, slug, name, prompt_template, required_fields, config_schema, is_premium";
 
 /**
  * Reads through the request-scoped client, not admin — `tools`/`templates`
@@ -53,7 +61,7 @@ export async function resolveTemplate(
 ): Promise<ResolvedTemplate | null> {
   const { data } = await supabase
     .from("templates")
-    .select("id, slug, name, prompt_template, required_fields")
+    .select(TEMPLATE_COLUMNS)
     .eq("slug", slug)
     .eq("tool_id", toolId)
     .maybeSingle();
@@ -63,16 +71,14 @@ export async function resolveTemplate(
 
 /**
  * Stage 8: the tool page needs *a* template to exercise the templated
- * prompt path end-to-end, but Stage 10 (Templates Library picker UI)
- * hasn't shipped yet — there's no UI for a person to choose among several
- * templates, and today there's exactly one template per active tool
- * anyway. "Oldest by created_at" is a deterministic, well-defined answer
- * for that one-row case; it stays well-defined (if not necessarily the
- * *right* choice once real UX exists) if a tool later gets more
- * templates, and Stage 10 can introduce an explicit notion of "default"
- * then, driven by whatever picker UX it actually builds — adding that
- * now would be guessing at a UI decision this stage was explicitly told
- * not to make.
+ * prompt path end-to-end. It originally took the oldest template by
+ * created_at and noted that Stage 10 could introduce an explicit notion
+ * of "default" once tools had several templates. Stage 10's completion
+ * did (migration 0016, `templates.is_default`, at most one per tool): the
+ * flagged template wins, and "oldest" remains only as the tie-breaker /
+ * fallback for a tool with no flagged default — "oldest" alone stopped
+ * being well-defined once a single seed transaction could give every
+ * template of a tool the same created_at.
  */
 export async function resolveDefaultTemplate(
   supabase: SupabaseClient<Database>,
@@ -80,8 +86,9 @@ export async function resolveDefaultTemplate(
 ): Promise<ResolvedTemplate | null> {
   const { data } = await supabase
     .from("templates")
-    .select("id, slug, name, prompt_template, required_fields")
+    .select(TEMPLATE_COLUMNS)
     .eq("tool_id", toolId)
+    .order("is_default", { ascending: false })
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
@@ -98,6 +105,8 @@ function toResolvedTemplate(row: {
   name: string;
   prompt_template: string;
   required_fields: unknown;
+  config_schema: Record<string, unknown> | null;
+  is_premium: boolean;
 }): ResolvedTemplate {
   return {
     id: row.id,
@@ -107,5 +116,7 @@ function toResolvedTemplate(row: {
     requiredFields: Array.isArray(row.required_fields)
       ? row.required_fields.filter((f): f is string => typeof f === "string")
       : [],
+    configSchema: row.config_schema ?? null,
+    isPremium: row.is_premium,
   };
 }

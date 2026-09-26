@@ -1,7 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/auth";
 import { resolveTool, resolveTemplate, resolveDefaultTemplate } from "@/lib/generation/catalog";
+import { resolvePlanLimits } from "@/lib/generation/plan";
 import { parseToolConfigSchema } from "@/lib/tool-config/validate";
 import { ToolRunner } from "@/components/tools/ToolRunner";
+import { PremiumTemplateNotice } from "@/components/templates/PremiumTemplateNotice";
 
 /**
  * Reuses Stage 5's `resolveTool` (lib/generation/catalog.ts) rather than
@@ -21,6 +24,14 @@ import { ToolRunner } from "@/components/tools/ToolRunner";
  * degrades to the tool's generic no-template prompt (ToolRunner's
  * existing, Stage 5-established fallback), not to different content than
  * what the link implied.
+ *
+ * Stage 10 completion: the form comes from the template when it has its
+ * own `config_schema` (a Facebook-specific ad doesn't ask for a platform),
+ * otherwise from the tool — architecture doc §12's "config_schema of the
+ * tool or template". A premium template on a plan without
+ * `premium_templates` shows an explanation instead of a form; the plan
+ * lookup only happens in that case, so ordinary tool pages cost no extra
+ * queries. /api/generate enforces the same rule regardless.
  */
 export default async function ToolPage({
   params,
@@ -43,16 +54,35 @@ export default async function ToolPage({
   const template = searchParams.template
     ? await resolveTemplate(supabase, searchParams.template, tool.id)
     : await resolveDefaultTemplate(supabase, tool.id);
-  const schema = parseToolConfigSchema(tool.configSchema);
+  const schema = parseToolConfigSchema(template?.configSchema ?? tool.configSchema);
+
+  let premiumLocked = false;
+  if (template?.isPremium) {
+    const user = await getUser();
+    const planLimits = await resolvePlanLimits(
+      supabase,
+      user ? { type: "user", userId: user.id } : { type: "guest" },
+    );
+    premiumLocked = !planLimits.premiumTemplates;
+  }
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <h1 className="font-display text-xl font-semibold text-ink-950">{tool.name}</h1>
-      <ToolRunner
-        tool={{ slug: tool.slug, name: tool.name }}
-        templateSlug={template?.slug}
-        schema={schema}
-      />
+      <div className="space-y-1">
+        <h1 className="font-display text-xl font-semibold text-ink-950">{tool.name}</h1>
+        {template && searchParams.template && (
+          <p className="text-sm text-ink-600">Template: {template.name}</p>
+        )}
+      </div>
+      {template && premiumLocked ? (
+        <PremiumTemplateNotice toolSlug={tool.slug} templateName={template.name} />
+      ) : (
+        <ToolRunner
+          tool={{ slug: tool.slug, name: tool.name }}
+          templateSlug={template?.slug}
+          schema={schema}
+        />
+      )}
     </main>
   );
 }
