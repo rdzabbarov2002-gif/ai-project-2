@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/layout/Logo";
+import { LegalLinks } from "@/components/layout/LegalLinks";
 
 const initialState: AuthFormState = { error: null };
 
@@ -68,6 +69,7 @@ export default function LoginPage({
           </Link>
         </p>
       </Card>
+      <LegalLinks />
     </main>
   );
 }

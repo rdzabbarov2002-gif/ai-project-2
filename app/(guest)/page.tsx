@@ -7,6 +7,7 @@ import { deriveCategories } from "@/lib/templates/query";
 import { ToolGrid } from "@/components/tools/gallery/ToolGrid";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
+import { LegalLinks } from "@/components/layout/LegalLinks";
 
 const STEPS = [
   {
@@ -126,6 +127,8 @@ export default async function LandingPage() {
           </Link>
         </section>
       )}
+
+      <LegalLinks />
     </main>
   );
 }
