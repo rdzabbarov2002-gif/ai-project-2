@@ -26,13 +26,13 @@ isOneToOne: false
                   ]
                 },"generations": {
                   Row: {
-                    "ai_model": string,"ai_provider": string,"company_profile_id": string | null,"created_at": string,"guest_session_id": string | null,"id": string,"input_params": NonNullable<Json>,"is_favorite": boolean,"output": string,"template_id": string | null,"tool_id": string,"updated_at": string,"user_id": string | null
+                    "ai_model": string,"ai_provider": string,"company_profile_id": string | null,"created_at": string,"duration_ms": number | null,"guest_session_id": string | null,"id": string,"input_params": NonNullable<Json>,"input_tokens": number | null,"is_favorite": boolean,"output": string,"output_tokens": number | null,"template_id": string | null,"tool_id": string,"updated_at": string,"user_id": string | null
                   }
                   Insert: {
-                    "ai_model": string,"ai_provider": string,"company_profile_id"?: string | null,"created_at"?: string,"guest_session_id"?: string | null,"id"?: string,"input_params"?: NonNullable<Json>,"is_favorite"?: boolean,"output"?: string,"template_id"?: string | null,"tool_id": string,"updated_at"?: string,"user_id"?: string | null
+                    "ai_model": string,"ai_provider": string,"company_profile_id"?: string | null,"created_at"?: string,"duration_ms"?: number | null,"guest_session_id"?: string | null,"id"?: string,"input_params"?: NonNullable<Json>,"input_tokens"?: number | null,"is_favorite"?: boolean,"output"?: string,"output_tokens"?: number | null,"template_id"?: string | null,"tool_id": string,"updated_at"?: string,"user_id"?: string | null
                   }
                   Update: {
-                    "ai_model"?: string,"ai_provider"?: string,"company_profile_id"?: string | null,"created_at"?: string,"guest_session_id"?: string | null,"id"?: string,"input_params"?: NonNullable<Json>,"is_favorite"?: boolean,"output"?: string,"template_id"?: string | null,"tool_id"?: string,"updated_at"?: string,"user_id"?: string | null
+                    "ai_model"?: string,"ai_provider"?: string,"company_profile_id"?: string | null,"created_at"?: string,"duration_ms"?: number | null,"guest_session_id"?: string | null,"id"?: string,"input_params"?: NonNullable<Json>,"input_tokens"?: number | null,"is_favorite"?: boolean,"output"?: string,"output_tokens"?: number | null,"template_id"?: string | null,"tool_id"?: string,"updated_at"?: string,"user_id"?: string | null
                   }
                   Relationships: [
                     {

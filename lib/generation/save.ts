@@ -19,6 +19,8 @@ export interface SaveGenerationParams {
   companyProfileId: string | null;
   inputParams: Record<string, unknown>;
   result: AIGenerateResult;
+  /** How long the AI call took — with the token counts, what pricing is set from. */
+  durationMs: number;
 }
 
 export interface SaveGenerationOutcome {
@@ -57,6 +59,9 @@ export async function saveGeneration(
     ai_model: params.result.model,
     input_params: params.inputParams as TablesInsert<"generations">["input_params"],
     output: params.result.text,
+    input_tokens: params.result.usage.inputTokens,
+    output_tokens: params.result.usage.outputTokens,
+    duration_ms: params.durationMs,
   };
 
   const { data, error } = await client.from("generations").insert(row).select("id").single();

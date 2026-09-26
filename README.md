@@ -160,6 +160,23 @@ timeout — on the Hobby plan 60s is the maximum.
   crashing (a failed save, a merge error).
 - **Security headers** — every response carries HSTS, `nosniff`,
   `Referrer-Policy` and `frame-ancestors 'none'` (`next.config.js`).
+- **Cost and speed of generations** — every generation stores its token
+  counts and how long the AI call took (`generations.input_tokens`,
+  `output_tokens`, `duration_ms`). In the Supabase SQL Editor (prices:
+  Claude Sonnet 5, $2 input / $10 output per million tokens — check
+  Anthropic's pricing page when they change):
+
+  ```sql
+  select ai_model, count(*) as generations,
+    round(avg(input_tokens * 2 + output_tokens * 10) / 1000000.0, 5) as avg_cost_usd,
+    round((percentile_cont(0.95) within group
+      (order by input_tokens * 2 + output_tokens * 10) / 1000000.0)::numeric, 5) as p95_cost_usd,
+    round(avg(duration_ms)) as avg_ms,
+    percentile_cont(0.95) within group (order by duration_ms) as p95_ms
+  from public.generations
+  where input_tokens is not null and created_at > now() - interval '30 days'
+  group by ai_model;
+  ```
 - **Dependencies** — Dependabot opens weekly update PRs
   (`.github/dependabot.yml`); CI checks each one.
 

@@ -136,6 +136,7 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
   // one, right here.
   const { providerName, model } = selectProviderAndModel(planLimits);
   let aiResult;
+  const startedAt = Date.now();
   try {
     aiResult = await getProvider(providerName).generate({
       systemPrompt,
@@ -168,6 +169,7 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
     companyProfileId,
     inputParams: body.inputParams,
     result: aiResult,
+    durationMs: Date.now() - startedAt,
   });
 
   // 11. Usage counters — user-only; guest usage is derived on read.

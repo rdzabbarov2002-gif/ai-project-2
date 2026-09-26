@@ -118,8 +118,10 @@ schema.
   client roles keep only the privileges the app uses — without it a
   signed-in user can rewrite or backdate their generations and attach
   them to a guest session) and `migrations/0020_foreign_key_indexes.sql`
-  (indexes on three foreign keys).
+  (indexes on three foreign keys), then
+  `migrations/0021_generation_usage.sql` (token counts and duration per
+  generation).
 
 Stages 11–14 (guest merge, Company Profile, Usage/Billing UI, History)
-were built as pure application code on top of these; `0020` is the last
+were built as pure application code on top of these; `0021` is the last
 migration.
