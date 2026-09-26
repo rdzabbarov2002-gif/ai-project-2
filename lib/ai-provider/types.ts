@@ -36,13 +36,18 @@ export interface AIGenerateResult {
   model: string;
 }
 
-export type AIProviderName =
-  | "claude"
-  | "openai"
-  | "gemini"
-  | "mistral"
-  | "grok"
-  | "openai-compatible";
+/** Runtime list of the names below — lib/env.ts validates
+ *  `DEFAULT_AI_PROVIDER` against it. */
+export const AI_PROVIDER_NAMES = [
+  "claude",
+  "openai",
+  "gemini",
+  "mistral",
+  "grok",
+  "openai-compatible",
+] as const;
+
+export type AIProviderName = (typeof AI_PROVIDER_NAMES)[number];
 
 export interface AIProvider {
   readonly name: AIProviderName;
