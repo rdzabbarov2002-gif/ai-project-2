@@ -1,0 +1,46 @@
+name: CI
+
+# Stage 15: the checks every change has to pass before it can ship —
+# the same commands a contributor runs locally (see README.md).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      # The build needs no secrets: Supabase/Anthropic settings are read at
+      # runtime, and the NEXT_PUBLIC_* values are only inlined when present.
+      - name: Build
+        run: npm run build

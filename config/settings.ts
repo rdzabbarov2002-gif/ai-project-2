@@ -18,6 +18,10 @@ export const appSettings = {
    *  Free plan for guests); the sign-up prompt in ToolRunner is only the
    *  explanation. */
   guestGenerationLimit: positiveIntFromEnv(process.env.GUEST_GENERATION_LIMIT, 3),
+  /** Burst cap per user or guest session (lib/limits/rateLimit.ts,
+   *  architecture doc §17) — generations started in any 60-second window.
+   *  Generous for a person, low for a script. */
+  maxGenerationsPerMinute: positiveIntFromEnv(process.env.MAX_GENERATIONS_PER_MINUTE, 6),
   /** Cap on AI response length (billed per token actually produced, so
    *  this is a ceiling, not a cost). Raised from 2048 in Phase 1: current
    *  Claude models think adaptively by default and thinking tokens count

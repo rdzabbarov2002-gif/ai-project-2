@@ -7,6 +7,7 @@ import { resolveIdentity } from "./identity";
 import { resolveTool, resolveTemplate } from "./catalog";
 import { resolvePlanLimits } from "./plan";
 import { checkUsage, type UsageCheckResult } from "@/lib/limits/checkUsage";
+import { isOverRateLimit } from "@/lib/limits/rateLimit";
 import { resolveCompanyContext } from "./company-context";
 import { buildSystemPrompt, buildUserPrompt } from "./prompt";
 import { saveGeneration, incrementUsage } from "./save";
@@ -55,6 +56,22 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
       "unauthorized",
       401,
       "Sign in or include a guest session token.",
+    );
+  }
+
+  // 1b. Burst protection (Stage 15, architecture doc §17) — before any
+  // lookup or AI call is spent on a caller who's going too fast.
+  if (
+    await isOverRateLimit({
+      admin: adminClient,
+      identity,
+      maxPerMinute: appSettings.maxGenerationsPerMinute,
+    })
+  ) {
+    throw new GenerationError(
+      "rate_limited",
+      429,
+      "You're generating very quickly — please wait a moment and try again.",
     );
   }
 

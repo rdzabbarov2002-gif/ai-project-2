@@ -1,5 +1,5 @@
 -- ============================================================
--- AI Marketing Workspace — seed data (through Stage 10 completion)
+-- AI Marketing Workspace — seed data (through Stage 15)
 -- Generated from migrations/0010, 0013, 0014, 0015, 0017. Run AFTER schema.sql.
 -- Safe to re-run any time (idempotent).
 -- ============================================================
