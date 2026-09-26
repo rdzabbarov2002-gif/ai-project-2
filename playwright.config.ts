@@ -1,10 +1,11 @@
 import { defineConfig } from "@playwright/test";
 
 /**
- * End-to-end tests (e2e/): the sign-in flows and the core product path,
- * against the app, the local Supabase stack (`npx supabase start`) —
- * whose mail inbox (Mailpit) the tests read emails from — and a stand-in
- * for the Anthropic API (e2e/mock-anthropic.mjs), started here.
+ * End-to-end tests (e2e/): the sign-in flows, the core product path and
+ * accessibility, against the app, the local Supabase stack
+ * (`npx supabase start`) — whose mail inbox (Mailpit) the tests read
+ * emails from — and a stand-in for the Anthropic API
+ * (e2e/mock-anthropic.mjs), started here.
  *
  * Locally: start the stack, then either keep `npm run dev` running (it is
  * reused) or `npm run build` first; install a browser once with

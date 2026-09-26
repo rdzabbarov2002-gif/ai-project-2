@@ -85,10 +85,11 @@ jobs:
           npm run db:types
           git diff --exit-code lib/supabase/database.types.ts
 
-  # End to end (e2e/): the sign-in flows and the core product path, the
-  # built app against a local Supabase stack (whose mail inbox the tests
-  # read) and a stand-in for the Anthropic API that Playwright starts.
-  # Runs in the Chrome preinstalled on the runner.
+  # End to end (e2e/): the sign-in flows, the core product path and
+  # accessibility (axe, 360px, both themes) — the built app against a
+  # local Supabase stack (whose mail inbox the tests read) and a stand-in
+  # for the Anthropic API that Playwright starts. Runs in the Chrome
+  # preinstalled on the runner.
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
