@@ -24,7 +24,9 @@ With the local database running:
 
 - `npx supabase test db` — `tests/rls.test.sql`: RLS on every table, the
   exact privileges the client roles hold, and what an anonymous visitor
-  and a signed-in user can and cannot read or change, table by table.
+  and a signed-in user can and cannot read or change, table by table;
+  `tests/account-deletion.test.sql`: deleting an account leaves none of
+  its rows in any table.
 - `npx supabase db advisors --local` — Supabase's Security and
   Performance Advisors.
 - `npm run db:types` — regenerates `lib/supabase/database.types.ts`.

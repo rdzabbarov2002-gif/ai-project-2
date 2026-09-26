@@ -93,13 +93,10 @@ after changing one on Vercel, redeploy. A Vercel build without the two
 | Preview | Vercel, one URL per pull request | Supabase project **staging** |
 | Production | Vercel, from `main` | Supabase project **prod** |
 
-1. **Supabase** — create two projects, `staging` and `prod`, and apply the
+1. **Supabase** — create two projects, `staging` and `prod`, apply the
    migrations to each (`supabase/README.md`: `npx supabase link` +
-   `npx supabase db push`; staging first, then prod). In each project's
-   Authentication → URL Configuration, allow its `/auth/callback` URL:
-   the production domain for prod, and
-   `https://*-<your-vercel-team>.vercel.app/**` for staging so every
-   preview URL works.
+   `npx supabase db push`; staging first, then prod), and configure Auth
+   in each as below.
 2. **Vercel** — import the repository. Under Project Settings →
    Environment Variables, give **Production** the prod project's values
    and **Preview** the staging project's, plus `ANTHROPIC_API_KEY` for
@@ -115,6 +112,41 @@ after changing one on Vercel, redeploy. A Vercel build without the two
    so a migration has to keep working with the previous deployment's code
    (add columns and tables; remove them only once no deployed code uses
    them).
+
+### Authentication settings (each Supabase project)
+
+The local stack already runs with these (`supabase/config.toml`); a
+hosted project needs them set by hand.
+
+| Where (Supabase dashboard) | Production | Staging |
+|---|---|---|
+| Authentication → URL Configuration → Site URL | `https://<your-domain>` | a preview URL or the staging domain |
+| … → Redirect URLs | `https://<your-domain>/**` | `https://*-<your-vercel-team>.vercel.app/**` |
+| Authentication → Sign In / Providers → Email | Confirm email **on**, minimum password length **8** | same |
+| Project Settings → Authentication → SMTP | your provider (below) | same provider, or the built-in one for testing |
+
+Confirmation and password-reset links come back to `/auth/callback`
+(the reset link with `?next=/reset-password`), so the redirect URLs must
+cover that path on every domain the app runs on.
+
+**Email (SMTP).** Supabase's built-in sender is for testing only: a few
+emails an hour, delivered only to your team's addresses. For real users:
+
+1. Create an account with a transactional email provider (Resend,
+   Postmark, Amazon SES, …) and verify your domain there.
+2. Add the DNS records it gives you: **SPF** and **DKIM**, plus a
+   **DMARC** record — `_dmarc.<your-domain>` TXT
+   `v=DMARC1; p=none; rua=mailto:<your address>` is a safe start.
+3. Enter the provider's SMTP host, port, user and password in Supabase
+   (Project Settings → Authentication → SMTP), with a sender address on
+   your domain, e.g. `no-reply@<your-domain>`.
+4. Raise Authentication → Rate Limits → emails per hour to fit your
+   expected sign-ups.
+5. Check: send a sign-up email to the address mail-tester.com gives you
+   (aim for 9/10 or better, SPF/DKIM/DMARC passing), and confirm that
+   the emails reach the inbox, not spam, in Gmail and Outlook.
+
+The default email templates work as they are.
 
 `/api/generate`, `/profile` and `/onboarding` declare `maxDuration = 60`
 because a Claude call routinely takes longer than the default serverless
@@ -140,12 +172,14 @@ timeout — on the Hobby plan 60s is the maximum.
 | `npm run lint` | ESLint (`next lint`) |
 | `npm run typecheck` | TypeScript, no emit |
 | `npm test` | Unit tests (Vitest) |
+| `npm run test:e2e` | End-to-end tests of the sign-in flows (Playwright, local Supabase running) |
 | `npm run db:types` | Regenerate `lib/supabase/database.types.ts` from the local database |
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests and the build on
-every pull request and every push to `main`, and in a parallel job builds
+every pull request and every push to `main`; in parallel jobs it builds
 the database from the migrations and runs the database checks (RLS tests,
-Supabase advisors, generated types up to date — `supabase/README.md`).
+Supabase advisors, generated types up to date — `supabase/README.md`), and
+runs the end-to-end tests against a local Supabase stack.
 
 ## Testing
 
@@ -155,8 +189,16 @@ migrations), prompt assembly, plan limits and entitlements, rate limiting,
 the Claude provider's request shape and retries, the SSRF guard of profile
 autofill, the open-redirect guard, the environment check and the logger.
 
-`supabase/tests/rls.test.sql` (pgTAP, `npx supabase test db`) checks row
-level security and client privileges on every table.
+`supabase/tests/` (pgTAP, `npx supabase test db`) checks row level
+security and client privileges on every table, and that deleting an
+account leaves none of its rows behind.
+
+`e2e/auth.spec.ts` (Playwright, `npm run test:e2e`) runs the sign-in flows
+in a browser: sign-up with email confirmation, sign-in and sign-out,
+returning to a protected page after signing in, password reset and
+account deletion. It needs the local Supabase stack running (it reads the
+emails from its inbox) and a browser: `npx playwright install chromium`
+once.
 
 End-to-end behavior was verified against a local Supabase stack (Supabase
 CLI: Postgres, GoTrue, PostgREST) with a stand-in for the Anthropic API and a
