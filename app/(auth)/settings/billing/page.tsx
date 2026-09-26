@@ -1,57 +1,96 @@
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { resolvePlanLimits } from "@/lib/generation/plan";
-import { currentMonthPeriod } from "@/lib/generation/period";
+import { resolveUsageSummary } from "@/lib/limits/usageSummary";
+import { firstEmbed, type Embed } from "@/lib/supabase/embed";
 import { UsageCard } from "@/components/usage/UsageCard";
+import { PlanComparison, type PlanOption } from "@/components/usage/PlanComparison";
+
+const PLAN_ORDER: PlanOption["slug"][] = ["free", "pro", "enterprise"];
 
 /**
- * Same data-fetching shape as the Dashboard (Stage 13) — considered and
- * deliberately NOT extracted into a shared helper. The two pages aren't
- * actually identical (this one also reads `subscriptions.status`, the
- * Dashboard doesn't), and Stage 10's audit already reasoned through this
- * exact tradeoff for a different pair of similar-but-not-identical
- * functions (lib/tools/query.ts vs lib/templates/query.ts): two small,
- * independent reads that are free to diverge beat one shared abstraction
- * built for two call sites that already differ. No Stripe/payment/
- * webhook logic here — explicitly out of scope for this stage; this page
- * only reads and displays what already exists.
+ * Billing & Plan (Stage 13). Usage comes from the shared
+ * resolveUsageSummary (lib/limits/usageSummary.ts — the same read the
+ * Dashboard and tool page use); the subscription status is this page's
+ * own extra read. No Stripe/payment/webhook logic — explicitly out of
+ * scope for the MVP; this page only reads and displays what exists.
+ *
+ * Stage 13 completion (architecture doc §9 "plan, limits, upgrade"): a
+ * comparison of the active plans, read from `plans`/`plan_limits`
+ * (public-read reference tables, migration 0002) so it reflects the real
+ * limits rather than a hand-written copy of them.
  */
 export default async function BillingSettingsPage() {
   const user = await requireUser();
   const supabase = createClient();
 
-  const planLimits = await resolvePlanLimits(supabase, { type: "user", userId: user.id });
-  const period = currentMonthPeriod();
+  const [summary, { data: subscription }, { data: plans }] = await Promise.all([
+    resolveUsageSummary(supabase, user.id),
+    // `subscriptions` allows a per-user history in principle (Stage 3);
+    // most recent row is "the" current one, same tie-breaker already used
+    // for company_profiles (Stage 12) and templates (Stage 7/10).
+    supabase
+      .from("subscriptions")
+      .select("status")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("plans")
+      .select(
+        "slug, name, price_month, plan_limits(max_generations_per_month, allowed_tool_ids, premium_templates)",
+      )
+      .eq("is_active", true),
+  ]);
 
-  const { data: usage } = await supabase
-    .from("usage_counters")
-    .select("generations_count")
-    .eq("user_id", user.id)
-    .eq("period_start", period.start)
-    .maybeSingle();
-
-  // `subscriptions` allows a per-user history in principle (Stage 3);
-  // most recent row is "the" current one, same tie-breaker already used
-  // for company_profiles (Stage 12) and templates (Stage 7/10).
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("status")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const used = usage?.generations_count ?? 0;
+  const planOptions: PlanOption[] = (plans ?? [])
+    .map((plan) => {
+      const limits = firstEmbed(
+        plan.plan_limits as unknown as Embed<{
+          max_generations_per_month: number | null;
+          allowed_tool_ids: unknown;
+          premium_templates: boolean;
+        }>,
+      );
+      return {
+        slug: plan.slug,
+        name: plan.name,
+        priceMonth: plan.price_month,
+        // null is meaningful here (unlimited) — only a missing limits row
+        // falls back to 0, failing closed like resolvePlanLimits does.
+        generationsPerMonth: limits ? limits.max_generations_per_month : 0,
+        tools: Array.isArray(limits?.allowed_tool_ids)
+          ? limits.allowed_tool_ids.length
+          : limits?.allowed_tool_ids === "all"
+            ? ("all" as const)
+            : 0,
+        premiumTemplates: limits?.premium_templates === true,
+      };
+    })
+    .sort((a, b) => PLAN_ORDER.indexOf(a.slug) - PLAN_ORDER.indexOf(b.slug));
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <h1 className="font-display text-xl font-semibold text-ink-950">Billing & Plan</h1>
-      <UsageCard
-        planSlug={planLimits.planSlug}
-        status={subscription?.status}
-        used={used}
-        limit={planLimits.maxGenerationsPerMonth}
-      />
+    <main className="mx-auto max-w-4xl space-y-8 p-6">
+      <div className="max-w-2xl space-y-6">
+        <h1 className="font-display text-xl font-semibold text-ink-950">Billing & Plan</h1>
+        <UsageCard
+          planSlug={summary.planLimits.planSlug}
+          status={subscription?.status}
+          used={summary.used}
+          limit={summary.planLimits.maxGenerationsPerMonth}
+        />
+      </div>
+
+      {planOptions.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="font-medium text-ink-950">Plans</h2>
+          <PlanComparison plans={planOptions} currentSlug={summary.planLimits.planSlug} />
+          <p className="text-xs text-ink-600">
+            Online upgrades are coming soon. Usage resets at the start of each calendar month
+            (UTC).
+          </p>
+        </section>
+      )}
     </main>
   );
 }

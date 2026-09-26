@@ -1,12 +1,16 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/supabase/auth";
 import { resolveTool, resolveTemplate, resolveDefaultTemplate } from "@/lib/generation/catalog";
 import { resolvePlanLimits } from "@/lib/generation/plan";
+import { resolveUsageSummary } from "@/lib/limits/usageSummary";
 import { parseToolConfigSchema } from "@/lib/tool-config/validate";
 import { ToolRunner } from "@/components/tools/ToolRunner";
 import { PremiumTemplateNotice } from "@/components/templates/PremiumTemplateNotice";
 import { GuestProfileDraftCard } from "@/components/profile/GuestProfileDraftCard";
 import { appSettings } from "@/config/settings";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Reuses Stage 5's `resolveTool` (lib/generation/catalog.ts) rather than
@@ -39,13 +43,20 @@ import { appSettings } from "@/config/settings";
  * check every (auth) page uses) and handed down — guests get the short
  * profile-draft card and ToolRunner's sign-up prompts. Presentation only;
  * the API resolves identity for itself.
+ *
+ * Stage 13 completion: a signed-in visitor sees how many generations are
+ * left before generating (architecture doc §10 — limits shown
+ * proactively, not only at the moment of refusal), and `?from=<id>`
+ * (History's "Use these inputs again") pre-fills the form from one of
+ * their own saved generations — read through the owner-scoped RLS select
+ * policy, and only when it belongs to this tool.
  */
 export default async function ToolPage({
   params,
   searchParams,
 }: {
   params: { slug: string };
-  searchParams: { template?: string };
+  searchParams: { template?: string; from?: string };
 }) {
   const supabase = createClient();
   const tool = await resolveTool(supabase, params.slug);
@@ -68,12 +79,24 @@ export default async function ToolPage({
   const schema = parseToolConfigSchema(template?.configSchema ?? tool.configSchema);
   const isGuest = !user;
 
+  const fromId = searchParams.from && UUID.test(searchParams.from) ? searchParams.from : null;
+  const [usage, previous] = await Promise.all([
+    user ? resolveUsageSummary(supabase, user.id) : null,
+    user && fromId
+      ? supabase
+          .from("generations")
+          .select("input_params, tool_id")
+          .eq("id", fromId)
+          .eq("user_id", user.id)
+          .maybeSingle()
+          .then(({ data }) => (data && data.tool_id === tool.id ? data.input_params : null))
+      : null,
+  ]);
+
   let premiumLocked = false;
   if (template?.isPremium) {
-    const planLimits = await resolvePlanLimits(
-      supabase,
-      user ? { type: "user", userId: user.id } : { type: "guest" },
-    );
+    // A signed-in visitor's plan already came with the usage summary.
+    const planLimits = usage?.planLimits ?? (await resolvePlanLimits(supabase, { type: "guest" }));
     premiumLocked = !planLimits.premiumTemplates;
   }
 
@@ -83,6 +106,17 @@ export default async function ToolPage({
         <h1 className="font-display text-xl font-semibold text-ink-950">{tool.name}</h1>
         {template && searchParams.template && (
           <p className="text-sm text-ink-600">Template: {template.name}</p>
+        )}
+        {usage && usage.remaining !== null && (
+          <p className={usage.remaining <= 2 ? "text-sm text-danger" : "text-sm text-ink-600"}>
+            {usage.remaining} of {usage.planLimits.maxGenerationsPerMonth} generations left this
+            month.{" "}
+            {usage.remaining <= 2 && (
+              <Link href="/settings/billing" className="text-accent hover:underline">
+                See plans
+              </Link>
+            )}
+          </p>
         )}
       </div>
       {template && premiumLocked ? (
@@ -96,6 +130,7 @@ export default async function ToolPage({
             schema={schema}
             isGuest={isGuest}
             guestGenerationLimit={appSettings.guestGenerationLimit}
+            initialValues={previous ?? undefined}
           />
         </>
       )}

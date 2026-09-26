@@ -62,8 +62,9 @@ export async function checkUsage(params: {
 
   // "Remaining after this one" — the request currently being checked
   // hasn't been saved yet, so it isn't in `currentCount`; subtracting 1
-  // here reports what the caller will have left once it goes through,
-  // which is what a UI usage indicator (Stage 13) actually wants to show.
+  // here reports what the caller will have left once it goes through
+  // (returned with the generated result). Passive "left right now"
+  // displays use resolveUsageSummary (./usageSummary.ts) instead.
   return { allowed: true, remaining: planLimits.maxGenerationsPerMonth - currentCount - 1 };
 }
 

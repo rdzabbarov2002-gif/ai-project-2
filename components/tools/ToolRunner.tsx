@@ -25,6 +25,10 @@ export interface ToolRunnerProps {
   isGuest?: boolean;
   /** The guest allowance (config/settings.ts), for the up-front hint. */
   guestGenerationLimit?: number;
+  /** Stage 13: a previous generation's saved inputs ("Use these inputs
+   *  again" from History). Only keys that are fields of `schema` are
+   *  used — a template's form may have changed since. */
+  initialValues?: Record<string, unknown>;
 }
 
 /**
@@ -71,9 +75,17 @@ export function ToolRunner({
   schema,
   isGuest = false,
   guestGenerationLimit,
+  initialValues,
 }: ToolRunnerProps) {
   const { session, ensureSession } = useGuestSession();
-  const [values, setValues] = useState<Record<string, unknown>>(() => buildInitialValues(schema));
+  const [values, setValues] = useState<Record<string, unknown>>(() => ({
+    ...buildInitialValues(schema),
+    ...Object.fromEntries(
+      Object.entries(initialValues ?? {}).filter(([name]) =>
+        schema.fields.some((field) => field.name === name),
+      ),
+    ),
+  }));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<{ code: string; message: string } | null>(null);

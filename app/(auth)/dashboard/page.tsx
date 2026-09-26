@@ -1,50 +1,105 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { resolvePlanLimits } from "@/lib/generation/plan";
-import { currentMonthPeriod } from "@/lib/generation/period";
+import { resolveUsageSummary } from "@/lib/limits/usageSummary";
+import { listActiveTools } from "@/lib/tools/catalog";
+import { listUserGenerations } from "@/lib/history/generations";
 import { UsageCard } from "@/components/usage/UsageCard";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { ToolGrid } from "@/components/tools/gallery/ToolGrid";
+import { HistoryItem } from "@/components/history/HistoryItem";
+import { Card } from "@/components/ui/Card";
+import { buttonClasses } from "@/components/ui/Button";
+
+const RECENT_COUNT = 5;
 
 /**
- * Reuses `resolvePlanLimits` (Stage 5) unchanged — this page's entire
- * plan/limit knowledge comes from calling it, not from re-deriving
- * anything about plans here. The generations-used count is read directly
- * from `usage_counters` via the existing user-scoped client: that table
- * already has a `select` RLS policy for the owning user (migration 0007,
- * written with exactly this kind of read in mind — "a usage indicator...
- * can read this directly without a dedicated API route"), so no new
- * access path is created. Deliberately not calling `checkUsage()`
- * (Stage 5): that function needs the admin client and answers a
- * different question — "may this specific tool run right now" — not "how
- * much has been used this period," which is what this page displays.
- *
- * `SignOutButton` (Stage 2) is rendered here for the first time — this
- * is the page Stage 9's audit named as where it belonged once a stage
- * "naturally starts working with Dashboard." Stage 13 is that stage.
+ * Dashboard. Stage 13 built it as the usage card plus sign-out; the
+ * architecture doc's spec for this screen (§9) is "quick access, recent
+ * generations, limit status", which Stage 13's completion fills in —
+ * entirely from reads that already exist elsewhere:
+ *  - usage: resolveUsageSummary (shared with Billing and the tool page),
+ *  - quick access: listActiveTools + ToolGrid, the Tools Gallery's own,
+ *  - recent: listUserGenerations + HistoryItem, the History page's own,
+ *  - a nudge to /onboarding while the user has no company profile
+ *    (§8: onboarding comes before the Dashboard for a draft profile —
+ *    skippable, so the Dashboard keeps offering it).
+ * All four run in parallel; nothing here writes.
  */
 export default async function DashboardPage() {
   const user = await requireUser();
   const supabase = createClient();
 
-  const planLimits = await resolvePlanLimits(supabase, { type: "user", userId: user.id });
-  const period = currentMonthPeriod();
-
-  const { data: usage } = await supabase
-    .from("usage_counters")
-    .select("generations_count")
-    .eq("user_id", user.id)
-    .eq("period_start", period.start)
-    .maybeSingle();
-
-  const used = usage?.generations_count ?? 0;
+  const [summary, tools, recent, { count: profileCount }] = await Promise.all([
+    resolveUsageSummary(supabase, user.id),
+    listActiveTools(supabase),
+    listUserGenerations(supabase, user.id, { limit: RECENT_COUNT }),
+    supabase
+      .from("company_profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
+  ]);
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <main className="mx-auto max-w-4xl space-y-8 p-6">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="font-display text-xl font-semibold text-ink-950">Dashboard</h1>
         <SignOutButton />
       </div>
-      <UsageCard planSlug={planLimits.planSlug} used={used} limit={planLimits.maxGenerationsPerMonth} />
+
+      {!profileCount && (
+        <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <h2 className="font-medium text-ink-950">Add your company profile</h2>
+            <p className="text-sm text-ink-600">
+              Every tool tailors its results to it — takes about a minute.
+            </p>
+          </div>
+          <Link href="/onboarding" className={buttonClasses("primary", "shrink-0")}>
+            Set it up
+          </Link>
+        </Card>
+      )}
+
+      <div className="max-w-2xl">
+        <UsageCard
+          planSlug={summary.planLimits.planSlug}
+          used={summary.used}
+          limit={summary.planLimits.maxGenerationsPerMonth}
+        />
+      </div>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-medium text-ink-950">Start creating</h2>
+          <Link href="/templates" className="text-sm text-accent hover:underline">
+            Browse templates →
+          </Link>
+        </div>
+        <ToolGrid tools={tools} />
+      </section>
+
+      <section className="max-w-2xl space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-medium text-ink-950">Recent generations</h2>
+          {recent.items.length > 0 && (
+            <Link href="/history" className="text-sm text-accent hover:underline">
+              View all →
+            </Link>
+          )}
+        </div>
+        {recent.items.length === 0 ? (
+          <div className="rounded-md border border-dashed border-ink-200 p-6 text-center text-sm text-ink-600">
+            Nothing yet — pick a tool above to create your first result.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recent.items.map((generation) => (
+              <HistoryItem key={generation.id} generation={generation} />
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }
