@@ -44,3 +44,40 @@ jobs:
       # runtime, and the NEXT_PUBLIC_* values are only inlined when present.
       - name: Build
         run: npm run build
+
+  # The database checks, against a throwaway local Postgres built from
+  # supabase/migrations. The CLI version is pinned: the generated types
+  # depend on it (same version as `npm run db:types`).
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE: npx --yes supabase@2.118.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Start Postgres (applies every migration to an empty database)
+        run: $SUPABASE db start
+
+      - name: Reset from scratch
+        run: $SUPABASE db reset
+
+      - name: RLS and privilege tests
+        run: $SUPABASE test db
+
+      - name: Security Advisor
+        run: $SUPABASE db advisors --local --type security --fail-on warn
+
+      - name: Performance Advisor — no unindexed foreign keys
+        run: |
+          $SUPABASE db advisors --local --type performance -o json > performance.json
+          jq -e '[.[] | select(.name == "unindexed_foreign_keys")] | length == 0' performance.json
+
+      - name: Generated types are up to date
+        run: |
+          npm run db:types
+          git diff --exit-code lib/supabase/database.types.ts
