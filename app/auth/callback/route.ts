@@ -13,7 +13,8 @@ import { getSiteUrl } from "@/lib/site-url";
  *
  * A missing, expired or already-used code used to be ignored, landing the
  * person on /dashboard → middleware → a bare /login with no explanation;
- * it now reaches /login with a reason the page can show.
+ * it now reaches a page with a reason it can show: /forgot-password for a
+ * reset link (where a new one can be requested), /login otherwise.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -33,5 +34,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  if (next === "/reset-password") {
+    return NextResponse.redirect(`${origin}/forgot-password?error=expired`);
+  }
   return NextResponse.redirect(`${origin}/login?error=confirmation`);
 }

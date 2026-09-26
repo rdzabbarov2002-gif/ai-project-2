@@ -19,8 +19,18 @@ function SubmitButton() {
   );
 }
 
-export default function ForgotPasswordPage() {
+// `searchParams` as a prop, not useSearchParams() — see app/login/page.tsx.
+export default function ForgotPasswordPage({
+  searchParams,
+}: {
+  searchParams: { error?: string };
+}) {
   const [state, formAction] = useFormState(requestPasswordReset, initialState);
+  // Set by /auth/callback when a reset link can't be used any more.
+  const linkError =
+    searchParams?.error === "expired"
+      ? "That reset link is invalid or has expired. Enter your email to get a new one."
+      : null;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
@@ -34,6 +44,7 @@ export default function ForgotPasswordPage() {
           </p>
         ) : (
           <form action={formAction} className="space-y-3">
+            {linkError && <p className="text-sm text-danger">{linkError}</p>}
             <Input type="email" name="email" placeholder="Email" required autoComplete="email" />
             {state.error && <p className="text-sm text-danger">{state.error}</p>}
             <SubmitButton />

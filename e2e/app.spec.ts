@@ -111,11 +111,18 @@ test("reset a forgotten password by email", async ({ page }) => {
   await page.getByRole("button", { name: "Send reset link" }).click();
   await expect(page.getByText("Check your email")).toBeVisible();
 
-  await page.goto(await emailLink(email));
+  const link = await emailLink(email);
+  await page.goto(link);
   await expect(page).toHaveURL(/\/reset-password$/);
   await page.getByPlaceholder(/New password/).fill("new-password-2");
   await page.getByRole("button", { name: "Update password" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
+
+  // The link works once; opened again, it says so and offers a new one.
+  await page.goto(link);
+  await expect(page).toHaveURL(/\/forgot-password\?error=expired(#|$)/);
+  await expect(page.getByText("That reset link is invalid or has expired")).toBeVisible();
+  await page.goto("/dashboard");
 
   await page.locator("button:visible", { hasText: "Sign out" }).click();
   await expect(page).toHaveURL(/\/$/);
