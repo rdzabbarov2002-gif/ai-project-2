@@ -193,6 +193,9 @@ timeout — on the Hobby plan 60s is the maximum.
   where input_tokens is not null and created_at > now() - interval '30 days'
   group by ai_model;
   ```
+- **Closed beta** — what to set up before inviting people, and the
+  numbers to watch (activation, time to a first result, feedback) with
+  the SQL that produces them: `docs/beta.md`.
 - **Backups** — Supabase's daily backups need the Pro plan (the Free plan
   has none); `supabase/backup.sh` takes and restores a logical backup.
   How to check a backup's age, restore into a new project and run the
