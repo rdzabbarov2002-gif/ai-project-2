@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 export interface AuthFormState {
   error: string | null;
@@ -13,7 +14,9 @@ export async function signIn(
 ): Promise<AuthFormState> {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/dashboard");
+  // `next` comes from the query string via a hidden field — validated so
+  // it can only ever point back into this app (see lib/safe-redirect.ts).
+  const next = safeRedirectPath(formData.get("next"), "/dashboard");
 
   if (!email || !password) {
     return { error: "Enter your email and password." };

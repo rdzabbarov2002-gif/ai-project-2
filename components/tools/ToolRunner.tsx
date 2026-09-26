@@ -43,7 +43,7 @@ interface GenerateError {
 }
 
 export function ToolRunner({ tool, templateSlug, schema }: ToolRunnerProps) {
-  const { session } = useGuestSession();
+  const { ensureSession } = useGuestSession();
   const [values, setValues] = useState<Record<string, unknown>>(() => buildInitialValues(schema));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -79,16 +79,18 @@ export function ToolRunner({ tool, templateSlug, schema }: ToolRunnerProps) {
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // guestSessionToken is sent whenever a guest session exists,
-        // regardless of whether the caller turns out to be signed in —
-        // Stage 5's identity resolution checks the auth cookie first and
-        // simply ignores this token for a signed-in request, so
-        // ToolRunner never needs to know or care which case it's in.
+        // guestSessionToken is always sent, regardless of whether the
+        // caller turns out to be signed in — Stage 5's identity resolution
+        // checks the auth cookie first and simply ignores this token for a
+        // signed-in request, so ToolRunner never needs to know or care
+        // which case it's in. The guest session itself is created here,
+        // at the first generation, not on page load (see
+        // lib/guest-session/context.tsx).
         body: JSON.stringify({
           toolSlug: tool.slug,
           templateSlug,
           inputParams: values,
-          guestSessionToken: session?.sessionToken,
+          guestSessionToken: ensureSession().sessionToken,
         }),
       });
 
@@ -110,8 +112,15 @@ export function ToolRunner({ tool, templateSlug, schema }: ToolRunnerProps) {
 
   async function handleCopy() {
     if (!result) return;
-    await navigator.clipboard.writeText(result.output);
-    setCopied(true);
+    try {
+      await navigator.clipboard.writeText(result.output);
+      setCopied(true);
+    } catch {
+      // Clipboard API unavailable (non-HTTPS origin, denied permission,
+      // older mobile browsers) — previously an unhandled rejection. The
+      // text stays selectable for a manual copy.
+      setCopied(false);
+    }
   }
 
   return (

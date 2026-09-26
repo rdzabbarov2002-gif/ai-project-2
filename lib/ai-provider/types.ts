@@ -13,6 +13,9 @@ export interface AIGenerateParams {
   userPrompt: string;
   model: string;
   maxTokens: number;
+  /** Honored only by providers whose models still accept sampling
+   *  parameters — ClaudeProvider ignores it (current Claude models reject
+   *  `temperature` outright; see claude.ts). */
   temperature?: number;
   /** Defaults to a per-provider sane value if omitted (see each provider). */
   timeoutMs?: number;

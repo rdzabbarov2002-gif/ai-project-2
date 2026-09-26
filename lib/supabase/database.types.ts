@@ -1,18 +1,23 @@
 /**
  * Hand-written to match supabase/migrations/*.sql exactly, because
- * `supabase gen types typescript` requires a live, linked project and
- * network access — neither available in this environment. Once the
- * project exists (after running Stage 3's migrations), regenerate this
- * file for real:
+ * `supabase gen types typescript` requires a live, linked project — once
+ * one exists, regenerate this file for real and diff it against this one:
  *
  *   npx supabase gen types typescript --project-id <ref> > lib/supabase/database.types.ts
  *
- * and diff it against this version — they should match. Until then, this
- * is what gives `createClient<Database>()` real autocomplete and type
- * checking instead of `any`.
+ * Shape follows what the generator emits (and what supabase-js's
+ * `GenericSchema` requires): a `type` alias (not an `interface` — an
+ * interface has no implicit index signature, so it can't satisfy
+ * `Record<string, GenericTable>`), a `Relationships` array on every table
+ * (one entry per foreign key in the migrations, which is also what types
+ * embedded selects like `plans(slug)` / `tools!inner(...)`), and
+ * `Views`/`Enums`/`CompositeTypes` even though this schema has none.
+ * The first real `next build` (Phase 1) showed that without these,
+ * supabase-js resolves every table to `never` — i.e. the earlier version
+ * of this file typed nothing at all.
  */
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       users: {
@@ -31,6 +36,15 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["users"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "users_plan_id_fkey";
+            columns: ["plan_id"];
+            isOneToOne: false;
+            referencedRelation: "plans";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       company_profiles: {
         Row: {
@@ -60,6 +74,15 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["company_profiles"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "company_profiles_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       guest_sessions: {
         Row: {
@@ -79,6 +102,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["guest_sessions"]["Insert"]>;
+        Relationships: [];
       };
       tools: {
         Row: {
@@ -106,6 +130,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["tools"]["Insert"]>;
+        Relationships: [];
       };
       templates: {
         Row: {
@@ -133,6 +158,15 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["templates"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "templates_tool_id_fkey";
+            columns: ["tool_id"];
+            isOneToOne: false;
+            referencedRelation: "tools";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       plans: {
         Row: {
@@ -154,6 +188,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["plans"]["Insert"]>;
+        Relationships: [];
       };
       plan_limits: {
         Row: {
@@ -179,6 +214,15 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["plan_limits"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "plan_limits_plan_id_fkey";
+            columns: ["plan_id"];
+            isOneToOne: true;
+            referencedRelation: "plans";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       usage_counters: {
         Row: {
@@ -200,6 +244,15 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["usage_counters"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "usage_counters_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       subscriptions: {
         Row: {
@@ -223,6 +276,22 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["subscriptions"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey";
+            columns: ["plan_id"];
+            isOneToOne: false;
+            referencedRelation: "plans";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       generations: {
         Row: {
@@ -256,8 +325,46 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["generations"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "generations_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "generations_guest_session_id_fkey";
+            columns: ["guest_session_id"];
+            isOneToOne: false;
+            referencedRelation: "guest_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "generations_company_profile_id_fkey";
+            columns: ["company_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "company_profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "generations_tool_id_fkey";
+            columns: ["tool_id"];
+            isOneToOne: false;
+            referencedRelation: "tools";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "generations_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "templates";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
+    Views: { [_ in never]: never };
     Functions: {
       /**
        * Matches supabase/migrations/0011_increment_usage_counter.sql.
@@ -273,5 +380,7 @@ export interface Database {
         Returns: Database["public"]["Tables"]["usage_counters"]["Row"];
       };
     };
+    Enums: { [_ in never]: never };
+    CompositeTypes: { [_ in never]: never };
   };
-}
+};

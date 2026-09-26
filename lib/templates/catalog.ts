@@ -44,9 +44,8 @@ export async function listTemplates(
 
   return (data ?? []).map((row) => {
     // Cast, not inferred — same caveat as lib/generation/plan.ts (Stage 5):
-    // database.types.ts is hand-written and doesn't carry the
-    // `Relationships` metadata supabase-js uses to type a `!inner` embed
-    // precisely.
+    // database.types.ts is hand-written (not generated), so the embed's
+    // shape is asserted here rather than trusted from inference.
     const tool = row.tools as unknown as { slug: string; name: string; is_active: boolean };
     return {
       slug: row.slug,

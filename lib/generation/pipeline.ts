@@ -123,7 +123,6 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
       userPrompt,
       model,
       maxTokens: appSettings.maxOutputTokens,
-      temperature: 0.7,
     });
   } catch (error) {
     // 9. AIProviderError carries a `kind`/`retryable` the route maps to a
@@ -177,6 +176,10 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
  * so turning on a second provider later (post-MVP, per the architecture
  * doc's own roadmap) is extending this list and the map below — not
  * touching the pipeline that calls it.
+ *
+ * `DEFAULT_AI_PROVIDER` (config/settings.ts) decides which implemented
+ * provider is tried first when a plan allows several — until Phase 1 that
+ * env var was documented but read by nothing on this path.
  */
 const IMPLEMENTED_PROVIDERS: AIProviderName[] = ["claude"];
 
@@ -190,7 +193,11 @@ function selectProviderAndModel(planLimits: {
   const allowed =
     planLimits.allowedAiModels === "all" ? IMPLEMENTED_PROVIDERS : planLimits.allowedAiModels;
 
-  const providerName = IMPLEMENTED_PROVIDERS.find((p) => allowed.includes(p));
+  const preferred = appSettings.defaultAIProvider as AIProviderName;
+  const candidates = IMPLEMENTED_PROVIDERS.includes(preferred)
+    ? [preferred, ...IMPLEMENTED_PROVIDERS.filter((p) => p !== preferred)]
+    : IMPLEMENTED_PROVIDERS;
+  const providerName = candidates.find((p) => allowed.includes(p));
   const model = providerName ? MODEL_BY_PROVIDER[providerName] : undefined;
 
   if (!providerName || !model) {

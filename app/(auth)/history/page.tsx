@@ -53,10 +53,11 @@ export default async function HistoryPage({
   const rows = data ?? [];
   const hasNextPage = rows.length > PAGE_SIZE;
   const generations = rows.slice(0, PAGE_SIZE).map((row) => {
-    // Cast, not inferred — database.types.ts is hand-written and doesn't
-    // carry the `Relationships` metadata supabase-js uses to type
-    // embedded selects precisely (same caveat as lib/generation/plan.ts,
-    // Stage 5, and lib/templates/catalog.ts, Stage 10).
+    // Cast kept on purpose even though database.types.ts now carries
+    // `Relationships` (Phase 1): it's still hand-written, not generated,
+    // so the object-vs-array shape of an embed is normalized here rather
+    // than trusted blindly (same pattern as lib/generation/plan.ts and
+    // lib/templates/catalog.ts).
     const tool = row.tools as unknown as { name: string } | { name: string }[] | null;
     const template = row.templates as unknown as { name: string } | { name: string }[] | null;
     const toolRow = Array.isArray(tool) ? tool[0] : tool;

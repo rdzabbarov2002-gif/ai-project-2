@@ -5,6 +5,14 @@ import { GenerationError } from "@/lib/generation/errors";
 import { AIProviderError, type AIProviderErrorKind } from "@/lib/ai-provider";
 
 /**
+ * Vercel's default serverless timeout (10s on Hobby, 15s on Pro) is shorter
+ * than a typical Claude generation, which would cut requests off mid-call
+ * in production. 60s is the Hobby ceiling and matches ClaudeProvider's own
+ * per-attempt timeout; raise it on plans that allow more.
+ */
+export const maxDuration = 60;
+
+/**
  * Core Generate Pipeline entry point. This route is deliberately thin: it
  * parses the request, calls `runGeneration`, and maps whatever comes back
  * (success, GenerationError, or AIProviderError) to an HTTP response.

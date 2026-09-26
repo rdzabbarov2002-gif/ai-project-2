@@ -20,6 +20,19 @@ export interface PlanLimits {
 const FREE_PLAN_SLUG = "free";
 
 /**
+ * Seed data missing or a plan with no matching plan_limits row — fail
+ * closed (zero generations allowed) rather than open (unlimited), since
+ * the alternative failure mode is silently free AI usage.
+ */
+const FAIL_CLOSED_LIMITS: PlanLimits = {
+  planSlug: FREE_PLAN_SLUG,
+  maxGenerationsPerMonth: 0,
+  maxSavedResults: 0,
+  allowedToolSlugs: [],
+  allowedAiModels: [],
+};
+
+/**
  * Both branches read through the request-scoped client (`plans`/
  * `plan_limits` are public-read reference tables per migration 0002 — no
  * need for the service-role client here), which is what keeps this safe to
@@ -41,24 +54,14 @@ export async function resolvePlanLimits(
     .single();
 
   if (error || !data || !data.plan_limits) {
-    // Seed data missing or a plan with no matching plan_limits row — fail
-    // closed (zero generations allowed) rather than open (unlimited),
-    // since the alternative failure mode is silently free AI usage.
-    return {
-      planSlug: FREE_PLAN_SLUG,
-      maxGenerationsPerMonth: 0,
-      maxSavedResults: 0,
-      allowedToolSlugs: [],
-      allowedAiModels: [],
-    };
+    return FAIL_CLOSED_LIMITS;
   }
 
-  // Cast rather than lean on inferred typing: database.types.ts is
-  // hand-written (see Stage 3 audit) and doesn't carry the `Relationships`
-  // metadata supabase-js uses to type nested embeds like `plan_limits(...)`
-  // precisely — the shape below is correct per the migration, but wasn't
-  // checked against a real generated type. Re-verify once
-  // `supabase gen types` replaces the hand-written file.
+  // Cast rather than lean on inferred typing: database.types.ts is still
+  // hand-written (it gained `Relationships` in Phase 1, but wasn't
+  // generated from a live project), so both embed shapes — object for
+  // the one-to-one `plan_limits.plan_id unique`, array otherwise — are
+  // accepted here. Re-verify once `supabase gen types` replaces the file.
   const rawLimits = data.plan_limits as unknown as
     | {
         max_generations_per_month: number | null;
@@ -73,6 +76,9 @@ export async function resolvePlanLimits(
         allowed_ai_models: unknown;
       }>;
   const limits = Array.isArray(rawLimits) ? rawLimits[0] : rawLimits;
+  // An embed can also come back as an empty array (no plan_limits row) —
+  // same fail-closed answer as above, not a crash on `limits.…` below.
+  if (!limits) return FAIL_CLOSED_LIMITS;
 
   return {
     planSlug: data.slug as "free" | "pro" | "enterprise",

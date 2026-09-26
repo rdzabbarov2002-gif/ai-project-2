@@ -41,8 +41,8 @@ schema is past this initial setup and starts changing incrementally.
 ## After running either option
 
 Copy your project's URL, anon key, and service-role key (Project Settings
-→ API) into `.env.local` (already created from `.env.example` at the
-project root, git-ignored) so the app in `lib/supabase/client.ts` /
+→ API) into `.env.local` (copy it from `.env.example` at the project
+root; it is git-ignored) so the app in `lib/supabase/client.ts` /
 `server.ts` / `admin.ts` can connect. Also required at this point:
 `ANTHROPIC_API_KEY`, for the AI Provider Gateway (`lib/ai-provider/`) to
 actually generate content.

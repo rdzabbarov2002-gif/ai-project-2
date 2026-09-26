@@ -19,9 +19,9 @@ Built and tested entirely from a phone, via a cloud IDE (Replit or bolt.new)
    `supabase/schema.sql` and `supabase/seed.sql` via the SQL Editor (see
    `supabase/README.md` for the exact steps and for applying only the
    newest migrations if you're re-syncing an existing project).
-4. **Environment variables** — `.env.local` already exists in this
-   project (copied from `.env.example`, and already git-ignored) with
-   every variable the code actually reads — fill in the real values:
+4. **Environment variables** — copy `.env.example` to `.env.local`
+   (git-ignored; it is not committed to the repo) — it lists every
+   variable the code actually reads — and fill in the real values:
    Supabase URL/anon key/service-role key (from your new project's
    Settings → API) and your Anthropic API key. Everything else has a
    working default. Values can be entered through Replit's/bolt.new's
