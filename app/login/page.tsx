@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { use, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { signIn, type AuthFormState } from "./actions";
 import { Button } from "@/components/ui/Button";
@@ -20,19 +21,19 @@ function SubmitButton() {
   );
 }
 
-// `searchParams` arrives as a prop straight from the router — deliberately
-// not useSearchParams() here, which would require wrapping this form in a
+// `searchParams` arrives as a prop straight from the router (a Promise
+// since Next.js 15, unwrapped with use()) — deliberately not
+// useSearchParams() here, which would require wrapping this form in a
 // <Suspense> boundary to avoid a "should be wrapped in a suspense boundary"
 // build error on `next build`. A plain prop has no such requirement.
-export default function LoginPage({
-  searchParams,
-}: {
-  searchParams: { next?: string; error?: string };
+export default function LoginPage(props: {
+  searchParams: Promise<{ next?: string; error?: string }>;
 }) {
-  const [state, formAction] = useFormState(signIn, initialState);
-  const next = searchParams?.next ?? "/dashboard";
+  const searchParams = use(props.searchParams);
+  const [state, formAction] = useActionState(signIn, initialState);
+  const next = searchParams.next ?? "/dashboard";
   const linkError =
-    searchParams?.error === "confirmation"
+    searchParams.error === "confirmation"
       ? "That confirmation link is invalid or has expired. Sign in, or register again to get a new one."
       : null;
 
@@ -46,7 +47,14 @@ export default function LoginPage({
         {linkError && <p className="text-sm text-danger">{linkError}</p>}
         <form action={formAction} className="space-y-3">
           <input type="hidden" name="next" value={next} />
-          <Input type="email" name="email" placeholder="Email" required autoComplete="email" />
+          <Input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+            autoComplete="email"
+            defaultValue={state.email}
+          />
           <Input
             type="password"
             name="password"

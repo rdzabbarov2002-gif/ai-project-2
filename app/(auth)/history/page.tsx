@@ -23,14 +23,18 @@ const PAGE_SIZE = 10;
  * `?page=` and `?template=`, so the filter form is an ordinary GET form
  * with no client JavaScript. Pagination links carry the filters along.
  * Repeating a generation's inputs lives on its detail page.
+ *
+ * No loading.tsx here, on purpose: with a loading boundary around the
+ * page, Next.js 15 sometimes never renders the page a Server Action sends
+ * back after revalidatePath (vercel/next.js#87529) — the favorite star stayed
+ * unchanged in about one try in four. Don't add one back until that is fixed.
  */
-export default async function HistoryPage({
-  searchParams,
-}: {
-  searchParams: { page?: string; tool?: string; favorites?: string };
+export default async function HistoryPage(props: {
+  searchParams: Promise<{ page?: string; tool?: string; favorites?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const page = Math.max(1, Number.parseInt(searchParams.page ?? "1", 10) || 1);
   const filters: GenerationFilters = {

@@ -30,7 +30,7 @@ export async function setFavorite(formData: FormData): Promise<void> {
   });
   if (!parsed.success) return;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from("generations")
     .update({ is_favorite: parsed.data.favorite === "true" })

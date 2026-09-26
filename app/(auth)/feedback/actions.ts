@@ -20,6 +20,8 @@ const MAX_PER_HOUR = 10;
 export interface FeedbackState {
   error: string | null;
   sent: boolean;
+  /** Sent back with an error so the form keeps it (see app/login/actions.ts). */
+  message?: string;
 }
 
 /**
@@ -33,9 +35,10 @@ export async function sendFeedback(
   formData: FormData,
 ): Promise<FeedbackState> {
   const user = await requireUser();
-  const parsed = FeedbackSchema.safeParse({ message: formData.get("message") ?? "" });
+  const message = String(formData.get("message") ?? "");
+  const parsed = FeedbackSchema.safeParse({ message });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]!.message, sent: false };
+    return { error: parsed.error.issues[0]!.message, sent: false, message };
   }
 
   const admin = createAdminClient();
@@ -46,7 +49,11 @@ export async function sendFeedback(
     .eq("user_id", user.id)
     .gte("created_at", since);
   if ((count ?? 0) >= MAX_PER_HOUR) {
-    return { error: "That's a lot of feedback for one hour — please try again later.", sent: false };
+    return {
+      error: "That's a lot of feedback for one hour — please try again later.",
+      sent: false,
+      message,
+    };
   }
 
   const { error } = await admin
@@ -54,7 +61,7 @@ export async function sendFeedback(
     .insert({ user_id: user.id, message: parsed.data.message });
   if (error) {
     logger.error("feedback: insert failed", { error });
-    return { error: "We couldn't send that. Please try again.", sent: false };
+    return { error: "We couldn't send that. Please try again.", sent: false, message };
   }
 
   await track("feedback_sent", user.id);

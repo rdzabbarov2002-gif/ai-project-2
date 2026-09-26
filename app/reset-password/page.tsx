@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { updatePassword, type NewPasswordState } from "./actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -19,7 +20,7 @@ function SubmitButton() {
 }
 
 export default function ResetPasswordPage() {
-  const [state, formAction] = useFormState(updatePassword, initialState);
+  const [state, formAction] = useActionState(updatePassword, initialState);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">

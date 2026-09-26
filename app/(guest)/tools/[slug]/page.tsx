@@ -51,14 +51,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * their own saved generations — read through the owner-scoped RLS select
  * policy, and only when it belongs to this tool.
  */
-export default async function ToolPage({
-  params,
-  searchParams,
-}: {
-  params: { slug: string };
-  searchParams: { template?: string; from?: string };
+export default async function ToolPage(props: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ template?: string; from?: string }>;
 }) {
-  const supabase = createClient();
+  const [params, searchParams] = await Promise.all([props.params, props.searchParams]);
+  const supabase = await createClient();
   const tool = await resolveTool(supabase, params.slug);
 
   if (!tool) {

@@ -22,7 +22,7 @@ export async function updatePassword(
     return { error: "Password must be at least 8 characters." };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {

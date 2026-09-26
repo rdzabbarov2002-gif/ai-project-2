@@ -6,6 +6,9 @@ import { safeRedirectPath } from "@/lib/safe-redirect";
 
 export interface AuthFormState {
   error: string | null;
+  /** Sent back with an error so the form keeps it: React resets a form's
+   *  fields after its action runs, to their defaultValue. */
+  email?: string;
 }
 
 export async function signIn(
@@ -19,14 +22,14 @@ export async function signIn(
   const next = safeRedirectPath(formData.get("next"), "/dashboard");
 
   if (!email || !password) {
-    return { error: "Enter your email and password." };
+    return { error: "Enter your email and password.", email };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: error.message };
+    return { error: error.message, email };
   }
 
   // Guest → user merge is triggered client-side (components/auth/AuthSyncListener.tsx)

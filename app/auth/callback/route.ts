@@ -22,12 +22,12 @@ export async function GET(request: NextRequest) {
   // request.url's: under `next start` that is always the server's own
   // hostname (localhost), so the session cookie set here would belong to a
   // different host than the page the person is sent to.
-  const origin = getSiteUrl();
+  const origin = await getSiteUrl();
   const code = searchParams.get("code");
   const next = safeRedirectPath(searchParams.get("next"), "/onboarding");
 
   if (code) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);

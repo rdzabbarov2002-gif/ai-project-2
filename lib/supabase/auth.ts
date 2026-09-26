@@ -16,7 +16,7 @@ import { createClient } from "./server";
  * Supabase Auth.
  */
 export const getUser = cache(async () => {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

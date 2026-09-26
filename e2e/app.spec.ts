@@ -7,9 +7,9 @@ import { expect, test, type Page } from "@playwright/test";
  *   protected page after signing in, password reset and account deletion
  *   (emails are read from the stack's inbox, Mailpit);
  * - the feedback form;
- * - the core path — generate, see the result, find it in history — and
- *   the server's two limits: the plan's monthly allowance and the
- *   per-minute rate limit.
+ * - the core path — generate, see the result, find it in history and
+ *   favorite it — and the server's two limits: the plan's monthly
+ *   allowance and the per-minute rate limit.
  */
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
@@ -130,6 +130,8 @@ test("reset a forgotten password by email", async ({ page }) => {
   await page.goto("/login");
   await signIn(page, email, "old-password-1");
   await expect(page.getByText(/invalid/i)).toBeVisible();
+  // React resets a form after its action runs; the email must survive it.
+  await expect(page.getByPlaceholder("Email")).toHaveValue(email);
   await signIn(page, email, "new-password-2");
   await expect(page).toHaveURL(/\/dashboard$/);
 });
@@ -166,6 +168,7 @@ test("send feedback from the footer", async ({ page }) => {
   await page.getByLabel("Your message").fill("   ");
   await page.getByRole("button", { name: "Send feedback" }).click();
   await expect(page.getByText("Write a few words first.")).toBeVisible();
+  await expect(page.getByLabel("Your message")).toHaveValue("   ");
 
   await page.getByLabel("Your message").fill("The ad tool saved me an hour.");
   await page.getByRole("button", { name: "Send feedback" }).click();
@@ -201,6 +204,18 @@ test("generate a result and find it in history", async ({ page }) => {
   );
   expect(row).toMatchObject({ input_tokens: 812, output_tokens: 64 });
   expect(row!.duration_ms).toBeGreaterThanOrEqual(0);
+
+  // Favorite it from the list: the star turns, and it's saved.
+  await page.goto("/history");
+  await page.getByRole("button", { name: "Add to favorites" }).click();
+  await expect(page.getByRole("button", { name: "Remove from favorites" })).toBeVisible();
+  const [saved] = await adminSelect<{ is_favorite: boolean }>(
+    "generations",
+    `user_id=eq.${userId}&select=is_favorite`,
+  );
+  expect(saved!.is_favorite).toBe(true);
+  await page.goto("/history?favorites=1");
+  await expect(page.getByRole("button", { name: "Remove from favorites" })).toBeVisible();
 });
 
 test("the server refuses a generation over the plan's monthly limit", async ({ page }) => {

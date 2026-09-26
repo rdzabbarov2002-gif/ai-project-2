@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import {
   deleteAccount,
   type DeleteAccountState,
@@ -22,7 +23,7 @@ function SubmitButton() {
 }
 
 export function DeleteAccountForm() {
-  const [state, formAction] = useFormState(deleteAccount, initialState);
+  const [state, formAction] = useActionState(deleteAccount, initialState);
 
   return (
     <form

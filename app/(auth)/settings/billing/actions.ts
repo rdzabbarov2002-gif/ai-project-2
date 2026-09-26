@@ -31,6 +31,7 @@ export async function deleteAccount(): Promise<DeleteAccountState> {
   await track("account_deleted", user.id);
 
   // Clears the session cookies; the session itself died with the account.
-  await createClient().auth.signOut();
+  const supabase = await createClient();
+  await supabase.auth.signOut();
   redirect("/");
 }

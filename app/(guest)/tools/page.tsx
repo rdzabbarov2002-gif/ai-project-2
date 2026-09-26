@@ -12,7 +12,7 @@ import { ToolGallery } from "@/components/tools/gallery/ToolGallery";
  * State), not a hand-rolled equivalent.
  */
 export default async function ToolsGalleryPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const tools = await listActiveTools(supabase);
 
   return (

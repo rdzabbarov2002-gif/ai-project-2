@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { sendFeedback, type FeedbackState } from "@/app/(auth)/feedback/actions";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
@@ -17,7 +18,7 @@ function SubmitButton() {
 }
 
 export function FeedbackForm() {
-  const [state, formAction] = useFormState(sendFeedback, initialState);
+  const [state, formAction] = useActionState(sendFeedback, initialState);
 
   if (state.sent) {
     return (
@@ -39,6 +40,7 @@ export function FeedbackForm() {
         required
         maxLength={2000}
         placeholder="What worked, what didn't, what you'd like to see…"
+        defaultValue={state.message}
       />
       {state.error && <p className="text-sm text-danger">{state.error}</p>}
       <SubmitButton />

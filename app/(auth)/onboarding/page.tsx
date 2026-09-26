@@ -17,7 +17,7 @@ export const maxDuration = 60;
  */
 export default async function OnboardingPage() {
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { count } = await supabase
     .from("company_profiles")

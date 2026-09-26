@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
@@ -58,6 +58,10 @@ function SubmitButton() {
  * new defaults (`formKey`), merged over whatever is currently typed in,
  * so a half-edited form doesn't lose manual changes to fields the
  * website said nothing about. Nothing is saved until Save.
+ *
+ * Save does the same with what was typed: React (19) resets a form's
+ * fields to their defaults once its action has run, so without it an
+ * error — or a save — would put back the values the page loaded with.
  */
 type EditableField = Exclude<keyof CompanyProfileFormValues, "id">;
 const EDITABLE_FIELDS: EditableField[] = [
@@ -74,20 +78,29 @@ export function CompanyProfileForm({
 }: {
   initialProfile: CompanyProfileFormValues | null;
 }) {
-  const [state, formAction] = useFormState(saveCompanyProfile, initialState);
+  const [state, formAction] = useActionState(saveCompanyProfile, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const [formKey, setFormKey] = useState(0);
   const [overrides, setOverrides] = useState<Partial<Record<EditableField, string>>>({});
 
   const valueOf = (name: EditableField) => overrides[name] ?? initialProfile?.[name] ?? "";
 
-  function applySuggestions(suggested: SuggestedProfile) {
+  /** What the form holds right now, field by field. */
+  function typedValues() {
     const current = formRef.current ? new FormData(formRef.current) : null;
-    const next: Partial<Record<EditableField, string>> = {};
+    const values: Partial<Record<EditableField, string>> = {};
     for (const name of EDITABLE_FIELDS) {
       const typed = current?.get(name);
-      const suggestion = suggested[name];
-      next[name] = suggestion ? suggestion : typeof typed === "string" ? typed : valueOf(name);
+      values[name] = typeof typed === "string" ? typed : valueOf(name);
+    }
+    return values;
+  }
+
+  function applySuggestions(suggested: SuggestedProfile) {
+    const typed = typedValues();
+    const next: Partial<Record<EditableField, string>> = {};
+    for (const name of EDITABLE_FIELDS) {
+      next[name] = suggested[name] || typed[name];
     }
     setOverrides(next);
     setFormKey((key) => key + 1);
@@ -97,7 +110,13 @@ export function CompanyProfileForm({
     <Card className="space-y-6">
       <WebsiteAutofill defaultUrl={initialProfile?.websiteUrl ?? ""} onFill={applySuggestions} />
 
-      <form key={formKey} ref={formRef} action={formAction} className="space-y-4">
+      <form
+        key={formKey}
+        ref={formRef}
+        action={formAction}
+        onSubmit={() => setOverrides(typedValues())}
+        className="space-y-4"
+      >
         {initialProfile?.id && <input type="hidden" name="id" value={initialProfile.id} />}
 
         <FieldWrapper label="Company name" required htmlFor="profile-name">

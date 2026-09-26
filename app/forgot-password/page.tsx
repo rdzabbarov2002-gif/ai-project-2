@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { use, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { requestPasswordReset, type ResetRequestState } from "./actions";
 import { Button } from "@/components/ui/Button";
@@ -20,15 +21,12 @@ function SubmitButton() {
 }
 
 // `searchParams` as a prop, not useSearchParams() — see app/login/page.tsx.
-export default function ForgotPasswordPage({
-  searchParams,
-}: {
-  searchParams: { error?: string };
-}) {
-  const [state, formAction] = useFormState(requestPasswordReset, initialState);
+export default function ForgotPasswordPage(props: { searchParams: Promise<{ error?: string }> }) {
+  const searchParams = use(props.searchParams);
+  const [state, formAction] = useActionState(requestPasswordReset, initialState);
   // Set by /auth/callback when a reset link can't be used any more.
   const linkError =
-    searchParams?.error === "expired"
+    searchParams.error === "expired"
       ? "That reset link is invalid or has expired. Enter your email to get a new one."
       : null;
 
@@ -45,7 +43,14 @@ export default function ForgotPasswordPage({
         ) : (
           <form action={formAction} className="space-y-3">
             {linkError && <p className="text-sm text-danger">{linkError}</p>}
-            <Input type="email" name="email" placeholder="Email" required autoComplete="email" />
+            <Input
+              type="email"
+              name="email"
+              placeholder="Email"
+              required
+              autoComplete="email"
+              defaultValue={state.email}
+            />
             {state.error && <p className="text-sm text-danger">{state.error}</p>}
             <SubmitButton />
           </form>

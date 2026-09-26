@@ -80,7 +80,7 @@ export async function saveCompanyProfile(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input.", success: false };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { id, ...fields } = parsed.data;
 
   const row = {

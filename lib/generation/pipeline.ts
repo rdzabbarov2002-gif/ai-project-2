@@ -42,7 +42,7 @@ export interface GenerateResult {
  * Stage 5 requirements list one-to-one, so it's checkable at a glance.
  */
 export async function runGeneration(body: GenerateRequestBody): Promise<GenerateResult> {
-  const userClient = createUserClient();
+  const userClient = await createUserClient();
   const adminClient = createAdminClient();
 
   // 1. Identify the caller — signed-in user, or guest session (created/

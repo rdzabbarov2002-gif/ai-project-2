@@ -2,7 +2,7 @@
 
 A guest-first PWA where a small business describes itself once and then uses
 AI tools and ready-made templates to produce ads, emails, social posts and
-long-form content — without writing prompts. Built with Next.js 14 (App
+long-form content — without writing prompts. Built with Next.js 15 (App
 Router), Supabase (Postgres + Auth + RLS) and an AI Provider Gateway
 (Claude today, other providers pluggable).
 

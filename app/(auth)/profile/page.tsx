@@ -28,10 +28,15 @@ export const maxDuration = 60;
  * consistent for the same reason: a user with several profiles (Stage 3,
  * future agency use) sees and edits whichever one the pipeline itself
  * would currently pick as their default company context.
+ *
+ * No loading.tsx here, on purpose: with a loading boundary around the
+ * page, Next.js 15 sometimes never renders the page a Server Action sends
+ * back after revalidatePath (vercel/next.js#87529) — the Save button stayed
+ * on "Saving…" in about one try in four. Don't add one back until that is fixed.
  */
 export default async function CompanyProfilePage() {
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: profile } = await supabase
     .from("company_profiles")

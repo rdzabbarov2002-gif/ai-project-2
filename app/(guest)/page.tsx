@@ -35,7 +35,7 @@ const STEPS = [
  * is the right response there.
  */
 export default async function LandingPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const [user, tools, templates] = await Promise.all([
     getUser(),
     listActiveTools(supabase).catch(() => []),

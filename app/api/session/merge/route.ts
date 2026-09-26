@@ -24,7 +24,7 @@ interface MergeRequestBody {
 }
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
  * between the two clients for authenticated writes.
  */
 async function maybeCreateCompanyProfileFromDraft(
-  supabase: ReturnType<typeof createClient>,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
   draft: GuestCompanyProfileDraft | null,
 ): Promise<boolean> {

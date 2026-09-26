@@ -7,6 +7,8 @@ import { track } from "@/lib/analytics";
 
 export interface AuthFormState {
   error: string | null;
+  /** Sent back with an error so the form keeps it (see app/login/actions.ts). */
+  email?: string;
 }
 
 export async function signUp(
@@ -17,21 +19,21 @@ export async function signUp(
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
-    return { error: "Enter your email and password." };
+    return { error: "Enter your email and password.", email };
   }
   if (password.length < 8) {
-    return { error: "Password must be at least 8 characters." };
+    return { error: "Password must be at least 8 characters.", email };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${getSiteUrl()}/auth/callback` },
+    options: { emailRedirectTo: `${await getSiteUrl()}/auth/callback` },
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: error.message, email };
   }
 
   if (data.user) await track("signed_up", data.user.id);

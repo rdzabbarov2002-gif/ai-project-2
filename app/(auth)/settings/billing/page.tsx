@@ -22,7 +22,7 @@ const PLAN_ORDER: PlanOption["slug"][] = ["free", "pro", "enterprise"];
  */
 export default async function BillingSettingsPage() {
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [summary, { data: subscription }, { data: plans }] = await Promise.all([
     resolveUsageSummary(supabase, user.id),

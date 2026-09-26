@@ -10,7 +10,7 @@ import { TemplateGallery } from "@/components/templates/TemplateGallery";
  * in-flight state — both Next.js's own convention, not hand-rolled.
  */
 export default async function TemplatesLibraryPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const templates = await listTemplates(supabase);
 
   return (

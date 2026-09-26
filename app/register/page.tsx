@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { signUp, type AuthFormState } from "./actions";
 import { Button } from "@/components/ui/Button";
@@ -21,7 +22,7 @@ function SubmitButton() {
 }
 
 export default function RegisterPage() {
-  const [state, formAction] = useFormState(signUp, initialState);
+  const [state, formAction] = useActionState(signUp, initialState);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
@@ -34,7 +35,14 @@ export default function RegisterPage() {
           Your generations so far will carry over — nothing is lost by signing up.
         </p>
         <form action={formAction} className="space-y-3">
-          <Input type="email" name="email" placeholder="Email" required autoComplete="email" />
+          <Input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+            autoComplete="email"
+            defaultValue={state.email}
+          />
           <Input
             type="password"
             name="password"

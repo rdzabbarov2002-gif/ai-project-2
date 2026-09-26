@@ -47,11 +47,11 @@ describe("sendFeedback", () => {
   it.each([
     ["an empty message", "   ", "Write a few words first."],
     ["a message over 2,000 characters", "x".repeat(2001), "Keep it under 2,000 characters."],
-  ])("refuses %s without saving", async (_label, message, error) => {
+  ])("refuses %s without saving, and gives it back to the form", async (_label, message, error) => {
     const { client, queries } = fakeSupabase({ feedback: feedbackTable(0) });
     createAdminClient.mockReturnValue(client);
 
-    expect(await sendFeedback(initial, form(message))).toEqual({ error, sent: false });
+    expect(await sendFeedback(initial, form(message))).toEqual({ error, sent: false, message });
     expect(queries).toHaveLength(0);
   });
 
@@ -62,6 +62,7 @@ describe("sendFeedback", () => {
     const result = await sendFeedback(initial, form("One more thing"));
     expect(result.sent).toBe(false);
     expect(result.error).toMatch(/try again later/);
+    expect(result.message).toBe("One more thing");
     expect(queries.some((q) => q.calls[0]?.[0] === "insert")).toBe(false);
     // Counted per user, over the last hour.
     expect(queries[0]!.calls).toContainEqual(["eq", "user_id", "user-1"]);
@@ -77,6 +78,7 @@ describe("sendFeedback", () => {
     expect(await sendFeedback(initial, form("Hello"))).toEqual({
       error: "We couldn't send that. Please try again.",
       sent: false,
+      message: "Hello",
     });
     expect(track).not.toHaveBeenCalled();
   });

@@ -6,6 +6,8 @@ import { getSiteUrl } from "@/lib/site-url";
 export interface ResetRequestState {
   error: string | null;
   sent: boolean;
+  /** Sent back with an error so the form keeps it (see app/login/actions.ts). */
+  email?: string;
 }
 
 /**
@@ -24,13 +26,13 @@ export async function requestPasswordReset(
     return { error: "Enter your email.", sent: false };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${getSiteUrl()}/auth/callback?next=/reset-password`,
+    redirectTo: `${await getSiteUrl()}/auth/callback?next=/reset-password`,
   });
 
   if (error) {
-    return { error: error.message, sent: false };
+    return { error: error.message, sent: false, email };
   }
 
   return { error: null, sent: true };

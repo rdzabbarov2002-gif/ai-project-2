@@ -28,9 +28,10 @@ import { CopyButton } from "@/components/ui/CopyButton";
  * needs a Client Component; the shared CopyButton (components/ui) is that
  * component now, so a saved result copies the same way a fresh one does.
  */
-export default async function HistoryDetailPage({ params }: { params: { id: string } }) {
+export default async function HistoryDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data } = await supabase
     .from("generations")

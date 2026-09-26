@@ -28,7 +28,7 @@ const RECENT_COUNT = 5;
  */
 export default async function DashboardPage() {
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [summary, tools, recent, { count: profileCount }] = await Promise.all([
     resolveUsageSummary(supabase, user.id),
