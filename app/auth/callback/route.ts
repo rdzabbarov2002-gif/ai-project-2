@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { safeRedirectPath } from "@/lib/safe-redirect";
+import { getSiteUrl } from "@/lib/site-url";
 
 /**
  * Supabase email-confirmation / password-reset landing point. Exchanges
@@ -15,7 +16,12 @@ import { safeRedirectPath } from "@/lib/safe-redirect";
  * it now reaches /login with a reason the page can show.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  // The same origin the emailed link was built with (lib/site-url.ts), not
+  // request.url's: under `next start` that is always the server's own
+  // hostname (localhost), so the session cookie set here would belong to a
+  // different host than the page the person is sent to.
+  const origin = getSiteUrl();
   const code = searchParams.get("code");
   const next = safeRedirectPath(searchParams.get("next"), "/onboarding");
 
