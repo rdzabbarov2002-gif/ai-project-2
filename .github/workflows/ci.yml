@@ -81,3 +81,44 @@ jobs:
         run: |
           npm run db:types
           git diff --exit-code lib/supabase/database.types.ts
+
+  # The sign-in flows end to end (e2e/): the built app against a local
+  # Supabase stack, whose mail inbox the tests read confirmation and reset
+  # emails from. Runs in the Chrome preinstalled on the runner.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE: npx --yes supabase@2.118.0
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Required at server start (lib/env.ts); these flows never call the AI.
+      ANTHROPIC_API_KEY: e2e-not-used
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Start Supabase (database, Auth, mail inbox)
+        run: $SUPABASE start -x studio,postgres-meta
+
+      - name: Point the app at it
+        run: |
+          eval "$($SUPABASE status -o env)"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "MAILPIT_URL=$MAILPIT_URL"
+          } >> "$GITHUB_ENV"
+
+      - name: Build
+        run: npm run build
+
+      - name: End-to-end tests
+        run: npm run test:e2e
