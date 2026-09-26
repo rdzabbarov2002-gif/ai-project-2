@@ -115,7 +115,7 @@ export default async function ToolPage({
             {usage.remaining} of {usage.planLimits.maxGenerationsPerMonth} generations left this
             month.{" "}
             {usage.remaining <= 2 && (
-              <Link href="/settings/billing" className="text-accent hover:underline">
+              <Link href="/settings/billing" className="text-accent underline">
                 See plans
               </Link>
             )}

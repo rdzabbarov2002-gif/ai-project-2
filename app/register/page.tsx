@@ -48,7 +48,7 @@ export default function RegisterPage() {
         </form>
         <p className="text-sm text-ink-600">
           Already have an account?{" "}
-          <Link href="/login" className="text-accent hover:underline">
+          <Link href="/login" className="text-accent underline">
             Sign in
           </Link>
         </p>

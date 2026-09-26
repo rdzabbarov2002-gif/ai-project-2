@@ -120,7 +120,7 @@ export function GuestProfileDraftCard() {
 
         <p className="mt-4 text-xs text-ink-600">
           Want the full profile — selling points, website, and more?{" "}
-          <Link href="/register" className="text-accent hover:underline">
+          <Link href="/register" className="text-accent underline">
             Create a free account
           </Link>
           .

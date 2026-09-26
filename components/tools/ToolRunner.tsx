@@ -226,7 +226,7 @@ export function ToolRunner({
         {isGuest && guestGenerationLimit !== undefined && (
           <p className="text-xs text-ink-600">
             Guest mode — up to {guestGenerationLimit} free generations, no sign-up needed.{" "}
-            <Link href="/register" className="text-accent hover:underline">
+            <Link href="/register" className="text-accent underline">
               Create a free account
             </Link>{" "}
             to save your results and get more.
@@ -292,7 +292,7 @@ export function ToolRunner({
                 Want to keep this?{" "}
                 <Link
                   href="/register"
-                  className="font-medium text-accent hover:underline"
+                  className="font-medium text-accent underline"
                 >
                   Sign up free
                 </Link>{" "}
