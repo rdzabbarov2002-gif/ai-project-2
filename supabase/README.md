@@ -18,6 +18,23 @@ API locally (settings in `config.toml`) and applies every file in
 `npx supabase db reset` rebuilds the local database from scratch. The
 root README has the full local setup.
 
+### Checks (run in CI on every pull request)
+
+With the local database running:
+
+- `npx supabase test db` — `tests/rls.test.sql`: RLS on every table, the
+  exact privileges the client roles hold, and what an anonymous visitor
+  and a signed-in user can and cannot read or change, table by table.
+- `npx supabase db advisors --local` — Supabase's Security and
+  Performance Advisors.
+- `npm run db:types` — regenerates `lib/supabase/database.types.ts`.
+  Run it after every schema change and commit the result; CI fails if
+  the committed file doesn't match the migrations.
+
+A new table needs its client privileges granted explicitly (see
+`migrations/0019_client_privileges.sql`) and a line in the RLS test —
+the test fails until it has both.
+
 The options below are for a hosted Supabase project (staging, prod).
 
 ## Option A — Supabase Dashboard SQL Editor (recommended, zero setup)
@@ -95,7 +112,12 @@ schema.
   (Stage 15 security fix — without it a signed-in user can change their
   own plan through the public API). Apply it even if you apply nothing
   else.
+- Then, for everyone: `migrations/0019_client_privileges.sql` (security:
+  client roles keep only the privileges the app uses — without it a
+  signed-in user can rewrite or backdate their generations and attach
+  them to a guest session) and `migrations/0020_foreign_key_indexes.sql`
+  (indexes on three foreign keys).
 
 Stages 11–14 (guest merge, Company Profile, Usage/Billing UI, History)
-were built as pure application code on top of these; `0018` is the last
+were built as pure application code on top of these; `0020` is the last
 migration.

@@ -139,9 +139,12 @@ timeout — on the Hobby plan 60s is the maximum.
 | `npm run lint` | ESLint (`next lint`) |
 | `npm run typecheck` | TypeScript, no emit |
 | `npm test` | Unit tests (Vitest) |
+| `npm run db:types` | Regenerate `lib/supabase/database.types.ts` from the local database |
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests and the build on
-every pull request and every push to `main`.
+every pull request and every push to `main`, and in a parallel job builds
+the database from the migrations and runs the database checks (RLS tests,
+Supabase advisors, generated types up to date — `supabase/README.md`).
 
 ## Testing
 
@@ -150,6 +153,9 @@ parses, every placeholder maps to a field, `schema.sql`/`seed.sql` match the
 migrations), prompt assembly, plan limits and entitlements, rate limiting,
 the Claude provider's request shape and retries, the SSRF guard of profile
 autofill, the open-redirect guard, the environment check and the logger.
+
+`supabase/tests/rls.test.sql` (pgTAP, `npx supabase test db`) checks row
+level security and client privileges on every table.
 
 End-to-end behavior was verified against a local Supabase stack (Supabase
 CLI: Postgres, GoTrue, PostgREST) with a stand-in for the Anthropic API and a
@@ -165,7 +171,7 @@ app/api/          /generate, /session/merge, /session/draft
 components/       ui/ (design system), layout/, tools/, templates/, …
 lib/              generation/ (pipeline), ai-provider/, supabase/, limits/,
                   profile-autofill/, history/, tools/, templates/, …
-supabase/         migrations/ (source of truth), config.toml (local stack),
+supabase/         migrations/ (source of truth), tests/ (RLS), config.toml (local stack),
                   schema.sql, seed.sql
 tests/            unit tests
 docs/             architecture, decisions, per-stage audits, reports
