@@ -120,8 +120,9 @@ schema.
   them to a guest session) and `migrations/0020_foreign_key_indexes.sql`
   (indexes on three foreign keys), then
   `migrations/0021_generation_usage.sql` (token counts and duration per
-  generation).
+  generation) and `migrations/0022_feedback.sql` (the in-app feedback
+  form's table).
 
 Stages 11–14 (guest merge, Company Profile, Usage/Billing UI, History)
-were built as pure application code on top of these; `0021` is the last
+were built as pure application code on top of these; `0022` is the last
 migration.

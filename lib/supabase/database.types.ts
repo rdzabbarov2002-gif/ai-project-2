@@ -24,6 +24,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"feedback": {
+                  Row: {
+                    "created_at": string,"id": string,"message": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"message": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"message"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "feedback_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"generations": {
                   Row: {
                     "ai_model": string,"ai_provider": string,"company_profile_id": string | null,"created_at": string,"duration_ms": number | null,"guest_session_id": string | null,"id": string,"input_params": NonNullable<Json>,"input_tokens": number | null,"is_favorite": boolean,"output": string,"output_tokens": number | null,"template_id": string | null,"tool_id": string,"updated_at": string,"user_id": string | null

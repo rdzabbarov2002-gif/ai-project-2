@@ -6,6 +6,7 @@ import { expect, test, type Page } from "@playwright/test";
  * - sign-up with email confirmation, sign-in, sign-out, the return to a
  *   protected page after signing in, password reset and account deletion
  *   (emails are read from the stack's inbox, Mailpit);
+ * - the feedback form;
  * - the core path — generate, see the result, find it in history — and
  *   the server's two limits: the plan's monthly allowance and the
  *   per-minute rate limit.
@@ -149,6 +150,29 @@ test("delete the account", async ({ page }) => {
   await page.goto("/login");
   await signIn(page, email, password);
   await expect(page.getByText(/invalid/i)).toBeVisible();
+});
+
+test("send feedback from the footer", async ({ page }) => {
+  const email = uniqueEmail("feedback");
+  const password = "e2e-password-1";
+  const userId = await createUser(email, password);
+
+  await page.goto("/login");
+  await signIn(page, email, password);
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  await page.getByRole("link", { name: "Send feedback" }).click();
+  await expect(page.getByRole("heading", { name: "Send feedback" })).toBeVisible();
+  await page.getByLabel("Your message").fill("   ");
+  await page.getByRole("button", { name: "Send feedback" }).click();
+  await expect(page.getByText("Write a few words first.")).toBeVisible();
+
+  await page.getByLabel("Your message").fill("The ad tool saved me an hour.");
+  await page.getByRole("button", { name: "Send feedback" }).click();
+  await expect(page.getByText("your message reached us")).toBeVisible();
+
+  const rows = await adminSelect<{ message: string }>("feedback", `user_id=eq.${userId}&select=message`);
+  expect(rows).toEqual([{ message: "The ad tool saved me an hour." }]);
 });
 
 test("generate a result and find it in history", async ({ page }) => {

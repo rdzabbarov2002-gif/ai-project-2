@@ -161,11 +161,21 @@ timeout — on the Hobby plan 60s is the maximum.
   crashing (a failed save, a merge error).
 - **Security headers** — every response carries HSTS, `nosniff`,
   `Referrer-Policy` and `frame-ancestors 'none'` (`next.config.js`).
-- **Product analytics** — with `POSTHOG_KEY` set, the server sends five
+- **Product analytics** — with `POSTHOG_KEY` set, the server sends six
   events to PostHog: `signed_up`, `generation_completed` (tool, template,
-  guest or not), `generation_blocked` (which limit), `account_deleted`,
-  and an alias linking a guest's events to the account they sign up
-  for. No cookies and nothing in the browser (`lib/analytics.ts`).
+  guest or not), `generation_blocked` (which limit), `feedback_sent`,
+  `account_deleted`, and an alias linking a guest's events to the account
+  they sign up for. No cookies and nothing in the browser
+  (`lib/analytics.ts`).
+- **Feedback** — signed-in people write to us from "Send feedback" in the
+  footer (`/feedback`; at most 10 messages an hour each). The `feedback`
+  table is server only; read it in the Supabase SQL Editor:
+
+  ```sql
+  select f.created_at, u.email, f.message
+  from public.feedback f join auth.users u on u.id = f.user_id
+  order by f.created_at desc;
+  ```
 - **Cost and speed of generations** — every generation stores its token
   counts and how long the AI call took (`generations.input_tokens`,
   `output_tokens`, `duration_ms`). In the Supabase SQL Editor (prices:

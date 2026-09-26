@@ -3,7 +3,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 
 /**
  * Protects the `(auth)` route group (Dashboard, Onboarding, Company
- * Profile, History, Billing) at the edge, before any Server Component renders — avoids a
+ * Profile, History, Billing, Feedback) at the edge, before any Server Component renders — avoids a
  * flash of protected content and keeps the redirect-to-login decision in
  * one place rather than duplicated per page.
  *
@@ -18,6 +18,7 @@ const PROTECTED_PATHS = [
   "/profile",
   "/history",
   "/settings",
+  "/feedback",
   // Reached signed in, from the reset link (app/auth/callback).
   "/reset-password",
 ];

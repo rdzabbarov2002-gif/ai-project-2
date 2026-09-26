@@ -39,6 +39,10 @@ export default function PrivacyPage() {
             the text generated for you, and whether you marked it as a favorite.
           </li>
           <li>
+            <strong className="text-ink-950">Feedback:</strong> the messages you send us through
+            the feedback form.
+          </li>
+          <li>
             <strong className="text-ink-950">Usage:</strong> how many generations you made this
             month, to apply your plan&apos;s limits.
           </li>
@@ -105,9 +109,9 @@ export default function PrivacyPage() {
         <h2 className="font-medium text-ink-950">How long we keep it</h2>
         <p className="text-ink-600">
           For as long as your account exists. Deleting your account deletes your account,
-          company profile and generations. Usage statistics, error reports and server logs
-          contain no email or content and stay with the processors above for up to [retention
-          period].
+          company profile, generations and feedback. Usage statistics, error reports and
+          server logs contain no email or content and stay with the processors above for up to
+          [retention period].
         </p>
       </section>
     </main>

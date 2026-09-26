@@ -6,7 +6,7 @@
 -- `anon`, and `authenticated` with A's JWT claims.
 
 begin;
-select plan(40);
+select plan(43);
 
 -- ---------------------------------------------------------------- setup
 insert into auth.users (id, email) values
@@ -106,6 +106,7 @@ select throws_ok('select 1 from public.generations', '42501', null, 'anon cannot
 select throws_ok('select 1 from public.guest_sessions', '42501', null, 'anon cannot read guest_sessions');
 select throws_ok('select 1 from public.usage_counters', '42501', null, 'anon cannot read usage_counters');
 select throws_ok('select 1 from public.subscriptions', '42501', null, 'anon cannot read subscriptions');
+select throws_ok('select 1 from public.feedback', '42501', null, 'anon cannot read feedback');
 select throws_ok('update public.plans set name = name', '42501', null, 'anon cannot change plans');
 
 reset role;
@@ -177,6 +178,13 @@ select throws_ok('update public.subscriptions set status = ''active''', '42501',
 
 -- guest_sessions
 select throws_ok('select 1 from public.guest_sessions', '42501', null, 'A cannot read guest_sessions');
+
+-- feedback: server only (migration 0022) — not even one's own
+select throws_ok('select 1 from public.feedback', '42501', null, 'A cannot read feedback');
+select throws_ok(
+  $$ insert into public.feedback (user_id, message)
+     values ('aaaaaaaa-0000-4000-8000-000000000001', 'hi') $$,
+  '42501', null, 'A cannot write feedback directly');
 
 -- reference data: read-only
 select isnt_empty('select 1 from public.tools', 'A reads the tools gallery');
