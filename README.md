@@ -50,7 +50,8 @@ Anthropic API key.
 
 4. `npm run dev` → http://localhost:3000. Studio (database browser) is at
    http://127.0.0.1:54323, and emails Auth sends locally land in the
-   inbox at http://127.0.0.1:54324.
+   inbox at http://127.0.0.1:54324 — as in production, a new account
+   confirms its email first: open the link from that inbox.
 
 `npx supabase stop` stops the stack (data is kept); `npx supabase db reset`
 rebuilds the database from the migrations.
