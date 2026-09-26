@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
+import { reportClientError } from "@/lib/report-client-error";
 
 export default function BillingSettingsError({
   error,
@@ -11,7 +12,7 @@ export default function BillingSettingsError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[settings/billing]", error);
+    reportClientError("settings/billing: error boundary", error);
   }, [error]);
 
   return (

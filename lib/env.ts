@@ -42,6 +42,7 @@ const envSchema = z.object({
   DEFAULT_AI_MODEL: optional(z.string()),
   GUEST_GENERATION_LIMIT: optional(positiveInt),
   MAX_GENERATIONS_PER_MINUTE: optional(positiveInt),
+  NEXT_PUBLIC_SENTRY_DSN: optional(url),
 });
 
 type EnvSource = Record<string, string | undefined>;

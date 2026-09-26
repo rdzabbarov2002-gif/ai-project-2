@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { fetchWebsiteSummary, WebsiteFetchError } from "@/lib/profile-autofill/fetchWebsite";
 import { extractProfile, type SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
+import { logger } from "@/lib/logger";
 
 /**
  * The only validation layer for this form — no parallel check in the
@@ -97,7 +98,7 @@ export async function saveCompanyProfile(
     : await supabase.from("company_profiles").insert(row);
 
   if (error) {
-    console.error("[profile] save failed:", error.message);
+    logger.error("profile: save failed", { error });
     return { error: "Something went wrong saving your profile. Please try again.", success: false };
   }
 
@@ -145,7 +146,7 @@ export async function autofillCompanyProfile(url: string): Promise<AutofillResul
     if (error instanceof WebsiteFetchError) {
       return { error: error.message, profile: null };
     }
-    console.error("[profile] autofill failed:", error);
+    logger.error("profile: autofill failed", { error });
     return { error: "We couldn't read that website. Please try again.", profile: null };
   }
 }

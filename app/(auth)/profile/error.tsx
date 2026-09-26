@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
+import { reportClientError } from "@/lib/report-client-error";
 
 /** Closes the Stage 15 audit's §1.10 finding: /profile ran the same kind of
  *  Supabase read as every other (auth) page but had no error boundary, so
@@ -14,7 +15,7 @@ export default function ProfileError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[profile]", error);
+    reportClientError("profile: error boundary", error);
   }, [error]);
 
   return (

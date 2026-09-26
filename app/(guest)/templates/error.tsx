@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { ErrorState } from "@/components/templates/ErrorState";
+import { reportClientError } from "@/lib/report-client-error";
 
 export default function TemplatesLibraryError({
   error,
@@ -12,7 +13,7 @@ export default function TemplatesLibraryError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[templates library]", error);
+    reportClientError("templates library: error boundary", error);
   }, [error]);
 
   return (

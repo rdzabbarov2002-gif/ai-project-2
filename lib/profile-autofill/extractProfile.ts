@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getDefaultProvider } from "@/lib/ai-provider";
 import { appSettings } from "@/config/settings";
 import type { WebsiteSummary } from "./fetchWebsite";
+import { logger } from "@/lib/logger";
 
 /**
  * Turns a fetched website (fetchWebsite.ts) into suggested company-profile
@@ -88,7 +89,7 @@ export async function extractProfile(site: WebsiteSummary): Promise<{
       source: "ai",
     };
   } catch (error) {
-    console.error("[profile-autofill] AI extraction failed, using page metadata:", error);
+    logger.error("profile-autofill: AI extraction failed, using page metadata", { error });
     return { profile: fromMetadata, source: "metadata" };
   }
 }

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
+import { reportClientError } from "@/lib/report-client-error";
 
 export default function HistoryError({
   error,
@@ -11,7 +12,7 @@ export default function HistoryError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[history]", error);
+    reportClientError("history: error boundary", error);
   }, [error]);
 
   return (

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { ErrorState } from "@/components/tools/gallery/ErrorState";
+import { reportClientError } from "@/lib/report-client-error";
 
 /**
  * Next.js error boundary convention: must be a Client Component, receives
@@ -19,7 +20,7 @@ export default function ToolsGalleryError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[tools gallery]", error);
+    reportClientError("tools gallery: error boundary", error);
   }, [error]);
 
   return (

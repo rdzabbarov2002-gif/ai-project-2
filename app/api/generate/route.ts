@@ -3,6 +3,7 @@ import { parseGenerateRequest } from "@/lib/generation/validate";
 import { runGeneration } from "@/lib/generation/pipeline";
 import { GenerationError } from "@/lib/generation/errors";
 import { AIProviderError, type AIProviderErrorKind } from "@/lib/ai-provider";
+import { logger } from "@/lib/logger";
 
 /**
  * Vercel's default serverless timeout (10s on Hobby, 15s on Pro) is shorter
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
 /**
  * Every branch here returns a message safe to show a real user — no
  * provider error text, no DB error text, no stack traces. Anything with
- * internal detail worth knowing was already `console.error`'d where it
+ * internal detail worth knowing was already `logger.error`'d where it
  * happened (see save.ts, identity.ts) before reaching this point.
  */
 function toErrorResponse(error: unknown): NextResponse {
@@ -47,11 +48,15 @@ function toErrorResponse(error: unknown): NextResponse {
 
   if (error instanceof AIProviderError) {
     const { status, message } = mapProviderError(error.kind);
-    console.error(`[AIProviderError:${error.provider}:${error.kind}]`, error.message);
+    logger.error("api/generate: AI provider error", {
+      error,
+      provider: error.provider,
+      kind: error.kind,
+    });
     return NextResponse.json({ error: { code: "ai_provider_error", message } }, { status });
   }
 
-  console.error("[api/generate] unhandled error:", error);
+  logger.error("api/generate: unhandled error", { error });
   return NextResponse.json(
     { error: { code: "internal_error", message: "Something went wrong. Please try again." } },
     { status: 500 },

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 const FavoriteSchema = z.object({
   id: z.string().uuid(),
@@ -37,7 +38,7 @@ export async function setFavorite(formData: FormData): Promise<void> {
     .eq("user_id", user.id);
 
   if (error) {
-    console.error("[history] favorite update failed:", error.message);
+    logger.error("history: favorite update failed", { error });
     return;
   }
 

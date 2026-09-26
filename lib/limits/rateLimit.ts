@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { Identity } from "@/lib/generation/identity";
+import { logger } from "@/lib/logger";
 
 const WINDOW_MS = 60_000;
 
@@ -44,7 +45,7 @@ export async function isOverRateLimit(params: {
 
   const { count, error } = await query;
   if (error) {
-    console.error("[rate-limit] count failed, not limiting:", error.message);
+    logger.error("rate-limit: count failed, not limiting", { error });
     return false;
   }
   return (count ?? 0) >= params.maxPerMinute;

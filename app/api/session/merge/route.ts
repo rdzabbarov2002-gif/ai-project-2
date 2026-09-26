@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { GuestCompanyProfileDraft } from "@/lib/guest-session/types";
+import { logger } from "@/lib/logger";
 
 /**
  * Guest → User merge endpoint. Stage 2 built the auth check, request
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
     // the guest token in place (AuthSyncListener's existing behavior for
     // any non-"merged" response) so a retry on the next sign-in can pick
     // this back up rather than silently losing the data.
-    console.error("[session/merge] failed to reassign generations:", reassignError.message);
+    logger.error("session/merge: reassigning generations failed", { error: reassignError });
     return NextResponse.json({ error: "merge_failed" }, { status: 500 });
   }
 
@@ -151,7 +152,7 @@ async function maybeCreateCompanyProfileFromDraft(
     // already moved successfully by this point. Same "don't discard a
     // real result over a secondary write failing" reasoning as Stage 5's
     // saveGeneration().
-    console.error("[session/merge] failed to create company profile from draft:", error.message);
+    logger.error("session/merge: creating company profile from draft failed", { error });
     return false;
   }
 

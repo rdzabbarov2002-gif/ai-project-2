@@ -1,3 +1,6 @@
+import * as Sentry from "@sentry/nextjs";
+import { sentryOptions } from "./lib/sentry";
+
 /**
  * Runs once when a Next.js server instance starts (next start, next dev,
  * and each serverless function's cold start on Vercel) — before it serves
@@ -13,5 +16,12 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { assertEnv } = await import("./lib/env");
     assertEnv();
+  }
+
+  // Error tracking for server code (Server Components, Route Handlers,
+  // Server Actions, middleware); the browser side loads on demand in
+  // lib/report-client-error.ts. What is (not) sent: lib/sentry.ts.
+  if (sentryOptions.dsn) {
+    Sentry.init(sentryOptions);
   }
 }

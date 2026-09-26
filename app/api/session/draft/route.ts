@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appSettings } from "@/config/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { GuestCompanyProfileDraft } from "@/lib/guest-session/types";
+import { logger } from "@/lib/logger";
 
 /**
  * Persists a guest's short company-profile draft to `guest_sessions`.
@@ -87,7 +88,7 @@ export async function POST(request: Request) {
     );
 
   if (error) {
-    console.error("[session/draft] failed to save draft:", error.message);
+    logger.error("session/draft: saving draft failed", { error });
     return NextResponse.json({ error: "save_failed" }, { status: 500 });
   }
 

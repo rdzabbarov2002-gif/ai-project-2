@@ -5,6 +5,7 @@ import type { Identity } from "./identity";
 import type { UsagePeriod } from "./period";
 import type { AIGenerateResult } from "@/lib/ai-provider";
 import type { ResolvedTool, ResolvedTemplate } from "./catalog";
+import { logger } from "@/lib/logger";
 
 export interface SaveGenerationParams {
   /** Request-scoped, RLS-enforced client — used for signed-in writes. */
@@ -60,7 +61,7 @@ export async function saveGeneration(
   const { data, error } = await client.from("generations").insert(row).select("id").single();
 
   if (error || !data) {
-    console.error("[generations] save failed:", error?.message);
+    logger.error("generations: save failed", { error: error ?? "no row returned" });
     return { id: null, saved: false };
   }
 
@@ -102,6 +103,6 @@ export async function incrementUsage(
     // succeeded) is already saved. Losing an increment means this one
     // period undercounts by one — worth logging, not worth failing an
     // otherwise-successful request over.
-    console.error("[usage_counters] increment failed:", error.message);
+    logger.error("usage_counters: increment failed", { error });
   }
 }
