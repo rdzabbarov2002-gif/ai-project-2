@@ -1,14 +1,17 @@
 import { defineConfig } from "@playwright/test";
 
 /**
- * End-to-end tests of the sign-in flows (e2e/), against the app and the
- * local Supabase stack (`npx supabase start`), whose mail inbox (Mailpit)
- * the tests read confirmation and reset emails from.
+ * End-to-end tests (e2e/): the sign-in flows and the core product path,
+ * against the app, the local Supabase stack (`npx supabase start`) —
+ * whose mail inbox (Mailpit) the tests read emails from — and a stand-in
+ * for the Anthropic API (e2e/mock-anthropic.mjs), started here.
  *
  * Locally: start the stack, then either keep `npm run dev` running (it is
  * reused) or `npm run build` first; install a browser once with
- * `npx playwright install chromium`. CI uses the Chrome preinstalled on
- * GitHub's runners instead of downloading one.
+ * `npx playwright install chromium`. A reused dev server must itself run
+ * with ANTHROPIC_BASE_URL=http://127.0.0.1:4010, or generations go to the
+ * real API. CI uses the Chrome preinstalled on GitHub's runners instead of
+ * downloading one.
  */
 export default defineConfig({
   testDir: "e2e",
@@ -22,10 +25,18 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     channel: process.env.CI ? "chrome" : undefined,
   },
-  webServer: {
-    command: "npm run start",
-    url: "http://localhost:3000/login",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: "node e2e/mock-anthropic.mjs",
+      url: "http://127.0.0.1:4010",
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: "npm run start",
+      url: "http://localhost:3000/login",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: { ANTHROPIC_BASE_URL: "http://127.0.0.1:4010" },
+    },
+  ],
 });

@@ -195,7 +195,7 @@ timeout — on the Hobby plan 60s is the maximum.
 | `npm run lint` | ESLint (`next lint`) |
 | `npm run typecheck` | TypeScript, no emit |
 | `npm test` | Unit tests (Vitest) |
-| `npm run test:e2e` | End-to-end tests of the sign-in flows (Playwright, local Supabase running) |
+| `npm run test:e2e` | End-to-end tests: sign-in flows and the core product path (Playwright, local Supabase running) |
 | `npm run db:types` | Regenerate `lib/supabase/database.types.ts` from the local database |
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests and the build on
@@ -216,12 +216,15 @@ autofill, the open-redirect guard, the environment check and the logger.
 security and client privileges on every table, and that deleting an
 account leaves none of its rows behind.
 
-`e2e/auth.spec.ts` (Playwright, `npm run test:e2e`) runs the sign-in flows
-in a browser: sign-up with email confirmation, sign-in and sign-out,
-returning to a protected page after signing in, password reset and
-account deletion. It needs the local Supabase stack running (it reads the
-emails from its inbox) and a browser: `npx playwright install chromium`
-once.
+`e2e/app.spec.ts` (Playwright, `npm run test:e2e`) runs in a browser:
+sign-up with email confirmation, sign-in and sign-out, returning to a
+protected page after signing in, password reset and account deletion;
+and the core path — generate, see the result, find it in history — plus
+the server's monthly plan limit and per-minute rate limit. The AI is a
+local stand-in (`e2e/mock-anthropic.mjs`, started by Playwright), so the
+tests cost nothing. It needs the local Supabase stack running (the tests
+read emails from its inbox) and a browser: `npx playwright install
+chromium` once.
 
 End-to-end behavior was verified against a local Supabase stack (Supabase
 CLI: Postgres, GoTrue, PostgREST) with a stand-in for the Anthropic API and a
