@@ -2,6 +2,14 @@ import { createClient } from "@/lib/supabase/server";
 import { listTemplates } from "@/lib/templates/catalog";
 import { TemplateGallery } from "@/components/templates/TemplateGallery";
 
+import { pageMetadata } from "@/config/site";
+
+export const metadata = pageMetadata(
+  "Marketing templates",
+  "Ready-made templates for ads, emails, social posts and more — pick one, fill in a few fields, get copy written for your business.",
+  "/templates",
+);
+
 /**
  * Same shape as app/(guest)/tools/page.tsx (Stage 7): fetch once
  * server-side, hand plain data to the client component that owns

@@ -3,11 +3,16 @@ import { headers } from "next/headers";
 import "./globals.css";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
+import { pageMetadata, site, siteOrigin } from "@/config/site";
 
+// Link previews (Open Graph, X) for every page; each public page sets its
+// own title and description (config/site.ts, pageMetadata).
 export const metadata: Metadata = {
-  title: "AI Marketing Workspace",
-  description:
-    "AI-powered marketing tools for small businesses — ads, emails and social posts generated from one company profile.",
+  ...pageMetadata(site.title, site.description, "/"),
+  metadataBase: new URL(siteOrigin()),
+  title: { default: site.title, template: `%s · ${site.name}` },
+  // Only public pages name their own canonical address.
+  alternates: undefined,
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

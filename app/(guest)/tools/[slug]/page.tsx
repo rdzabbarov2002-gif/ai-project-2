@@ -9,6 +9,17 @@ import { ToolRunner } from "@/components/tools/ToolRunner";
 import { PremiumTemplateNotice } from "@/components/templates/PremiumTemplateNotice";
 import { GuestProfileDraftCard } from "@/components/profile/GuestProfileDraftCard";
 import { appSettings } from "@/config/settings";
+import { pageMetadata, site } from "@/config/site";
+import { listActiveTools } from "@/lib/tools/catalog";
+
+/** The tool's name and description in search results and link previews. */
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
+  const { slug } = await props.params;
+  const tools = await listActiveTools(await createClient()).catch(() => []);
+  const tool = tools.find((candidate) => candidate.slug === slug);
+  if (!tool) return {};
+  return pageMetadata(tool.name, tool.description ?? site.description, `/tools/${slug}`);
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

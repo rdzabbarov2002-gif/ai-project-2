@@ -7,6 +7,10 @@ import { deriveCategories } from "@/lib/templates/query";
 import { ToolGrid } from "@/components/tools/gallery/ToolGrid";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
+import { pageMetadata, site } from "@/config/site";
+
+// The full title on its own — no "· AI Marketing Workspace" suffix.
+export const metadata = { ...pageMetadata(site.title, site.description, "/"), title: { absolute: site.title } };
 
 const STEPS = [
   {

@@ -2,6 +2,14 @@ import { createClient } from "@/lib/supabase/server";
 import { listActiveTools } from "@/lib/tools/catalog";
 import { ToolGallery } from "@/components/tools/gallery/ToolGallery";
 
+import { pageMetadata } from "@/config/site";
+
+export const metadata = pageMetadata(
+  "AI marketing tools",
+  "Ad, email, social post, landing page and article generators that write for your business. Try any tool free, no sign-up needed.",
+  "/tools",
+);
+
 /**
  * Server Component: fetches once, passes plain data down to the client
  * component that owns interaction state (ToolGallery). Throws straight

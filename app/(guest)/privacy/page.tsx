@@ -1,3 +1,11 @@
+import { pageMetadata } from "@/config/site";
+
+export const metadata = pageMetadata(
+  "Privacy Policy",
+  "What AI Marketing Workspace collects, why, who processes it, and your rights.",
+  "/privacy",
+);
+
 /**
  * DRAFT — to be reviewed by the owner before launch. Describes only what
  * the app does today; bracketed placeholders need real values. Keep it in

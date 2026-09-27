@@ -1,3 +1,11 @@
+import { pageMetadata } from "@/config/site";
+
+export const metadata = pageMetadata(
+  "Terms of Service",
+  "The terms for using AI Marketing Workspace: accounts, plans and payment, trials, cancelling and refunds.",
+  "/terms",
+);
+
 /**
  * DRAFT — to be reviewed by the owner before launch. Bracketed
  * placeholders need real values. The payment, cancellation and refund

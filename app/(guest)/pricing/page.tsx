@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/config/site";
 import { getUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { resolvePlanLimits } from "@/lib/generation/plan";
@@ -6,7 +7,11 @@ import { billingEnabled, TRIAL_DAYS } from "@/lib/billing/stripe";
 import { listPlanOptions, readPaidSubscriptions } from "@/lib/billing/plans";
 import { PlanComparison, type PlanActions } from "@/components/usage/PlanComparison";
 
-export const metadata: Metadata = { title: "Pricing · AI Marketing Workspace" };
+export const metadata: Metadata = pageMetadata(
+  "Pricing",
+  "Start free, or go Pro for more generations and every template — with a free trial.",
+  "/pricing",
+);
 
 /**
  * The public pricing page (Phase 6). The same plan comparison as Billing
