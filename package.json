@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
-    "db:types": "npx --yes supabase@2.118.0 gen types typescript --local --schema public > lib/supabase/database.types.ts"
+    "db:types": "npx --yes supabase@2.118.0 gen types typescript --local --schema public > lib/supabase/database.types.ts",
+    "test:load": "node scripts/load-smoke.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.127.0",

@@ -1,10 +1,12 @@
 // Stand-in for the Anthropic Messages API in the end-to-end tests: the app
 // talks to it through ANTHROPIC_BASE_URL (playwright.config.ts), so the
 // tests are free, fast and deterministic. Answers every request with the
-// same short text and a fixed token usage.
+// same short text and a fixed token usage. MOCK_AI_DELAY_MS makes each
+// answer take that long, like a real call (the load smoke test).
 import { createServer } from "node:http";
 
 const MOCK_OUTPUT = "E2E mock copy: fresh roasted coffee, delivered weekly.";
+const DELAY_MS = Number(process.env.MOCK_AI_DELAY_MS ?? 0);
 
 createServer((req, res) => {
   if (req.method !== "POST" || !req.url?.startsWith("/v1/messages")) {
@@ -13,8 +15,9 @@ createServer((req, res) => {
   }
   let body = "";
   req.on("data", (chunk) => (body += chunk));
-  req.on("end", () => {
+  req.on("end", async () => {
     const { model } = JSON.parse(body);
+    if (DELAY_MS) await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
     res.writeHead(200, { "content-type": "application/json" });
     res.end(
       JSON.stringify({

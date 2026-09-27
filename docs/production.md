@@ -63,3 +63,61 @@ run up an unbounded bill:
 The app's own limits also bound AI cost: plan limits per month, 3 free
 generations per guest, 6 generations a minute per person
 (`MAX_GENERATIONS_PER_MINUTE`), output capped at 8,192 tokens.
+
+## Load smoke test
+
+`scripts/load-smoke.mjs` (`npm run test:load`): 50 people sign in and at
+the same moment go through the main path three times — dashboard, the ad
+tool, a generation, history. It fails if 1% or more of the requests
+fail, or if a generation isn't saved. The AI is the local stand-in with a 2-second answer, like a real
+call; the script stops at the first answer that isn't the stand-in's, so
+it can't spend money. It creates its accounts and deletes them after.
+
+```bash
+npx supabase start && npm run build
+MOCK_AI_DELAY_MS=2000 node e2e/mock-anthropic.mjs &
+ANTHROPIC_BASE_URL=http://127.0.0.1:4010 npm run start &
+npm run test:load    # --users 50 --rounds 3 are the defaults
+```
+
+The environment variables are the local stack's, as for the end-to-end
+tests (`README.md`, Testing).
+
+Result (2026-09-27, one local `next start` process with the local
+Supabase stack, in a small container):
+
+| Step | Requests | Failed | p50 | p95 |
+|---|---|---|---|---|
+| GET /dashboard | 150 | 0 | 1.9 s | 4.1 s |
+| GET /tools/ad-generator | 150 | 0 | 1.5 s | 2.0 s |
+| POST /api/generate (AI: 2 s) | 150 | 0 | 3.3 s | 4.0 s |
+| GET /history | 150 | 0 | 1.0 s | 2.0 s |
+| **All** | **600** | **0 (0.00%)** | | |
+
+150 generations answered, 150 saved.
+
+The times are those of a single server process on one small machine
+serving 50 people at once: it rendered every page itself. On Vercel each
+request gets its own function instance, so the times are closer to one
+person's. What the test proves is that nothing breaks under concurrency:
+no failed request, and every generation answered is saved (the script
+counts them in the database). Against staging (with its AI pointed at the
+stand-in): `BASE_URL=https://<staging> npm run test:load -- --allow-remote`.
+
+### The AI provider's rate limits
+
+Anthropic limits each organization by tier: requests per minute (RPM),
+input tokens per minute (ITPM) and output tokens per minute (OTPM) — see
+Console → Settings → Limits for the current numbers. A generation is one
+request, about 1,500–3,000 input tokens, and 1,500 output tokens on
+average (8,192 at most). The app doesn't retry a rate-limited request:
+the person sees "The AI provider is busy right now. Please try again
+shortly.", and the error goes to Sentry.
+
+What the limits must cover: at peak, **people generating at the same time
+× 2** requests a minute (an answer takes about 30 s, and people read it
+before generating again). For 50 at once: 100 RPM, ~300,000 ITPM, ~150,000
+OTPM. Before launch, compare with the organization's tier; if it's lower,
+move up a tier (Console → Billing: tiers rise with credit purchased) or
+ask Anthropic for a higher limit. During the beta (10–20 people) the
+first tiers are usually enough — check the numbers anyway.
