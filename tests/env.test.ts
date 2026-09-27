@@ -33,6 +33,17 @@ describe("checkEnv", () => {
     expect(checkEnv({ ...valid, STRIPE_SECRET_KEY: "sk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x" })).toEqual([]);
   });
 
+  it("wants a support address in production only", () => {
+    expect(checkEnv({ ...valid, VERCEL_ENV: "production" })).toEqual([
+      "NEXT_PUBLIC_SUPPORT_EMAIL: is required in production",
+    ]);
+    expect(checkEnv({ ...valid, VERCEL_ENV: "production", NEXT_PUBLIC_SUPPORT_EMAIL: "help@app.example" })).toEqual([]);
+    expect(checkEnv({ ...valid, VERCEL_ENV: "preview" })).toEqual([]);
+    expect(checkEnv({ ...valid, NEXT_PUBLIC_SUPPORT_EMAIL: "not-an-email" })).toEqual([
+      "NEXT_PUBLIC_SUPPORT_EMAIL: must be an email address",
+    ]);
+  });
+
   it("names every missing required variable", () => {
     expect(checkEnv({})).toEqual([
       "NEXT_PUBLIC_SUPABASE_URL: is required",

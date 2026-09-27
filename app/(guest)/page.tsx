@@ -8,6 +8,16 @@ import { ToolGrid } from "@/components/tools/gallery/ToolGrid";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { pageMetadata, site } from "@/config/site";
+import { faqFacts } from "@/lib/faq-facts";
+import { faq } from "@/content/faq";
+
+/** The FAQ's questions the landing page answers too (content/faq.ts). */
+const LANDING_QUESTIONS = [
+  "Do I need an account to try it?",
+  "How does it know about my business?",
+  "How much does it cost?",
+  "Which AI does it use, and is my data used to train it?",
+];
 
 // The full title on its own — no "· AI Marketing Workspace" suffix.
 export const metadata = { ...pageMetadata(site.title, site.description, "/"), title: { absolute: site.title } };
@@ -40,12 +50,14 @@ const STEPS = [
  */
 export default async function LandingPage() {
   const supabase = await createClient();
-  const [user, tools, templates] = await Promise.all([
+  const [user, tools, templates, facts] = await Promise.all([
     getUser(),
     listActiveTools(supabase).catch(() => []),
     listTemplates(supabase).catch(() => []),
+    faqFacts(supabase),
   ]);
   const categories = deriveCategories(templates);
+  const questions = faq(facts).filter((entry) => LANDING_QUESTIONS.includes(entry.question));
 
   return (
     <main className="mx-auto max-w-5xl space-y-16 px-4 py-12 sm:px-6">
@@ -117,6 +129,54 @@ export default async function LandingPage() {
           </ul>
         </section>
       )}
+
+      <section className="space-y-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-display text-xl font-semibold text-ink-950">Pricing</h2>
+          <Link href="/pricing" className="text-sm text-accent hover:underline">
+            Compare plans →
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="space-y-2 rounded-lg border border-ink-200 bg-surface p-4">
+            <h3 className="font-medium text-ink-950">Free</h3>
+            <p className="text-sm text-ink-600">
+              {typeof facts.freeGenerations === "number"
+                ? `${facts.freeGenerations} generations a month`
+                : "A monthly allowance of generations"}
+              , with your history and company profile.
+            </p>
+          </div>
+          <div className="space-y-2 rounded-lg border border-ink-200 bg-surface p-4">
+            <h3 className="font-medium text-ink-950">
+              Pro{typeof facts.proPrice === "number" ? ` — $${Number(facts.proPrice)} a month` : ""}
+            </h3>
+            <p className="text-sm text-ink-600">
+              {typeof facts.proGenerations === "number"
+                ? `${facts.proGenerations} generations a month`
+                : "More generations"}{" "}
+              and every template. Starts with a {facts.trialDays}-day free trial; cancel any time.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-display text-xl font-semibold text-ink-950">Questions</h2>
+          <Link href="/faq" className="text-sm text-accent hover:underline">
+            All questions →
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {questions.map((entry) => (
+            <div key={entry.question} className="space-y-2">
+              <h3 className="font-medium text-ink-950">{entry.question}</h3>
+              <p className="text-sm text-ink-600">{entry.answer}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {!user && (
         <section className="space-y-3 rounded-lg border border-ink-200 bg-surface p-6 text-center">

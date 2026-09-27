@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { PRIVATE_PATHS, robotsFor, sitemapFor } from "@/lib/seo";
 import { pageMetadata, siteOrigin, supportEmail } from "@/config/site";
 
@@ -25,6 +25,8 @@ describe("sitemap.xml", () => {
       "https://app.example/tools",
       "https://app.example/templates",
       "https://app.example/pricing",
+      "https://app.example/faq",
+      "https://app.example/changelog",
       "https://app.example/privacy",
       "https://app.example/terms",
       "https://app.example/tools/ad-generator",
@@ -41,7 +43,9 @@ describe("site settings", () => {
   });
 
   it("uses the configured support address", () => {
-    expect(supportEmail({ NEXT_PUBLIC_SUPPORT_EMAIL: "help@app.example" })).toBe("help@app.example");
+    vi.stubEnv("NEXT_PUBLIC_SUPPORT_EMAIL", "help@app.example");
+    expect(supportEmail()).toBe("help@app.example");
+    vi.unstubAllEnvs();
   });
 
   it("repeats a page's title and description in its link preview, with a canonical URL", () => {

@@ -14,6 +14,8 @@ const GUEST_PAGES = [
   "/tools/ad-generator",
   "/templates",
   "/pricing",
+  "/faq",
+  "/changelog",
   "/login",
   "/register",
   "/forgot-password",

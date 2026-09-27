@@ -40,7 +40,7 @@ test("every response carries an enforced policy with a fresh nonce", async ({ pa
 
 test("guest pages and a guest generation run without a violation", async ({ page }) => {
   const violations = watchViolations(page);
-  for (const path of ["/", "/tools", "/templates", "/pricing", "/login", "/register", "/forgot-password", "/privacy", "/terms"]) {
+  for (const path of ["/", "/tools", "/templates", "/pricing", "/faq", "/changelog", "/login", "/register", "/forgot-password", "/privacy", "/terms"]) {
     await visit(page, path);
   }
 

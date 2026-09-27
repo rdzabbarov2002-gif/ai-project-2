@@ -54,7 +54,19 @@ const envSchema = z.object({
   AI_DAILY_BUDGET_USD: optional(z.string().regex(/^\d+(\.\d+)?$/, "must be a number of dollars")),
   // "true": the Content Security Policy only reports (lib/csp.ts).
   CSP_REPORT_ONLY: optional(z.enum(["true", "false"])),
+  // Where people write to us (config/site.ts): the footer, FAQ, legal pages.
+  NEXT_PUBLIC_SUPPORT_EMAIL: optional(z.string().email("must be an email address")),
+  // Set by Vercel: production, preview or development.
+  VERCEL_ENV: optional(z.string()),
 }).superRefine((env, ctx) => {
+  // Production can't launch without a way for people to reach us.
+  if (env.VERCEL_ENV === "production" && !env.NEXT_PUBLIC_SUPPORT_EMAIL) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["NEXT_PUBLIC_SUPPORT_EMAIL"],
+      message: "is required in production",
+    });
+  }
   // Payments half set up would take money without ever hearing back.
   if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET) {
     ctx.addIssue({

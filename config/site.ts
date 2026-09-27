@@ -34,10 +34,11 @@ export function siteOrigin(env: Record<string, string | undefined> = process.env
 
 /**
  * Where people write to us: NEXT_PUBLIC_SUPPORT_EMAIL — required in
- * production (lib/env.ts); a placeholder elsewhere.
+ * production (lib/env.ts); a placeholder elsewhere. Read by its full name
+ * so the build can put it into the browser code too (the footer).
  */
-export function supportEmail(env: Record<string, string | undefined> = process.env) {
-  return env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@example.com";
+export function supportEmail() {
+  return process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@example.com";
 }
 
 /**

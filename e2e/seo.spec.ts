@@ -9,7 +9,7 @@ test("the sitemap lists the public pages and every tool", async ({ request }) =>
   const res = await request.get("/sitemap.xml");
   expect(res.status()).toBe(200);
   const xml = await res.text();
-  for (const path of ["/tools", "/templates", "/pricing", "/privacy", "/terms", "/tools/ad-generator"]) {
+  for (const path of ["/tools", "/templates", "/pricing", "/faq", "/changelog", "/privacy", "/terms", "/tools/ad-generator"]) {
     expect(xml).toContain(`${path}</loc>`);
   }
   expect(xml).not.toContain("/dashboard");
@@ -37,4 +37,19 @@ test("public pages have their own title, description and a link preview with an 
   await page.goto("/tools/ad-generator");
   await expect(page).toHaveTitle("AI Ad Generator · AI Marketing Workspace");
   expect(await page.locator('link[rel="canonical"]').getAttribute("href")).toMatch(/\/tools\/ad-generator$/);
+});
+
+test("help for everyone: the FAQ, the changelog and the support address in every footer", async ({ page }) => {
+  await page.goto("/");
+  const footer = page.locator("footer");
+  await expect(footer.getByRole("link", { name: "Contact" })).toHaveAttribute("href", /^mailto:.+@.+/);
+
+  await footer.getByRole("link", { name: "FAQ" }).click();
+  await expect(page.getByRole("heading", { name: "Frequently asked questions" })).toBeVisible();
+  expect(await page.locator("main h2").count()).toBeGreaterThanOrEqual(10);
+  // The numbers come from the plans the app enforces.
+  await expect(page.getByText("The free plan gives you 20 generations a month.")).toBeVisible();
+
+  await page.locator("footer").getByRole("link", { name: "Changelog" }).click();
+  await expect(page.getByRole("heading", { name: "1.0 — Public launch" })).toBeVisible();
 });

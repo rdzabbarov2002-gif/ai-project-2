@@ -6,7 +6,7 @@ import type { MetadataRoute } from "next";
  */
 
 /** Pages for search engines: public, and the same for everyone. */
-export const PUBLIC_PATHS = ["/", "/tools", "/templates", "/pricing", "/privacy", "/terms"];
+export const PUBLIC_PATHS = ["/", "/tools", "/templates", "/pricing", "/faq", "/changelog", "/privacy", "/terms"];
 
 /** Per-person pages and endpoints — nothing for a search engine. */
 export const PRIVATE_PATHS = [
