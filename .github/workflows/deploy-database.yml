@@ -1,0 +1,40 @@
+name: Deploy database (staging)
+
+# Applies supabase/migrations to the hosted staging project — started by
+# hand from the Actions tab, so a phone is enough (docs/staging.md):
+# Actions → "Deploy database (staging)" → Run workflow.
+#
+# Needs one repository secret, STAGING_SUPABASE_DB_URL: the project's
+# Session pooler connection string (Supabase → Connect → Session pooler),
+# password included. The data (plans, tools, templates) comes with the
+# migrations. Running it again applies only migrations that are new.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only list the migrations it would apply"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DB_URL: ${{ secrets.STAGING_SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the secret is set
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "::error::Add the repository secret STAGING_SUPABASE_DB_URL (docs/staging.md, step 2)."
+            exit 1
+          fi
+
+      - name: Apply the migrations
+        run: npx --yes supabase@2.118.0 db push --db-url "$DB_URL" ${{ inputs.dry_run && '--dry-run' || '' }}

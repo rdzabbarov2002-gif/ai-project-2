@@ -98,6 +98,10 @@ after changing one on Vercel, redeploy. A Vercel build without the two
 | Preview | Vercel, one URL per pull request | Supabase project **staging** |
 | Production | Vercel, from `main` | Supabase project **prod** |
 
+Setting up a staging copy from a phone — a Supabase project migrated by
+the "Deploy database (staging)" workflow and a Vercel preview of the
+branch: `docs/staging.md`.
+
 1. **Supabase** — create two projects, `staging` and `prod`, apply the
    migrations to each (`supabase/README.md`: `npx supabase link` +
    `npx supabase db push`; staging first, then prod), and configure Auth
