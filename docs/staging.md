@@ -19,8 +19,10 @@ Passwords. Wait until the project is ready.
 2. GitHub → the repository → Settings → Secrets and variables → Actions →
    New repository secret: name `STAGING_SUPABASE_DB_URL`, the URI as the
    value.
-3. GitHub → Actions → **Deploy database (staging)** → Run workflow →
-   branch `claude/stoic-franklin-0o9nt2` → Run. Green in about a minute.
+3. GitHub → Actions → **Deploy database (staging)** → the latest run
+   (it was skipped: no secret yet) → **Re-run all jobs**. Green in about
+   a minute; the log ends with the migrations it applied. Later pushes
+   that add migrations apply them by themselves.
 4. Check: Supabase → Table Editor → `tools` has 4 rows, `templates` 20.
 
 ## 3. Sign-in settings (Supabase → Authentication)

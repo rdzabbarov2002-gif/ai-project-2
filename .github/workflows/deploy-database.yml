@@ -1,24 +1,28 @@
 name: Deploy database (staging)
 
-# Applies supabase/migrations to the hosted staging project — started by
-# hand from the Actions tab, so a phone is enough (docs/staging.md):
-# Actions → "Deploy database (staging)" → Run workflow.
+# Applies supabase/migrations to the hosted staging project
+# (docs/staging.md). Runs on every push to a branch other than main that
+# changes the migrations, and by hand: Actions → this workflow → a run →
+# "Re-run all jobs" (or "Run workflow", once this file is on main).
 #
 # Needs one repository secret, STAGING_SUPABASE_DB_URL: the project's
 # Session pooler connection string (Supabase → Connect → Session pooler),
-# password included. The data (plans, tools, templates) comes with the
-# migrations. Running it again applies only migrations that are new.
+# password included. Without it the run is skipped, not failed. The data
+# (plans, tools, templates) comes with the migrations; a run applies only
+# migrations the database doesn't have yet.
 
 on:
+  push:
+    branches-ignore: [main]
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/deploy-database.yml"
   workflow_dispatch:
-    inputs:
-      dry_run:
-        description: "Only list the migrations it would apply"
-        type: boolean
-        default: false
 
 permissions:
   contents: read
+
+concurrency: deploy-database-staging
 
 jobs:
   push:
@@ -29,12 +33,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check the secret is set
+      - name: Is staging set up?
+        id: secret
         run: |
           if [ -z "$DB_URL" ]; then
-            echo "::error::Add the repository secret STAGING_SUPABASE_DB_URL (docs/staging.md, step 2)."
-            exit 1
+            echo "::notice::Skipped: add the repository secret STAGING_SUPABASE_DB_URL (docs/staging.md, step 2), then re-run this workflow."
+            echo "set=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "set=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Apply the migrations
-        run: npx --yes supabase@2.118.0 db push --db-url "$DB_URL" ${{ inputs.dry_run && '--dry-run' || '' }}
+        if: steps.secret.outputs.set == 'true'
+        run: npx --yes supabase@2.118.0 db push --db-url "$DB_URL"
