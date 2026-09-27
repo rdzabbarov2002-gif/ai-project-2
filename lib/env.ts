@@ -50,6 +50,8 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: optional(z.string()),
   STRIPE_API_BASE: optional(url),
   CRON_SECRET: optional(z.string()),
+  // "true": the Content Security Policy only reports (lib/csp.ts).
+  CSP_REPORT_ONLY: optional(z.enum(["true", "false"])),
 }).superRefine((env, ctx) => {
   // Payments half set up would take money without ever hearing back.
   if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET) {

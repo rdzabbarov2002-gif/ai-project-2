@@ -2,10 +2,11 @@ const { withSentryConfig } = require("@sentry/nextjs/config");
 
 /**
  * Baseline security headers on every response. The full Content Security
- * Policy (scripts, styles, connections) comes later, as a production
- * readiness task — for now the CSP header carries only `frame-ancestors`,
- * which restricts nothing but who may frame the app. When the full policy
- * lands, it extends this same header.
+ * Policy needs a fresh nonce per response, so middleware.ts sets it
+ * (lib/csp.ts); the `frame-ancestors` one here also covers what
+ * middleware skips (static files, public/offline.html) and stays enforced
+ * while the full policy runs in Report-Only mode, which ignores
+ * `frame-ancestors`.
  *
  * HSTS without `includeSubDomains`/`preload`: both are commitments for the
  * whole domain (every subdomain HTTPS-only, a browser preload list that is

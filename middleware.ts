@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { CSP_REPORT_PATH, buildCsp, createNonce, cspHeaderName, cspMode } from "@/lib/csp";
 
 /**
  * Protects the `(auth)` route group (Dashboard, Onboarding, Company
@@ -24,7 +25,23 @@ const PROTECTED_PATHS = [
 ];
 
 export async function middleware(request: NextRequest) {
+  // The Content Security Policy (lib/csp.ts). On the request too: Next.js
+  // reads the nonce from there for its own scripts, the root layout from
+  // `x-nonce`; updateSession passes these request headers on.
+  const nonce = createNonce();
+  const csp = buildCsp({
+    nonce,
+    dev: process.env.NODE_ENV !== "production",
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  });
+  const cspHeader = cspHeaderName(cspMode());
+  request.headers.set("x-nonce", nonce);
+  request.headers.set(cspHeader, csp);
+
   const { response, user } = await updateSession(request);
+  response.headers.set(cspHeader, csp);
+  response.headers.set("Reporting-Endpoints", `csp="${CSP_REPORT_PATH}"`);
 
   const isProtected = PROTECTED_PATHS.some((path) =>
     request.nextUrl.pathname.startsWith(path),

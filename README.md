@@ -162,7 +162,10 @@ timeout — on the Hobby plan 60s is the maximum.
   Errors also go to Sentry, including failures the app handles without
   crashing (a failed save, a merge error).
 - **Security headers** — every response carries HSTS, `nosniff`,
-  `Referrer-Policy` and `frame-ancestors 'none'` (`next.config.js`).
+  `Referrer-Policy` and `frame-ancestors 'none'` (`next.config.js`), and
+  every page a Content Security Policy with a per-request nonce
+  (`lib/csp.ts`); rolling it out in Report-Only mode first:
+  `docs/production.md`.
 - **Product analytics** — with `POSTHOG_KEY` set, the server sends six
   events to PostHog: `signed_up`, `generation_completed` (tool, template,
   guest or not), `generation_blocked` (which limit), `feedback_sent`,
