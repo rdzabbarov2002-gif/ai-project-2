@@ -80,6 +80,8 @@ naming the variable. `.env.example` describes each.
 | `POSTHOG_KEY` / `POSTHOG_HOST` | no | Product analytics (PostHog project key; host defaults to the US cloud) |
 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | no (both or neither) | Payments; off when unset (`docs/billing.md`) |
 | `CRON_SECRET` | with payments | Protects the nightly subscription check |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | in production | Support address: footer, FAQ, Privacy, Terms |
+| `LEGAL_OPERATOR`, `LEGAL_COUNTRY`, `EMAIL_PROVIDER` | in production | Who runs the service, as the Privacy Policy and Terms name it; placeholders ("Draft") elsewhere |
 
 `OPENAI_API_KEY`, `GOOGLE_AI_API_KEY`, `MISTRAL_API_KEY`, `XAI_API_KEY`
 are reserved for providers that are still stubs and aren't read yet.
@@ -219,6 +221,12 @@ timeout — on the Hobby plan 60s is the maximum.
   and failing webhooks; a daily AI spend check (`/api/cron/ai-spend`,
   `AI_DAILY_BUDGET_USD`); spending limits per service:
   `docs/production.md`.
+- **Launch** — the funnel in PostHog, the checklist before launch
+  (Search Console, link previews, legal review), the announcement drafts
+  per channel with their tracking links, and the first 14 days:
+  `docs/launch.md`. Search engines get `sitemap.xml` and `robots.txt`
+  (production only is indexed); the public pages have titles,
+  descriptions and a link preview image (`config/site.ts`).
 - **Production readiness and incidents** — what to set up before public
   traffic (keys per environment, alerts, spending limits, the CSP
   rollout, performance targets and results): `docs/production.md`; the

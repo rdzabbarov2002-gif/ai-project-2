@@ -199,6 +199,8 @@ production data or money:
 | `NEXT_PUBLIC_SENTRY_DSN` | the same project; events are tagged `production`/`preview` | same |
 | `CSP_REPORT_ONLY` | `true` for the first 3 days, then removed | unset |
 | `AI_DAILY_BUDGET_USD` | your threshold | unset (the $10 default) |
+| `NEXT_PUBLIC_SUPPORT_EMAIL`, `LEGAL_OPERATOR`, `LEGAL_COUNTRY`, `EMAIL_PROVIDER` | required (`docs/launch.md`) | optional |
+| `NEXT_PUBLIC_SITE_URL` | `https://<domain>` — sitemap, link previews, email links | unset (the preview's own URL) |
 
 **Secrets only in Vercel's environment variables** (Project Settings →
 Environment Variables, marked *Sensitive*): never in the repository
