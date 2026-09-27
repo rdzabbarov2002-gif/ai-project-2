@@ -214,6 +214,12 @@ timeout — on the Hobby plan 60s is the maximum.
   and failing webhooks; a daily AI spend check (`/api/cron/ai-spend`,
   `AI_DAILY_BUDGET_USD`); spending limits per service:
   `docs/production.md`.
+- **Production readiness and incidents** — what to set up before public
+  traffic (keys per environment, alerts, spending limits, the CSP
+  rollout, performance targets and results): `docs/production.md`; the
+  security review: `docs/security-checklist.md`; what to do when the AI
+  or the database is down, webhooks fail, a key leaks, or data must be
+  restored: `docs/runbook.md`.
 - **Dependencies** — Dependabot opens weekly update PRs
   (`.github/dependabot.yml`); CI checks each one.
 
@@ -227,6 +233,7 @@ timeout — on the Hobby plan 60s is the maximum.
 | `npm run typecheck` | TypeScript, no emit |
 | `npm test` | Unit tests (Vitest) |
 | `npm run test:e2e` | End-to-end tests: sign-in flows, the core product path, payments and accessibility (Playwright, local Supabase running) |
+| `npm run test:load` | Load smoke test: 50 people at once on the main path, AI mocked (`docs/production.md`) |
 | `npm run db:types` | Regenerate `lib/supabase/database.types.ts` from the local database |
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests and the build on
@@ -241,7 +248,9 @@ runs the end-to-end tests against a local Supabase stack.
 parses, every placeholder maps to a field, `schema.sql`/`seed.sql` match the
 migrations), prompt assembly, plan limits and entitlements, rate limiting,
 the Claude provider's request shape and retries, the SSRF guard of profile
-autofill, the open-redirect guard, the environment check and the logger.
+autofill, the open-redirect guard, the environment check and the logger,
+the Content Security Policy and its report endpoint, the health check and
+the AI spend alert.
 
 `supabase/tests/` (pgTAP, `npx supabase test db`) checks row level
 security and client privileges on every table, and that deleting an
@@ -259,7 +268,9 @@ WCAG 2.1 AA violation (axe-core) and no sideways scrolling.
 trial, trial → payment, trial → cancel, plan up and down, a declined card
 (past due → Free), cancel at period end, refund — plus the webhook's
 signature and replay checks, the nightly reconciliation and deleting a
-paying account. The AI and Stripe are local stand-ins
+paying account. `e2e/csp.spec.ts` runs the key pages and a generation
+under the enforced Content Security Policy and fails on any violation.
+The AI and Stripe are local stand-ins
 (`e2e/mock-anthropic.mjs`, `e2e/mock-stripe.mjs`, started by Playwright;
 the Stripe one sends signed webhook events like Stripe), so the tests
 cost nothing and need no keys. It needs the local Supabase stack running (the tests

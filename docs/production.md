@@ -183,3 +183,51 @@ the top 10 are Auth's session lookups (every request checks the
 session), setting the request's role, reading the plan and usage, and
 saving a generation. The highest p95 estimate was **9.3 ms**, the highest
 single run 49 ms. Deleting an account, with all its cascades, takes 4 ms.
+
+## Production configuration
+
+**Separate keys per environment.** Production never shares a key with
+Preview (staging) or development, so a leaked staging key can't touch
+production data or money:
+
+| Variable | Production | Preview (staging) |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL`, `…_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | the **prod** Supabase project | the **staging** project |
+| `ANTHROPIC_API_KEY` | its own key (Console → API Keys, named `prod`) | another key (`staging`), in a workspace with a low spend limit |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | **live** mode (`sk_live_…`) | **test** mode (`sk_test_…`) |
+| `CRON_SECRET` | `openssl rand -hex 32` | a different one |
+| `NEXT_PUBLIC_SENTRY_DSN` | the same project; events are tagged `production`/`preview` | same |
+| `CSP_REPORT_ONLY` | `true` for the first 3 days, then removed | unset |
+| `AI_DAILY_BUDGET_USD` | your threshold | unset (the $10 default) |
+
+**Secrets only in Vercel's environment variables** (Project Settings →
+Environment Variables, marked *Sensitive*): never in the repository
+(`.env.local` is git-ignored, `.env.example` has no values), never in a
+`NEXT_PUBLIC_` variable (those are compiled into the browser code). The
+server checks every variable at startup (`lib/env.ts`).
+
+**No cookie banner needed.** The app sets one cookie, the Supabase
+session that keeps a person signed in, and uses browser storage for the
+guest session and the theme choice — all strictly necessary for what
+the person asked for. Analytics (PostHog) runs on the server without
+cookies; Speed Insights and Sentry set none; there are no ads or
+third-party scripts (the CSP would block them). The Privacy page says
+so. Adding any non-essential cookie or tracker later means adding a
+consent banner first.
+
+## Before public traffic — the owner's checklist
+
+Everything above that needs your accounts:
+
+- [ ] Vercel: the variables in the table above, per environment; redeploy.
+- [ ] CSP: 3 days in Report-Only without unexplained reports, then
+  enforced ("Content Security Policy").
+- [ ] Uptime monitor on `/api/health`; the Sentry alerts; each alert
+  fired once and seen on the phone and in the inbox.
+- [ ] Spending limits at Anthropic, Supabase, Vercel, Sentry, PostHog.
+- [ ] Anthropic rate-limit tier checked against the expected peak.
+- [ ] Speed Insights enabled; mobile p75 read once the beta has traffic.
+- [ ] Production Supabase: Advisors 0 ERROR; the query check above.
+- [ ] `curl -sI https://<domain>/`: HSTS, nosniff, Referrer-Policy, CSP,
+  X-Frame-Options.
+- [ ] One secret rotated on production (`docs/runbook.md`, 4).
