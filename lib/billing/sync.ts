@@ -36,11 +36,17 @@ export async function syncSubscription(
     .maybeSingle();
   // The checkout also writes the user into the subscription's metadata.
   const userId = customer?.user_id ?? subscription.metadata?.user_id;
-  if (!userId) {
-    logger.error("billing: subscription of an unknown customer", {
-      subscription: subscription.id,
-      customer: customerId,
-    });
+  const { data: user } = userId
+    ? await admin.from("users").select("id").eq("id", userId).maybeSingle()
+    : { data: null };
+  if (!user) {
+    // An ended subscription of a deleted account is expected, not a fault.
+    if (subscription.status !== "canceled" && subscription.status !== "incomplete_expired") {
+      logger.error("billing: subscription of an unknown customer", {
+        subscription: subscription.id,
+        customer: customerId,
+      });
+    }
     return "skipped";
   }
 
@@ -58,7 +64,7 @@ export async function syncSubscription(
   }
 
   const row = {
-    user_id: userId,
+    user_id: user.id,
     plan_id: plan.id,
     status: subscription.status,
     provider_ref: subscription.id,

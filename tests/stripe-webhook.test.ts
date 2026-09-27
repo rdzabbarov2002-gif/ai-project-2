@@ -60,6 +60,7 @@ function database({ seen = false, stored = null as FakeResult["data"] } = {}) {
   return fakeSupabase({
     stripe_events: (q) => (first(q) === "insert" ? {} : { data: seen ? { id: "evt_1" } : null }),
     billing_customers: () => ({ data: { user_id: "user-1" } }),
+    users: () => ({ data: { id: "user-1" } }),
     plans: () => ({ data: { id: "plan-pro" } }),
     subscriptions: (q) => (first(q) === "upsert" ? {} : { data: stored }),
   });
