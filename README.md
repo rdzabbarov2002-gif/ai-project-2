@@ -166,12 +166,17 @@ timeout — on the Hobby plan 60s is the maximum.
   every page a Content Security Policy with a per-request nonce
   (`lib/csp.ts`); rolling it out in Report-Only mode first:
   `docs/production.md`.
-- **Product analytics** — with `POSTHOG_KEY` set, the server sends six
-  events to PostHog: `signed_up`, `generation_completed` (tool, template,
-  guest or not), `generation_blocked` (which limit), `feedback_sent`,
-  `account_deleted`, and an alias linking a guest's events to the account
-  they sign up for. No cookies and nothing in the browser
-  (`lib/analytics.ts`).
+- **Product analytics** — with `POSTHOG_KEY` set, the server sends events
+  to PostHog: `site_visited` (a page opened by someone not signed in:
+  the page, the referring site and `utm_*` tags — `lib/visitor.ts`),
+  `signed_up`, `generation_completed` (tool, template, guest or not),
+  `generation_blocked` (which limit), `subscription_started` (plan,
+  trial or not) and `payment_succeeded` (amount), `feedback_sent`,
+  `account_deleted`, and aliases linking a guest's events and that day's
+  visits to the account they sign up for. No cookies and nothing in the
+  browser: a visitor is a pseudonymous ID (a keyed hash of the date, IP
+  and browser) that changes daily. The funnel visit → sign-up → first
+  result → payment: `docs/launch.md`.
 - **Feedback** — signed-in people write to us from "Send feedback" in the
   footer (`/feedback`; at most 10 messages an hour each). The `feedback`
   table is server only; read it in the Supabase SQL Editor:

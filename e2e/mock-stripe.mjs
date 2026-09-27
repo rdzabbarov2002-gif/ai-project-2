@@ -96,7 +96,16 @@ async function control(path, body) {
     if (body.status === "active" && sub.trial_end && sub.trial_end > now()) sub.trial_end = now();
     const type = sub.status === "canceled" ? "customer.subscription.deleted" : "customer.subscription.updated";
     if (body.invoice) {
-      const invoice = { id: nextId("in"), object: "invoice", parent: { subscription_details: { subscription: sub.id } } };
+      const paid = body.invoice === "paid";
+      const invoice = {
+        id: nextId("in"),
+        object: "invoice",
+        customer: sub.customer,
+        amount_paid: paid ? sub.items.data[0].price.unit_amount : 0,
+        currency: "usd",
+        billing_reason: "subscription_cycle",
+        parent: { subscription_details: { subscription: sub.id } },
+      };
       await send(body.invoice === "failed" ? "invoice.payment_failed" : "invoice.paid", invoice);
     }
     if (body.refund) await send("charge.refunded", { id: nextId("ch"), object: "charge", customer: sub.customer });

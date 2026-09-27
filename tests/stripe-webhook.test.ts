@@ -4,6 +4,7 @@ import { fakeSupabase, type FakeResult, type RecordedQuery } from "./helpers/fak
 
 const state = vi.hoisted(() => ({ enabled: true, retrieve: vi.fn() }));
 const createAdminClient = vi.hoisted(() => vi.fn());
+const track = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/billing/stripe", async (importOriginal) => {
   const { default: StripeClient } = await import("stripe");
@@ -15,6 +16,7 @@ vi.mock("@/lib/billing/stripe", async (importOriginal) => {
   };
 });
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient }));
+vi.mock("@/lib/analytics", () => ({ track }));
 
 const { POST } = await import("@/app/api/stripe/webhook/route");
 
@@ -201,5 +203,67 @@ describe("POST /api/stripe/webhook", () => {
   it("refuses every request while payments aren't set up", async () => {
     state.enabled = false;
     expect((await webhook(updated())).status).toBe(404);
+  });
+
+  describe("funnel events", () => {
+    it("reports a completed Checkout as subscription_started, with the plan and whether it's a trial", async () => {
+      const { client } = database();
+      createAdminClient.mockReturnValue(client);
+      state.retrieve.mockResolvedValue(subscription("trialing"));
+
+      await webhook({
+        id: "evt_c",
+        type: "checkout.session.completed",
+        data: { object: { id: "cs_1", mode: "subscription", subscription: "sub_1", client_reference_id: "user-1" } },
+      });
+      expect(track).toHaveBeenCalledWith("subscription_started", "user-1", { plan: "pro", trial: true });
+    });
+
+    it("reports an invoice that took money as payment_succeeded, for the customer's account", async () => {
+      const { client, queries } = database();
+      createAdminClient.mockReturnValue(client);
+      state.retrieve.mockResolvedValue(subscription("active"));
+      const invoice = (amount: number) => ({
+        id: "evt_i" + amount,
+        type: "invoice.paid",
+        data: {
+          object: {
+            id: "in_1",
+            customer: "cus_1",
+            amount_paid: amount,
+            currency: "usd",
+            billing_reason: "subscription_cycle",
+            parent: { subscription_details: { subscription: "sub_1" } },
+          },
+        },
+      });
+
+      await webhook(invoice(2900));
+      expect(track).toHaveBeenCalledWith("payment_succeeded", "user-1", {
+        amount: 29,
+        currency: "usd",
+        reason: "subscription_cycle",
+      });
+      const lookup = queries.find((q) => q.table === "billing_customers" && q.calls.some((c) => c[1] === "stripe_customer_id"));
+      expect(lookup?.calls).toContainEqual(["eq", "stripe_customer_id", "cus_1"]);
+
+      track.mockClear();
+      await webhook(invoice(0)); // a trial's $0 invoice
+      expect(track).not.toHaveBeenCalled();
+    });
+
+    it("sends nothing for other events, or when the event fails", async () => {
+      const { client } = database();
+      createAdminClient.mockReturnValue(client);
+      state.retrieve.mockResolvedValue(subscription("active"));
+      await webhook(updated());
+      state.retrieve.mockRejectedValue(new Error("stripe down"));
+      await webhook({
+        id: "evt_c2",
+        type: "checkout.session.completed",
+        data: { object: { id: "cs_1", mode: "subscription", subscription: "sub_1", client_reference_id: "user-1" } },
+      });
+      expect(track).not.toHaveBeenCalled();
+    });
   });
 });

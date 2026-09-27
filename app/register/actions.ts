@@ -3,7 +3,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
+import { headers } from "next/headers";
 import { track } from "@/lib/analytics";
+import { visitorIdFrom } from "@/lib/visitor";
 
 export interface AuthFormState {
   error: string | null;
@@ -36,7 +38,13 @@ export async function signUp(
     return { error: error.message, email };
   }
 
-  if (data.user) await track("signed_up", data.user.id);
+  if (data.user) {
+    await track("signed_up", data.user.id);
+    // Today's visits from this browser (lib/visitor.ts) become this
+    // account's: the funnel's visit → sign-up step.
+    const visitor = await visitorIdFrom(await headers());
+    if (visitor) await track("$create_alias", data.user.id, { alias: visitor });
+  }
 
   // With email confirmations ON (Supabase's default), signUp succeeds but
   // returns no session yet — the user must click the emailed link first,

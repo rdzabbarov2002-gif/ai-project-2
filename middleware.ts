@@ -1,6 +1,7 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { CSP_REPORT_PATH, buildCsp, createNonce, cspHeaderName, cspMode } from "@/lib/csp";
+import { trackVisit } from "@/lib/visitor";
 
 /**
  * Protects the `(auth)` route group (Dashboard, Onboarding, Company
@@ -24,7 +25,7 @@ const PROTECTED_PATHS = [
   "/reset-password",
 ];
 
-export async function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // The Content Security Policy (lib/csp.ts). On the request too: Next.js
   // reads the nonce from there for its own scripts, the root layout from
   // `x-nonce`; updateSession passes these request headers on.
@@ -52,6 +53,9 @@ export async function middleware(request: NextRequest) {
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
   }
+
+  // The funnel's first step: a page opened by someone not signed in.
+  if (!user) trackVisit(request, (promise) => event.waitUntil(promise));
 
   return response;
 }

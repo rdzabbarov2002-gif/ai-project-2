@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { billingEnabled, stripe } from "@/lib/billing/stripe";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { billingEnabled, planSlugForPrice, stripe } from "@/lib/billing/stripe";
 import { syncSubscription } from "@/lib/billing/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/lib/supabase/database.types";
+import { track } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
 
 /**
@@ -36,14 +39,18 @@ export async function POST(request: Request) {
   const { data: seen } = await admin.from("stripe_events").select("id").eq("id", event.id).maybeSingle();
   if (seen) return NextResponse.json({ received: true, duplicate: true });
 
+  const subscriptions: Stripe.Subscription[] = [];
   try {
     for (const id of subscriptionIds(event)) {
-      await syncSubscription(admin, await stripe().subscriptions.retrieve(id));
+      const subscription = await stripe().subscriptions.retrieve(id);
+      await syncSubscription(admin, subscription);
+      subscriptions.push(subscription);
     }
   } catch (error) {
     logger.error("billing: webhook event failed", { error, event: event.id, type: event.type });
     return NextResponse.json({ error: "Not processed." }, { status: 500 });
   }
+  await trackPayment(admin, event, subscriptions);
 
   const { error } = await admin.from("stripe_events").insert({ id: event.id, type: event.type });
   // 23505: the same event, handled at the same moment by another delivery.
@@ -77,3 +84,40 @@ function subscriptionIds(event: Stripe.Event): string[] {
       return [];
   }
 }
+
+/**
+ * The funnel's last steps (docs/launch.md): `subscription_started` when
+ * someone completes Checkout (a trial or a first payment), and
+ * `payment_succeeded` for every invoice that took money — a trial's $0
+ * invoice doesn't count. Sent once: a redelivered event stops at the
+ * `stripe_events` check above.
+ */
+async function trackPayment(admin: SupabaseClient<Database>, event: Stripe.Event, subscriptions: Stripe.Subscription[]) {
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const [subscription] = subscriptions;
+    const userId = session.client_reference_id ?? subscription?.metadata.user_id;
+    if (session.mode !== "subscription" || !subscription || !userId) return;
+    const price = subscription.items.data[0]?.price;
+    await track("subscription_started", userId, {
+      plan: price ? planSlugForPrice(price) : null,
+      trial: subscription.status === "trialing",
+    });
+  }
+  if (event.type === "invoice.paid") {
+    const invoice = event.data.object;
+    if (!invoice.amount_paid || !invoice.customer) return;
+    const { data: customer } = await admin
+      .from("billing_customers")
+      .select("user_id")
+      .eq("stripe_customer_id", idOf(invoice.customer))
+      .maybeSingle();
+    if (!customer) return;
+    await track("payment_succeeded", customer.user_id, {
+      amount: invoice.amount_paid / 100,
+      currency: invoice.currency,
+      reason: invoice.billing_reason,
+    });
+  }
+}
+

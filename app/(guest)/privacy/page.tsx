@@ -68,6 +68,14 @@ export default function PrivacyPage() {
             hosting provider, and error reports (stack traces, the page where an error happened)
             that exclude the content of your requests.
           </li>
+          <li>
+            <strong className="text-ink-950">Visits:</strong> when you open a page without being
+            signed in, which page, the site that linked to it and any campaign tags in the link.
+            Our server labels the visit with an ID it computes from your IP address and browser
+            and that changes every day; the IP address itself isn&apos;t kept, and nothing is
+            stored on your device. If you sign up, that day&apos;s visits are linked to your
+            account.
+          </li>
         </ul>
       </section>
 
@@ -94,9 +102,10 @@ export default function PrivacyPage() {
           </li>
           <li>Sentry — error reports.</li>
           <li>
-            PostHog — usage statistics: events such as &quot;signed up&quot; or &quot;generated
-            an ad&quot;, tied to a random account or session ID — never your email or what you
-            enter. Sent from our servers with no cookies.
+            PostHog — usage statistics: visits (above) and events such as &quot;signed up&quot;,
+            &quot;generated an ad&quot; or &quot;started a subscription&quot;, tied to a random
+            account, session or daily visitor ID — never your email or what you enter. Sent from
+            our servers with no cookies.
           </li>
           <li>
             Stripe — payments for paid plans: your card details go straight to Stripe. We keep
