@@ -121,3 +121,65 @@ OTPM. Before launch, compare with the organization's tier; if it's lower,
 move up a tier (Console → Billing: tiers rise with credit purchased) or
 ask Anthropic for a higher limit. During the beta (10–20 people) the
 first tiers are usually enough — check the numbers anyway.
+
+## Performance
+
+### Core Web Vitals
+
+Target (mobile, 75th percentile of real visits): LCP ≤ 2.5 s, INP ≤ 200
+ms, CLS ≤ 0.1 on the landing page, the dashboard and the main tool.
+
+**Real visits** are measured by Vercel Speed Insights: in production the
+root layout loads its script (`/_vercel/speed-insights/script.js`, same
+origin, no cookies). Turn it on once: Vercel → the project → Speed
+Insights → Enable. Then Speed Insights → Mobile, P75, per route: `/`,
+`/dashboard`, `/tools/[slug]`. Read it once the beta has had a few
+hundred visits; a page over target is the one place to optimize.
+
+**Lab measurement** before launch (Lighthouse 12, mobile preset:
+emulated mid-range phone, slow 4G, 4× CPU slowdown; median of 3 runs;
+`next start` locally, signed in for the dashboard). Lighthouse can't
+measure INP; Total Blocking Time is its stand-in (≤ 200 ms is good):
+
+| Page | LCP | CLS | TBT | Performance score |
+|---|---|---|---|---|
+| `/` | 1.9 s | 0 | 53 ms | 100 |
+| `/dashboard` | 2.45 s | 0.073 | 61 ms | 97 |
+| `/tools/ad-generator` | 1.7 s | 0 | 91 ms | 99 |
+
+All within target, so nothing was optimized. The dashboard is the one to
+watch: its LCP is the text under the page title, which arrives with the
+rest of the page after its database reads (usage, recent generations),
+and the CLS is the footer moving down when that content replaces the
+loading skeleton. If real visits put it over target, render the page
+without `loading.tsx` or give the skeleton the content's height.
+
+JavaScript: about 190 kB compressed on each of the three pages, the same
+shared chunks (React, Next.js, the Supabase client). No images besides
+the icons.
+
+### Database queries
+
+Target: none of the 10 queries with the most total time has a p95 over
+100 ms. `pg_stat_statements` gives each query's mean, standard deviation
+and maximum; mean + 2 × stddev is an upper estimate of p95. On the
+production project (SQL Editor; Supabase has the extension on by
+default — also Reports → Query Performance):
+
+```sql
+select round(total_exec_time::numeric) as total_ms, calls,
+  round(mean_exec_time::numeric, 2) as mean_ms,
+  round((mean_exec_time + 2 * stddev_exec_time)::numeric, 2) as p95_upper_ms,
+  round(max_exec_time::numeric, 2) as max_ms,
+  left(regexp_replace(query, '\s+', ' ', 'g'), 120) as query
+from extensions.pg_stat_statements
+where dbid = (select oid from pg_database where datname = current_database())
+order by total_exec_time desc
+limit 10;
+```
+
+Measured locally under the load smoke test (statistics reset first):
+the top 10 are Auth's session lookups (every request checks the
+session), setting the request's role, reading the plan and usage, and
+saving a generation. The highest p95 estimate was **9.3 ms**, the highest
+single run 49 ms. Deleting an account, with all its cascades, takes 4 ms.

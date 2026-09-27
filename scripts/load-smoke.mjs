@@ -193,5 +193,7 @@ try {
     }
   }
 } finally {
-  await Promise.all(accounts.map(({ id }) => deleteAccount(id)));
+  // One at a time, as people delete accounts: 50 cascading deletes at once
+  // only measure lock contention, not the app.
+  for (const { id } of accounts) await deleteAccount(id);
 }

@@ -76,7 +76,10 @@ export default function PrivacyPage() {
         <h2 className="font-medium text-ink-950">Who processes it for us</h2>
         <ul className="list-disc space-y-2 pl-5 text-ink-600">
           <li>Supabase — database and authentication.</li>
-          <li>Vercel — hosting.</li>
+          <li>
+            Vercel — hosting, and page speed measurements: how fast pages load and respond on
+            your device, with the page address and device type — no cookies.
+          </li>
           <li>
             Anthropic — generates the text: your tool inputs and company profile are sent to it
             for each generation.

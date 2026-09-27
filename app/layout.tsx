@@ -51,6 +51,11 @@ export default async function RootLayout({
       </head>
       <body>
         <AppProviders>{children}</AppProviders>
+        {/* Core Web Vitals from real visits (docs/production.md): Vercel
+            Speed Insights, production only — no cookies, same origin. */}
+        {process.env.VERCEL_ENV === "production" && (
+          <script nonce={nonce} defer src="/_vercel/speed-insights/script.js" />
+        )}
         {/* Service worker registration (Stage 1); the worker's caching is Stage 14's (public/sw.js). */}
         <script
           nonce={nonce}
