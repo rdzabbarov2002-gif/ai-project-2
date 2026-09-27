@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { PRIVATE_PATHS, robotsFor, sitemapFor } from "@/lib/seo";
-import { pageMetadata, siteOrigin, supportEmail } from "@/config/site";
+import { legalFacts, pageMetadata, siteOrigin, supportEmail } from "@/config/site";
 
 describe("robots.txt", () => {
   it("lets search engines into production's public pages, not the per-person ones", () => {
@@ -57,3 +57,21 @@ describe("site settings", () => {
     });
   });
 });
+
+describe("who runs the service (Privacy, Terms)", () => {
+  it("shows placeholders and marks the pages as a draft until all three are set", () => {
+    vi.stubEnv("LEGAL_OPERATOR", "");
+    vi.stubEnv("LEGAL_COUNTRY", "Ireland");
+    vi.stubEnv("EMAIL_PROVIDER", "Resend");
+    expect(legalFacts()).toEqual({
+      operator: "[Company name and address]",
+      country: "Ireland",
+      emailProvider: "Resend",
+      draft: true,
+    });
+    vi.stubEnv("LEGAL_OPERATOR", "Example Ltd, 1 Main St, Dublin");
+    expect(legalFacts()).toMatchObject({ operator: "Example Ltd, 1 Main St, Dublin", draft: false });
+    vi.unstubAllEnvs();
+  });
+});
+

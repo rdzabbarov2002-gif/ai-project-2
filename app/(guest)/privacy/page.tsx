@@ -1,4 +1,5 @@
-import { pageMetadata } from "@/config/site";
+import { legalFacts, pageMetadata, site, supportEmail } from "@/config/site";
+import { formatDay } from "@/lib/format";
 
 export const metadata = pageMetadata(
   "Privacy Policy",
@@ -7,26 +8,35 @@ export const metadata = pageMetadata(
 );
 
 /**
- * DRAFT — to be reviewed by the owner before launch. Describes only what
- * the app does today; bracketed placeholders need real values. Keep it in
- * step with the code: a new processor, cookie or kind of stored data
- * belongs here.
+ * Describes only what the app does today — keep it in step with the code:
+ * a new processor, cookie or kind of stored data belongs here, and a
+ * change moves `site.legalUpdated`. Who runs the service comes from the
+ * environment (legalFacts); without it the page says "Draft". Have it
+ * reviewed by a lawyer for your country before launch (docs/launch.md).
  */
 export default function PrivacyPage() {
+  const facts = legalFacts();
+  const email = supportEmail();
   return (
     <main className="mx-auto max-w-3xl space-y-8 px-4 py-12 sm:px-6">
       <header className="space-y-2">
         <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-950">
           Privacy Policy
         </h1>
-        <p className="text-sm text-ink-600">Draft · Last updated September 26, 2026</p>
+        <p className="text-sm text-ink-600">
+          {facts.draft && "Draft · "}Last updated {formatDay(site.legalUpdated)}
+        </p>
       </header>
 
       <section className="space-y-3">
         <h2 className="font-medium text-ink-950">Who we are</h2>
         <p className="text-ink-600">
-          AI Marketing Workspace is operated by [Company name] (&quot;we&quot;). We are
-          responsible for the personal data described here. Contact: [contact email].
+          AI Marketing Workspace is operated by {facts.operator} (&quot;we&quot;). We are
+          responsible for the personal data described here. Contact:{" "}
+          <a href={`mailto:${email}`} className="text-accent underline">
+            {email}
+          </a>
+          .
         </p>
       </section>
 
@@ -89,7 +99,7 @@ export default function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-medium text-ink-950">Who processes it for us</h2>
+        <h2 className="font-medium text-ink-950">Who processes it for us (subprocessors)</h2>
         <ul className="list-disc space-y-2 pl-5 text-ink-600">
           <li>Supabase — database and authentication.</li>
           <li>
@@ -111,16 +121,16 @@ export default function PrivacyPage() {
             Stripe — payments for paid plans: your card details go straight to Stripe. We keep
             only your Stripe customer number and your subscription&apos;s status and dates.
           </li>
-          <li>[Email provider] — sends account emails.</li>
+          <li>{facts.emailProvider} — sends account emails.</li>
         </ul>
       </section>
 
       <section className="space-y-3">
         <h2 className="font-medium text-ink-950">Cookies and browser storage</h2>
         <p className="text-ink-600">
-          We use only what the service needs: a cookie that keeps you signed in, and browser
-          storage for the guest session and your light/dark theme. No analytics or advertising
-          cookies.
+          This is our cookie policy. We use only what the service needs: a cookie that keeps
+          you signed in, and browser storage for the guest session and your light/dark theme.
+          No analytics or advertising cookies, so there is nothing to consent to.
         </p>
       </section>
 
@@ -129,7 +139,11 @@ export default function PrivacyPage() {
         <p className="text-ink-600">
           You can see and edit your company profile at any time, and delete your account and
           its data yourself under Billing &amp; Plan → Delete account. For a copy of your
-          data or any other request, contact [contact email].
+          data or any other request, contact{" "}
+          <a href={`mailto:${email}`} className="text-accent underline">
+            {email}
+          </a>
+          .
         </p>
       </section>
 
@@ -138,8 +152,8 @@ export default function PrivacyPage() {
         <p className="text-ink-600">
           For as long as your account exists. Deleting your account deletes your account,
           company profile, generations and feedback. Usage statistics, error reports and
-          server logs contain no email or content and stay with the processors above for up to
-          [retention period].
+          server logs contain no email or content and stay with the processors above for up to{" "}
+          {site.statisticsRetention}.
         </p>
       </section>
     </main>
