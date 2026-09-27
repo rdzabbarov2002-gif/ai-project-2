@@ -40,6 +40,16 @@ export async function adminInsert(table: string, row: Record<string, unknown>): 
   expect(res.ok, `inserting into ${table}: ${res.status}`).toBe(true);
 }
 
+/** Changes rows as the service role (PostgREST filter in `query`). */
+export async function adminUpdate(table: string, query: string, values: Record<string, unknown>): Promise<void> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+    method: "PATCH",
+    headers: adminHeaders,
+    body: JSON.stringify(values),
+  });
+  expect(res.ok, `updating ${table}: ${res.status}`).toBe(true);
+}
+
 /** Rows of a table as the service role sees them (PostgREST query string). */
 export async function adminSelect<T>(table: string, query: string): Promise<T[]> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers: adminHeaders });

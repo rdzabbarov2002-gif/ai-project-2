@@ -214,7 +214,7 @@ timeout — on the Hobby plan 60s is the maximum.
 | `npm run lint` | ESLint (`next lint`) |
 | `npm run typecheck` | TypeScript, no emit |
 | `npm test` | Unit tests (Vitest) |
-| `npm run test:e2e` | End-to-end tests: sign-in flows, the core product path and accessibility (Playwright, local Supabase running) |
+| `npm run test:e2e` | End-to-end tests: sign-in flows, the core product path, payments and accessibility (Playwright, local Supabase running) |
 | `npm run db:types` | Regenerate `lib/supabase/database.types.ts` from the local database |
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests and the build on
@@ -242,9 +242,15 @@ feedback form; and the core path — generate, see the result, find it in
 history and favorite it — plus the server's monthly plan limit and
 per-minute rate limit. `e2e/a11y.spec.ts` checks the key pages, guest and
 signed in, at 360px in the light and dark theme: no critical or serious
-WCAG 2.1 AA violation (axe-core) and no sideways scrolling. The AI is a
-local stand-in (`e2e/mock-anthropic.mjs`, started by Playwright), so the
-tests cost nothing. It needs the local Supabase stack running (the tests
+WCAG 2.1 AA violation (axe-core) and no sideways scrolling.
+`e2e/billing.spec.ts` runs the payment scenarios — subscribe with a
+trial, trial → payment, trial → cancel, plan up and down, a declined card
+(past due → Free), cancel at period end, refund — plus the webhook's
+signature and replay checks, the nightly reconciliation and deleting a
+paying account. The AI and Stripe are local stand-ins
+(`e2e/mock-anthropic.mjs`, `e2e/mock-stripe.mjs`, started by Playwright;
+the Stripe one sends signed webhook events like Stripe), so the tests
+cost nothing and need no keys. It needs the local Supabase stack running (the tests
 read emails from its inbox) and a browser: `npx playwright install
 chromium` once.
 
