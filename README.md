@@ -195,6 +195,10 @@ timeout — on the Hobby plan 60s is the maximum.
   where input_tokens is not null and created_at > now() - interval '30 days'
   group by ai_model;
   ```
+- **Payments** — Stripe Checkout, the Customer Portal, a signed and
+  idempotent webhook, and a nightly reconciliation with Stripe
+  (`vercel.json`). Setting up test and live mode, the scenarios to run,
+  and the margins per plan: `docs/billing.md`.
 - **Closed beta** — what to set up before inviting people, and the
   numbers to watch (activation, time to a first result, feedback) with
   the SQL that produces them: `docs/beta.md`.

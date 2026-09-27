@@ -21,6 +21,7 @@ const customers = new Map();
 const sessions = new Map();
 const subscriptions = new Map();
 const sent = []; // every event sent, for replays
+const webhookEndpoints = []; // scripts/stripe-setup.mjs registers one
 let counter = 0;
 const nextId = (prefix) => `${prefix}_${Date.now().toString(36)}${(++counter).toString(36)}`;
 const now = () => Math.floor(Date.now() / 1000);
@@ -153,6 +154,16 @@ async function handle(req, url, body) {
   if (req.method === "POST" && path === "/v1/billing_portal/sessions") {
     const params = parseForm(body);
     return json(200, { id: nextId("bps"), object: "billing_portal.session", url: params.return_url });
+  }
+  if (path === "/v1/webhook_endpoints") {
+    if (req.method === "POST") {
+      const params = parseForm(body);
+      const endpoint = { id: nextId("we"), object: "webhook_endpoint", url: params.url, secret: SECRET,
+        enabled_events: Object.values(params.enabled_events ?? {}) };
+      webhookEndpoints.push(endpoint);
+      return json(200, endpoint);
+    }
+    return json(200, { object: "list", data: webhookEndpoints.map(({ secret, ...rest }) => rest), has_more: false });
   }
   if (req.method === "GET" && path === "/v1/subscriptions") {
     return json(200, { object: "list", data: [...subscriptions.values()], has_more: false, url: "/v1/subscriptions" });
