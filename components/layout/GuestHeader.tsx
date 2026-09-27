@@ -27,6 +27,9 @@ export function GuestHeader() {
             <NavLink href="/templates" className={linkClasses} activeClassName={active} inactiveClassName={inactive}>
               Templates
             </NavLink>
+            <NavLink href="/pricing" className={linkClasses} activeClassName={active} inactiveClassName={inactive}>
+              Pricing
+            </NavLink>
           </nav>
         </div>
         <div className="flex items-center gap-2">

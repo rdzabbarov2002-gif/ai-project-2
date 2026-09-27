@@ -17,13 +17,6 @@ import { Card } from "@/components/ui/Card";
  */
 export interface UsageCardProps {
   planSlug: "free" | "pro" | "enterprise";
-  /** Subscription status (Settings/Billing only — Stage 13's brief asks
-   *  for it there, not on the Dashboard). Omitted entirely when absent,
-   *  not rendered as an empty state — there is always a real value once
-   *  a `subscriptions` row exists (migration 0009's signup trigger
-   *  creates one for every user), so "missing" only happens for an edge
-   *  case already worth just not showing a status line for. */
-  status?: string;
   used: number;
   /** null = unlimited (mirrors PlanLimits.maxGenerationsPerMonth's own
    *  null-means-unlimited convention, Stage 5) — kept as the same
@@ -38,7 +31,7 @@ const PLAN_LABELS: Record<UsageCardProps["planSlug"], string> = {
   enterprise: "Enterprise",
 };
 
-export function UsageCard({ planSlug, status, used, limit }: UsageCardProps) {
+export function UsageCard({ planSlug, used, limit }: UsageCardProps) {
   const isUnlimited = limit === null;
   const remaining = isUnlimited ? null : Math.max(0, limit - used);
   const percentage = isUnlimited
@@ -51,7 +44,6 @@ export function UsageCard({ planSlug, status, used, limit }: UsageCardProps) {
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="font-medium text-ink-950">Plan: {PLAN_LABELS[planSlug]}</h2>
-        {status && <span className="text-xs text-ink-600">{status}</span>}
       </div>
 
       <dl className="grid grid-cols-3 gap-2 text-sm">

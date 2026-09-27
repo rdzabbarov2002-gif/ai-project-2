@@ -1,95 +1,78 @@
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { resolveUsageSummary } from "@/lib/limits/usageSummary";
-import { firstEmbed, type Embed } from "@/lib/supabase/embed";
+import { billingEnabled, TRIAL_DAYS } from "@/lib/billing/stripe";
+import { listPlanOptions, readPaidSubscriptions, type PaidSubscription } from "@/lib/billing/plans";
 import { UsageCard } from "@/components/usage/UsageCard";
-import { PlanComparison, type PlanOption } from "@/components/usage/PlanComparison";
+import { PlanComparison, type PlanActions } from "@/components/usage/PlanComparison";
 import { DeleteAccountForm } from "@/components/account/DeleteAccountForm";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { openBillingPortal } from "./actions";
 
-const PLAN_ORDER: PlanOption["slug"][] = ["free", "pro", "enterprise"];
+/** Statuses in which the person still has a subscription to manage. */
+const PAYING = ["active", "trialing", "past_due", "unpaid"];
 
 /**
- * Billing & Plan (Stage 13). Usage comes from the shared
- * resolveUsageSummary (lib/limits/usageSummary.ts — the same read the
- * Dashboard and tool page use); the subscription status is this page's
- * own extra read. No Stripe/payment/webhook logic — explicitly out of
- * scope for the MVP; this page only reads and displays what exists.
- *
- * Stage 13 completion (architecture doc §9 "plan, limits, upgrade"): a
- * comparison of the active plans, read from `plans`/`plan_limits`
- * (public-read reference tables, migration 0002) so it reflects the real
- * limits rather than a hand-written copy of them.
+ * Billing & Plan (Stage 13; payments since Phase 6, docs/billing.md).
+ * Usage comes from the shared resolveUsageSummary (lib/limits/
+ * usageSummary.ts — the same read the Dashboard and tool page use); the
+ * plan comparison and the paid subscription from lib/billing/plans.ts.
+ * Buying goes to Stripe Checkout, everything after that — plan changes,
+ * cards, cancelling, invoices — to Stripe's Customer Portal. The page
+ * only shows what the webhook stored.
  */
-export default async function BillingSettingsPage() {
+export default async function BillingSettingsPage(props: {
+  searchParams: Promise<{ checkout?: string; billing?: string }>;
+}) {
+  const searchParams = await props.searchParams;
   const user = await requireUser();
   const supabase = await createClient();
 
-  const [summary, { data: subscription }, { data: plans }] = await Promise.all([
+  const [summary, planOptions, paid] = await Promise.all([
     resolveUsageSummary(supabase, user.id),
-    // `subscriptions` allows a per-user history in principle (Stage 3);
-    // most recent row is "the" current one, same tie-breaker already used
-    // for company_profiles (Stage 12) and templates (Stage 7/10).
-    supabase
-      .from("subscriptions")
-      .select("status")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("plans")
-      .select(
-        "slug, name, price_month, plan_limits(max_generations_per_month, allowed_tool_ids, premium_templates)",
-      )
-      .eq("is_active", true),
+    listPlanOptions(supabase),
+    readPaidSubscriptions(supabase, user.id),
   ]);
-
-  const planOptions: PlanOption[] = (plans ?? [])
-    .map((plan) => {
-      const limits = firstEmbed(
-        plan.plan_limits as unknown as Embed<{
-          max_generations_per_month: number | null;
-          allowed_tool_ids: unknown;
-          premium_templates: boolean;
-        }>,
-      );
-      return {
-        // plans.slug is limited to these three by its CHECK constraint (0002).
-        slug: plan.slug as PlanOption["slug"],
-        name: plan.name,
-        priceMonth: plan.price_month,
-        // null is meaningful here (unlimited) — only a missing limits row
-        // falls back to 0, failing closed like resolvePlanLimits does.
-        generationsPerMonth: limits ? limits.max_generations_per_month : 0,
-        tools: Array.isArray(limits?.allowed_tool_ids)
-          ? limits.allowed_tool_ids.length
-          : limits?.allowed_tool_ids === "all"
-            ? ("all" as const)
-            : 0,
-        premiumTemplates: limits?.premium_templates === true,
-      };
-    })
-    .sort((a, b) => PLAN_ORDER.indexOf(a.slug) - PLAN_ORDER.indexOf(b.slug));
+  const paying = paid.latest !== null && PAYING.includes(paid.latest.status);
+  const actions: PlanActions = billingEnabled()
+    ? { kind: "checkout", trialDays: paid.any ? null : TRIAL_DAYS, paying }
+    : { kind: "unavailable" };
 
   return (
     <main className="mx-auto max-w-4xl space-y-8 p-6">
       <div className="max-w-2xl space-y-6">
         <h1 className="font-display text-xl font-semibold text-ink-950">Billing & Plan</h1>
+        {searchParams.checkout === "success" && (
+          <p role="status" className="text-sm text-ink-950">
+            Thank you — your subscription is starting. It can take a few seconds to show here;
+            refresh if it doesn&apos;t.
+          </p>
+        )}
+        {searchParams.billing === "unavailable" && (
+          <p role="alert" className="text-sm text-danger">
+            Payments aren&apos;t available right now. Please try again in a few minutes.
+          </p>
+        )}
         <UsageCard
           planSlug={summary.planLimits.planSlug}
-          status={subscription?.status}
           used={summary.used}
           limit={summary.planLimits.maxGenerationsPerMonth}
         />
+        {paid.latest && <SubscriptionCard subscription={paid.latest} manage={billingEnabled()} />}
       </div>
 
       {planOptions.length > 0 && (
         <section className="space-y-3">
           <h2 className="font-medium text-ink-950">Plans</h2>
-          <PlanComparison plans={planOptions} currentSlug={summary.planLimits.planSlug} />
+          <PlanComparison
+            plans={planOptions}
+            currentSlug={summary.planLimits.planSlug}
+            actions={actions}
+          />
           <p className="text-xs text-ink-600">
-            Online upgrades are coming soon. Usage resets at the start of each calendar month
-            (UTC).
+            Prices exclude tax, which is added at checkout for your country. Usage resets at
+            the start of each calendar month (UTC).
           </p>
         </section>
       )}
@@ -103,5 +86,47 @@ export default async function BillingSettingsPage() {
         <DeleteAccountForm />
       </section>
     </main>
+  );
+}
+
+const formatDate = (value: string | null) =>
+  value
+    ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(value))
+    : "the end of the period";
+
+/** The paid subscription, in words — as the webhook last stored it. */
+function SubscriptionCard({ subscription, manage }: { subscription: PaidSubscription; manage: boolean }) {
+  const { status, planName, periodEnd, trialEnd, cancelAtPeriodEnd } = subscription;
+  let text: string;
+  let problem = false;
+  if (status === "trialing") {
+    text = cancelAtPeriodEnd
+      ? `${planName} free trial until ${formatDate(trialEnd)}. It ends then — you won't be charged.`
+      : `${planName} free trial until ${formatDate(trialEnd)}, then your card is charged.`;
+  } else if (status === "active") {
+    text = cancelAtPeriodEnd
+      ? `${planName} until ${formatDate(periodEnd)}. It won't renew.`
+      : `${planName}, renews on ${formatDate(periodEnd)}.`;
+  } else if (status === "past_due" || status === "unpaid") {
+    problem = true;
+    text = `Your last payment for ${planName} failed. Update your card to get ${planName} back — until then you're on the Free plan.`;
+  } else if (status === "incomplete") {
+    problem = true;
+    text = `The first payment for ${planName} wasn't completed.`;
+  } else {
+    text = `Your ${planName} subscription has ended.`;
+  }
+
+  return (
+    <Card className="space-y-3">
+      <p className={problem ? "text-sm text-danger" : "text-sm text-ink-950"}>{text}</p>
+      {manage && PAYING.includes(status) && (
+        <form action={openBillingPortal}>
+          <Button type="submit" variant="secondary">
+            {problem ? "Update payment method" : "Manage billing"}
+          </Button>
+        </form>
+      )}
+    </Card>
   );
 }

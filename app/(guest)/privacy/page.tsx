@@ -43,6 +43,10 @@ export default function PrivacyPage() {
             the feedback form.
           </li>
           <li>
+            <strong className="text-ink-950">Subscription:</strong> on a paid plan, its status,
+            dates and your Stripe customer number (no card details).
+          </li>
+          <li>
             <strong className="text-ink-950">Usage:</strong> how many generations you made this
             month, to apply your plan&apos;s limits.
           </li>
@@ -82,6 +86,10 @@ export default function PrivacyPage() {
             PostHog — usage statistics: events such as &quot;signed up&quot; or &quot;generated
             an ad&quot;, tied to a random account or session ID — never your email or what you
             enter. Sent from our servers with no cookies.
+          </li>
+          <li>
+            Stripe — payments for paid plans: your card details go straight to Stripe. We keep
+            only your Stripe customer number and your subscription&apos;s status and dates.
           </li>
           <li>[Email provider] — sends account emails.</li>
         </ul>

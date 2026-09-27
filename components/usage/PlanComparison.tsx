@@ -1,7 +1,9 @@
+import Link from "next/link";
 import clsx from "clsx";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClasses } from "@/components/ui/Button";
+import { openBillingPortal, startCheckout } from "@/app/(auth)/settings/billing/actions";
 
 export interface PlanOption {
   slug: "free" | "pro" | "enterprise";
@@ -13,22 +15,35 @@ export interface PlanOption {
   /** "all" or how many tools. */
   tools: "all" | number;
   premiumTemplates: boolean;
+  /** Bought through Stripe Checkout (lib/billing/stripe.ts, CHECKOUT_PRICE). */
+  selfServe: boolean;
 }
 
+/** What the buttons can do for this visitor. */
+export type PlanActions =
+  /** Payments aren't set up here (no STRIPE_SECRET_KEY). */
+  | { kind: "unavailable" }
+  /** Not signed in: every button starts with an account. */
+  | { kind: "signup"; trialDays: number }
+  /** Signed in: Checkout, or the Customer Portal for someone who pays. */
+  | { kind: "checkout"; trialDays: number | null; paying: boolean };
+
 /**
- * Plan comparison for Billing/Settings (architecture doc §9: "plan,
- * limits, upgrade — UI ready, payment later"; §18). Pure presentation of
- * what `plans`/`plan_limits` hold — the page reads them; nothing here is
- * hard-coded per plan except the display order. The upgrade buttons are
- * honest placeholders: payments (Stripe) are explicitly outside the MVP,
- * so they're disabled and say so rather than leading anywhere.
+ * Plan comparison for the pricing page and Billing & Plan. Pure
+ * presentation of what `plans`/`plan_limits` hold (lib/billing/plans.ts);
+ * nothing here is hard-coded per plan except the display order. Buttons
+ * are plain forms posting to the billing Server Actions, which redirect
+ * to Stripe.
  */
 export function PlanComparison({
   plans,
   currentSlug,
+  actions,
 }: {
   plans: PlanOption[];
-  currentSlug: PlanOption["slug"];
+  /** null for a visitor who isn't signed in. */
+  currentSlug: PlanOption["slug"] | null;
+  actions: PlanActions;
 }) {
   const currentIndex = plans.findIndex((plan) => plan.slug === currentSlug);
 
@@ -69,18 +84,75 @@ export function PlanComparison({
               </li>
             </ul>
 
-            {isCurrent ? (
-              <Button variant="secondary" disabled>
-                Your plan
-              </Button>
-            ) : index > currentIndex ? (
-              <Button variant="upgrade" disabled title="Online payments aren't available yet">
-                {plan.priceMonth === null ? "Contact sales — coming soon" : "Upgrade — coming soon"}
-              </Button>
-            ) : null}
+            <PlanButton
+              plan={plan}
+              isCurrent={isCurrent}
+              isUpgrade={currentSlug === null || index > currentIndex}
+              actions={actions}
+            />
           </Card>
         );
       })}
     </div>
   );
+}
+
+function PlanButton({
+  plan,
+  isCurrent,
+  isUpgrade,
+  actions,
+}: {
+  plan: PlanOption;
+  isCurrent: boolean;
+  isUpgrade: boolean;
+  actions: PlanActions;
+}) {
+  if (isCurrent) {
+    return actions.kind === "checkout" && actions.paying ? (
+      <form action={openBillingPortal}>
+        <Button type="submit" variant="secondary" className="w-full">
+          Manage billing
+        </Button>
+      </form>
+    ) : (
+      <Button variant="secondary" disabled>
+        Your plan
+      </Button>
+    );
+  }
+  if (!isUpgrade) return null;
+
+  if (!plan.selfServe && plan.priceMonth !== 0) {
+    // Custom pricing is agreed in person; the feedback form reaches us.
+    return (
+      <Link href="/feedback" className={buttonClasses("secondary")}>
+        Contact us
+      </Link>
+    );
+  }
+
+  switch (actions.kind) {
+    case "unavailable":
+      return plan.priceMonth === 0 ? null : (
+        <Button variant="upgrade" disabled title="Online payments aren't available yet">
+          Upgrade — coming soon
+        </Button>
+      );
+    case "signup":
+      return (
+        <Link href="/register" className={buttonClasses(plan.priceMonth === 0 ? "secondary" : "upgrade")}>
+          {plan.priceMonth === 0 ? "Start free" : `Start ${actions.trialDays}-day free trial`}
+        </Link>
+      );
+    case "checkout":
+      return actions.paying ? null : (
+        <form action={startCheckout}>
+          <input type="hidden" name="plan" value={plan.slug} />
+          <Button type="submit" variant="upgrade" className="w-full">
+            {actions.trialDays ? `Start ${actions.trialDays}-day free trial` : `Upgrade to ${plan.name}`}
+          </Button>
+        </form>
+      );
+  }
 }
