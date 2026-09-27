@@ -209,6 +209,11 @@ timeout — on the Hobby plan 60s is the maximum.
   has none); `supabase/backup.sh` takes and restores a logical backup.
   How to check a backup's age, restore into a new project and run the
   restore drill: `docs/backup-restore.md`.
+- **Health and alerts** — `GET /api/health` for the uptime monitor (200,
+  or 503 when the database can't be read); Sentry alerts on error spikes
+  and failing webhooks; a daily AI spend check (`/api/cron/ai-spend`,
+  `AI_DAILY_BUDGET_USD`); spending limits per service:
+  `docs/production.md`.
 - **Dependencies** — Dependabot opens weekly update PRs
   (`.github/dependabot.yml`); CI checks each one.
 

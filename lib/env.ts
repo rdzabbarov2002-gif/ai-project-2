@@ -50,6 +50,8 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: optional(z.string()),
   STRIPE_API_BASE: optional(url),
   CRON_SECRET: optional(z.string()),
+  // Alert threshold for the daily AI spend check (app/api/cron/ai-spend).
+  AI_DAILY_BUDGET_USD: optional(z.string().regex(/^\d+(\.\d+)?$/, "must be a number of dollars")),
   // "true": the Content Security Policy only reports (lib/csp.ts).
   CSP_REPORT_ONLY: optional(z.enum(["true", "false"])),
 }).superRefine((env, ctx) => {
