@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
+import localFont from "next/font/local";
 import "./globals.css";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
@@ -25,10 +26,23 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F7F7F8" },
-    { media: "(prefers-color-scheme: dark)", color: "#0E0F12" },
+    { media: "(prefers-color-scheme: light)", color: "#F2F3F7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0C0D16" },
   ],
 };
+
+/**
+ * Manrope, served from our own origin (the CSP allows fonts from 'self'
+ * only) — the file comes from the npm package at build time, so builds
+ * don't depend on reaching Google Fonts. Latin only: other scripts fall
+ * back to the system font.
+ */
+const manrope = localFont({
+  src: "../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2",
+  weight: "200 800",
+  variable: "--font-manrope",
+  display: "swap",
+});
 
 /**
  * Runs before first paint (Stage 14): applies the saved theme, or the
@@ -50,7 +64,7 @@ export default async function RootLayout({
     // suppressHydrationWarning: the theme script above may add `dark` to
     // this element before React hydrates — an expected, one-attribute
     // difference, not a mismatch worth warning about.
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={manrope.variable} suppressHydrationWarning>
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

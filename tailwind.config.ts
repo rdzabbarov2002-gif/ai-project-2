@@ -58,6 +58,17 @@ const config: Config = {
         },
         success: token("success"),
         danger: token("danger"),
+        /** Pastel tile backgrounds and their text (landing page tools). */
+        tone: {
+          blue: token("tone-blue"),
+          "blue-ink": token("tone-blue-ink"),
+          green: token("tone-green"),
+          "green-ink": token("tone-green-ink"),
+          pink: token("tone-pink"),
+          "pink-ink": token("tone-pink-ink"),
+          amber: token("tone-amber"),
+          "amber-ink": token("tone-amber-ink"),
+        },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
@@ -67,6 +78,7 @@ const config: Config = {
         sm: "6px",
         md: "10px",
         lg: "16px",
+        xl: "22px",
       },
       spacing: {
         18: "4.5rem",
