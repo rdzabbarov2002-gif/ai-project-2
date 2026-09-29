@@ -11,8 +11,8 @@
  * themes — the table is in config/design-tokens.md.
  */
 :root {
-  --font-sans: var(--font-manrope), system-ui, sans-serif;
-  --font-display: var(--font-manrope), system-ui, sans-serif;
+  --font-sans: var(--font-manrope), var(--font-manrope-cyrillic), system-ui, sans-serif;
+  --font-display: var(--font-manrope), var(--font-manrope-cyrillic), system-ui, sans-serif;
 
   --ink-950: 16 18 35;
   --ink-800: 38 42 60;

@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
+import { getLocale } from "@/lib/i18n/server";
 import { pageMetadata, site, siteOrigin } from "@/config/site";
 
 // Link previews (Open Graph, X) for every page; each public page sets its
@@ -33,15 +34,24 @@ export const viewport: Viewport = {
 
 /**
  * Manrope, served from our own origin (the CSP allows fonts from 'self'
- * only) — the file comes from the npm package at build time, so builds
- * don't depend on reaching Google Fonts. Latin only: other scripts fall
- * back to the system font.
+ * only) — the files come from the npm package at build time, so builds
+ * don't depend on reaching Google Fonts. Two subsets as two families in
+ * one font stack (globals.css): Latin, and Cyrillic for the Russian
+ * interface — the browser takes each letter from the first that has it,
+ * and fetches the Cyrillic file only when a page uses it.
  */
 const manrope = localFont({
   src: "../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2",
   weight: "200 800",
   variable: "--font-manrope",
   display: "swap",
+});
+const manropeCyrillic = localFont({
+  src: "../node_modules/@fontsource-variable/manrope/files/manrope-cyrillic-wght-normal.woff2",
+  weight: "200 800",
+  variable: "--font-manrope-cyrillic",
+  display: "swap",
+  preload: false,
 });
 
 /**
@@ -59,17 +69,18 @@ export default async function RootLayout({
   // This request's CSP nonce (middleware.ts): without it the browser
   // won't run the two inline scripts below.
   const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const locale = await getLocale();
 
   return (
     // suppressHydrationWarning: the theme script above may add `dark` to
     // this element before React hydrates — an expected, one-attribute
     // difference, not a mismatch worth warning about.
-    <html lang="en" className={manrope.variable} suppressHydrationWarning>
+    <html lang={locale} className={`${manrope.variable} ${manropeCyrillic.variable}`} suppressHydrationWarning>
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders locale={locale}>{children}</AppProviders>
         {/* Core Web Vitals from real visits (docs/production.md): Vercel
             Speed Insights, production only — no cookies, same origin. */}
         {process.env.VERCEL_ENV === "production" && (
