@@ -19,8 +19,14 @@ import { EmptyState } from "./EmptyState";
  * because those render a different item shape and carry
  * tools-specific text, not because sharing was rejected in general.
  */
-export function TemplateGallery({ templates }: { templates: TemplateListItem[] }) {
-  const [search, setSearch] = useState("");
+export function TemplateGallery({
+  templates,
+  initialSearch = "",
+}: {
+  templates: TemplateListItem[];
+  initialSearch?: string;
+}) {
+  const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState<string | null>(null);
 
   const categories = useMemo(() => deriveCategories(templates), [templates]);

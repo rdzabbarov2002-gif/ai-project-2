@@ -17,14 +17,19 @@ export const metadata = pageMetadata(
  * app/(guest)/templates/error.tsx on failure; loading.tsx covers the
  * in-flight state — both Next.js's own convention, not hand-rolled.
  */
-export default async function TemplatesLibraryPage() {
+export default async function TemplatesLibraryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string | string[] }>;
+}) {
   const supabase = await createClient();
-  const templates = await listTemplates(supabase);
+  const [templates, { q }] = await Promise.all([listTemplates(supabase), searchParams]);
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 p-6">
       <h1 className="font-display text-xl font-semibold text-ink-950">Templates</h1>
-      <TemplateGallery templates={templates} />
+      {/* `q`: the search box on the landing page lands here with its words. */}
+      <TemplateGallery templates={templates} initialSearch={typeof q === "string" ? q : ""} />
     </main>
   );
 }
