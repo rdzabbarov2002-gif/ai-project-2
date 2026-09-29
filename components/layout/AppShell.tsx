@@ -8,8 +8,9 @@ import { LegalLinks } from "./LegalLinks";
 
 /**
  * The one responsive navigation frame (architecture doc §7): guests get
- * the top menu; signed-in users get a sidebar on tablet/desktop and a top
- * bar + bottom tab bar on phones. Used by the (guest) and (auth) route
+ * the top menu (on phones: a one-row header and the bottom tab bar);
+ * signed-in users get a sidebar on tablet/desktop and a top bar + bottom
+ * tab bar on phones. Used by the (guest) and (auth) route
  * group layouts, which already know who the visitor is — this component
  * does no data fetching. The footer (LegalLinks) is on every page; signed
  * in, it also links to the feedback form.
@@ -30,9 +31,10 @@ export function AppShell({ user, children }: { user: { email?: string } | null; 
         {skipLink}
         <GuestHeader />
         <div id="content">{children}</div>
-        <footer className="px-4 py-8">
+        <footer className="px-4 pb-28 pt-8 md:pb-8">
           <LegalLinks />
         </footer>
+        <MobileTabBar variant="guest" />
       </>
     );
   }
@@ -51,7 +53,7 @@ export function AppShell({ user, children }: { user: { email?: string } | null; 
           <LegalLinks feedback />
         </footer>
       </div>
-      <MobileTabBar />
+      <MobileTabBar variant="member" />
     </div>
   );
 }
