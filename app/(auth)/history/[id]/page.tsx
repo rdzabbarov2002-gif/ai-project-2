@@ -6,6 +6,9 @@ import { firstEmbed, type Embed } from "@/lib/supabase/embed";
 import { buttonClasses } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { getLocale, getMessages } from "@/lib/i18n/server";
+import { localizeText } from "@/lib/i18n/catalog";
+import { INTL_LOCALE } from "@/lib/i18n/config";
 
 /**
  * One saved generation (Stage 14). Scoped to the owner by the same RLS
@@ -32,6 +35,7 @@ export default async function HistoryDetailPage(props: { params: Promise<{ id: s
   const params = await props.params;
   const user = await requireUser();
   const supabase = await createClient();
+  const [locale, t] = await Promise.all([getLocale(), getMessages()]);
 
   const { data } = await supabase
     .from("generations")
@@ -43,7 +47,7 @@ export default async function HistoryDetailPage(props: { params: Promise<{ id: s
   if (!data) {
     return (
       <main className="p-8">
-        <p className="text-ink-600">This generation isn&apos;t available.</p>
+        <p className="text-ink-600">{t.history.unavailable}</p>
       </main>
     );
   }
@@ -61,17 +65,17 @@ export default async function HistoryDetailPage(props: { params: Promise<{ id: s
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <h1 className="font-display text-xl font-semibold text-ink-950">
-            {tool?.name ?? "Unknown tool"}
+            {tool?.name ? localizeText(tool.name, locale) : t.history.unknownTool}
           </h1>
           <div className="flex items-center gap-2 text-xs text-ink-600">
-            <time dateTime={data.created_at}>{new Date(data.created_at).toLocaleString()}</time>
-            {template?.name && <Badge>{template.name}</Badge>}
+            <time dateTime={data.created_at}>{new Date(data.created_at).toLocaleString(INTL_LOCALE[locale], { timeZone: "UTC" })}</time>
+            {template?.name && <Badge>{localizeText(template.name, locale)}</Badge>}
           </div>
         </div>
         <FavoriteButton id={data.id} isFavorite={data.is_favorite} />
       </div>
 
-      <p className="whitespace-pre-wrap text-sm text-ink-950">{data.output || "(empty result)"}</p>
+      <p className="whitespace-pre-wrap text-sm text-ink-950">{data.output || t.common.emptyResult}</p>
 
       <div className="flex flex-wrap gap-3">
         {data.output && <CopyButton text={data.output} />}
@@ -80,7 +84,7 @@ export default async function HistoryDetailPage(props: { params: Promise<{ id: s
             href={`/tools/${tool.slug}?${repeatParams.toString()}`}
             className={buttonClasses("secondary")}
           >
-            Use these inputs again
+            {t.history.useAgain}
           </Link>
         )}
       </div>

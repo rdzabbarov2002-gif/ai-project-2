@@ -1,10 +1,12 @@
 import { Skeleton } from "@/components/ui/Skeleton";
+import { getMessages } from "@/lib/i18n/server";
 
-export default function BillingSettingsLoading() {
+export default async function BillingSettingsLoading() {
+  const t = await getMessages();
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-6">
       <p className="sr-only" role="status">
-        Loading billing…
+        {t.billing.loading}
       </p>
       <Skeleton className="h-7 w-40" />
       <Skeleton className="h-32 max-w-2xl" />

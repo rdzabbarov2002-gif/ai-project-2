@@ -2,8 +2,9 @@ import Link from "next/link";
 
 /**
  * Brand mark + wordmark. The mark is the same shape as app/icon.svg.
- * Phones get the short name ("AI Marketing") so the header stays one row;
- * `compact` shows the mark alone there.
+ * Phones get the short name ("AI Marketing") so the header stays one row
+ * — the mark alone below 380px; `compact` shows the mark alone on all
+ * phones. The brand isn't translated.
  */
 export function Logo({ href = "/", compact = false }: { href?: string; compact?: boolean }) {
   return (
@@ -19,7 +20,7 @@ export function Logo({ href = "/", compact = false }: { href?: string; compact?:
         <span className="sr-only sm:not-sr-only">AI Marketing Workspace</span>
       ) : (
         <>
-          <span className="sm:hidden">AI Marketing</span>
+          <span className="max-[379px]:sr-only sm:hidden">AI Marketing</span>
           <span className="hidden sm:inline">AI Marketing Workspace</span>
         </>
       )}

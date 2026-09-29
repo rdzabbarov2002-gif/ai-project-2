@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldWrapper } from "@/components/tools/fields/FieldWrapper";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 /**
  * The guest's "short company profile" (architecture doc §8: a guest can
@@ -29,6 +30,7 @@ import { FieldWrapper } from "@/components/tools/fields/FieldWrapper";
  * of mirroring every field in state.
  */
 export function GuestProfileDraftCard() {
+  const t = useMessages();
   const { session, setProfileDraft } = useGuestSession();
   const draft = session?.companyProfileDraft ?? null;
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "local-only">("idle");
@@ -63,19 +65,16 @@ export function GuestProfileDraftCard() {
     <Card>
       <details open={isOpen} onToggle={(e) => setExpanded(e.currentTarget.open)}>
         <summary className="cursor-pointer text-sm font-medium text-ink-950">
-          {draft?.name ? `Your business: ${draft.name}` : "Tell us about your business (optional)"}
+          {draft?.name ? t.guestDraft.yourBusiness(draft.name) : t.guestDraft.tellUs}
         </summary>
-        <p className="mt-2 text-xs text-ink-600">
-          Results get tailored to your business. Saved on this device until you sign up — then
-          it becomes your company profile.
-        </p>
+        <p className="mt-2 text-xs text-ink-600">{t.guestDraft.explainer}</p>
 
         <form
           key={draft ? "draft" : "empty"}
           onSubmit={handleSubmit}
           className="mt-4 space-y-3"
         >
-          <FieldWrapper label="Business name" required htmlFor="draft-name">
+          <FieldWrapper label={t.guestDraft.name} required htmlFor="draft-name">
             <Input
               id="draft-name"
               name="name"
@@ -84,7 +83,7 @@ export function GuestProfileDraftCard() {
               maxLength={200}
             />
           </FieldWrapper>
-          <FieldWrapper label="Niche / industry" htmlFor="draft-niche">
+          <FieldWrapper label={t.guestDraft.niche} htmlFor="draft-niche">
             <Input
               id="draft-niche"
               name="niche"
@@ -92,7 +91,7 @@ export function GuestProfileDraftCard() {
               maxLength={200}
             />
           </FieldWrapper>
-          <FieldWrapper label="Target audience" htmlFor="draft-targetAudience">
+          <FieldWrapper label={t.guestDraft.audience} htmlFor="draft-targetAudience">
             <Input
               id="draft-targetAudience"
               name="targetAudience"
@@ -101,8 +100,8 @@ export function GuestProfileDraftCard() {
             />
           </FieldWrapper>
           <FieldWrapper
-            label="Tone of voice"
-            helpText="e.g. friendly, professional, bold."
+            label={t.guestDraft.tone}
+            helpText={t.guestDraft.toneHelp}
             htmlFor="draft-toneOfVoice"
           >
             <Input
@@ -114,14 +113,14 @@ export function GuestProfileDraftCard() {
           </FieldWrapper>
 
           <Button type="submit" variant="secondary" disabled={status === "saving"}>
-            {status === "saving" ? "Saving…" : "Save"}
+            {status === "saving" ? t.common.saving : t.common.save}
           </Button>
         </form>
 
         <p className="mt-4 text-xs text-ink-600">
-          Want the full profile — selling points, website, and more?{" "}
+          {t.guestDraft.fullProfileBefore}{" "}
           <Link href="/register" className="text-accent underline">
-            Create a free account
+            {t.common.createFreeAccount}
           </Link>
           .
         </p>
@@ -130,12 +129,10 @@ export function GuestProfileDraftCard() {
       {/* Outside <details> so it stays visible after a save collapses it. */}
       <div aria-live="polite">
         {status === "saved" && (
-          <p className="mt-2 text-sm text-success">Saved — your next results will use it.</p>
+          <p className="mt-2 text-sm text-success">{t.guestDraft.savedNotice}</p>
         )}
         {status === "local-only" && (
-          <p className="mt-2 text-sm text-danger">
-            Saved on this device, but couldn&apos;t reach the server — try again shortly.
-          </p>
+          <p className="mt-2 text-sm text-danger">{t.guestDraft.localOnly}</p>
         )}
       </div>
     </Card>

@@ -1,4 +1,5 @@
 import { legalFacts, pageMetadata, site, supportEmail } from "@/config/site";
+import { getMessages } from "@/lib/i18n/server";
 import { formatDay } from "@/lib/format";
 
 export const metadata = pageMetadata(
@@ -14,11 +15,18 @@ export const metadata = pageMetadata(
  * environment (legalFacts); without it the page says "Draft". Have it
  * reviewed by a lawyer for your country before launch (docs/launch.md).
  */
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const t = await getMessages();
   const facts = legalFacts();
   const email = supportEmail();
   return (
-    <main className="mx-auto max-w-3xl space-y-8 px-4 py-12 sm:px-6">
+    <main lang="en" className="mx-auto max-w-3xl space-y-8 px-4 py-12 sm:px-6">
+      {/* The legal text is English only; other languages say so up front. */}
+      {t.legal.englishOnly && (
+        <p lang="ru" className="rounded-md bg-accent-subtle p-3 text-sm text-ink-950">
+          {t.legal.englishOnly}
+        </p>
+      )}
       <header className="space-y-2">
         <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-950">
           Privacy Policy

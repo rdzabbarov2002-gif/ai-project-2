@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { FieldWrapper } from "@/components/tools/fields/FieldWrapper";
 import { autofillCompanyProfile } from "@/app/(auth)/profile/actions";
 import type { SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 /**
  * "Autofill from website" (Stage 12), shared by the onboarding wizard and
@@ -24,6 +25,7 @@ export function WebsiteAutofill({
   defaultUrl?: string;
   onFill: (profile: SuggestedProfile) => void;
 }) {
+  const t = useMessages();
   const [url, setUrl] = useState(defaultUrl);
   const [message, setMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -35,16 +37,14 @@ export function WebsiteAutofill({
     startTransition(async () => {
       const result = await autofillCompanyProfile(url);
       if (result.error || !result.profile) {
-        setMessage({ kind: "error", text: result.error ?? "Something went wrong. Please try again." });
+        setMessage({ kind: "error", text: result.error ?? t.common.somethingWentWrong });
         return;
       }
       onFill(result.profile);
       setMessage({
         kind: "success",
         text:
-          result.source === "ai"
-            ? "Filled in from your website — review everything before saving."
-            : "We could only read the basics from your website — please fill in the rest.",
+          result.source === "ai" ? t.profile.filledAi : t.profile.filledBasic,
       });
     });
   }
@@ -52,8 +52,8 @@ export function WebsiteAutofill({
   return (
     <div className="space-y-2">
       <FieldWrapper
-        label="Your website"
-        helpText="We'll read your homepage and suggest a profile — you can edit everything."
+        label={t.profile.yourWebsite}
+        helpText={t.profile.websiteHelp}
         htmlFor={inputId}
       >
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -84,7 +84,7 @@ export function WebsiteAutofill({
             onClick={handleAutofill}
             disabled={isPending || url.trim() === ""}
           >
-            {isPending ? "Reading your website…" : "Autofill from website"}
+            {isPending ? t.profile.reading : t.profile.autofill}
           </Button>
         </div>
       </FieldWrapper>

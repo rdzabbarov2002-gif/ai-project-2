@@ -8,13 +8,11 @@ import { TemplateStrip } from "@/components/landing/TemplateStrip";
 import { pageMetadata, site } from "@/config/site";
 import { faqFacts } from "@/lib/faq-facts";
 import { faq } from "@/content/faq";
+import { getLocale, getMessages } from "@/lib/i18n/server";
+import { localizeTemplate, localizeTool } from "@/lib/i18n/catalog";
 
 /** The FAQ's questions the landing page answers too (content/faq.ts). */
-const LANDING_QUESTIONS = [
-  "Do I need an account to try it?",
-  "How does it know about my business?",
-  "Which AI does it use, and is my data used to train it?",
-];
+const LANDING_QUESTIONS = ["account", "profile", "ai"];
 
 // The full title on its own — no "· AI Marketing Workspace" suffix.
 export const metadata = { ...pageMetadata(site.title, site.description, "/"), title: { absolute: site.title } };
@@ -44,26 +42,26 @@ function SectionHeader({ title, href, link }: { title: string; href: string; lin
  */
 export default async function LandingPage() {
   const supabase = await createClient();
-  const [user, tools, templates, facts] = await Promise.all([
+  const [user, tools, templates, facts, locale, t] = await Promise.all([
     getUser(),
     listActiveTools(supabase).catch(() => []),
     listTemplates(supabase).catch(() => []),
     faqFacts(supabase),
+    getLocale(),
+    getMessages(),
   ]);
-  const questions = faq(facts).filter((entry) => LANDING_QUESTIONS.includes(entry.question));
+  const questions = faq(facts, locale).filter((entry) => LANDING_QUESTIONS.includes(entry.id));
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-4 pt-6 sm:px-6 sm:pt-10">
       <section className="max-w-2xl">
         <p className="text-sm font-semibold text-ink-600">
-          {user ? "Welcome back" : "Hi there"} <span aria-hidden="true">👋</span>
+          {user ? t.landing.welcomeBack : t.landing.hiThere} <span aria-hidden="true">👋</span>
         </p>
         <h1 className="mt-1 font-display text-[27px] font-extrabold leading-[1.15] tracking-tight text-ink-950 sm:text-4xl">
-          What do you want to write today?
+          {t.landing.title}
         </h1>
-        <p className="mt-2 text-[15px] text-ink-600">
-          Ads, emails and social posts for your business — fill in a few fields, no prompts.
-        </p>
+        <p className="mt-2 text-[15px] text-ink-600">{t.landing.lead}</p>
         <form action="/templates" role="search" className="mt-4">
           <div className="flex h-[52px] items-center gap-2.5 rounded-lg bg-surface pl-4 pr-2 shadow-sm ring-1 ring-ink-200/60 focus-within:ring-2 focus-within:ring-accent">
             <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-ink-600" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
@@ -72,13 +70,13 @@ export default async function LandingPage() {
             <input
               type="search"
               name="q"
-              aria-label="Search templates"
-              placeholder="e.g. Instagram ad, newsletter…"
+              aria-label={t.landing.searchLabel}
+              placeholder={t.landing.searchPlaceholder}
               className="min-w-0 flex-1 bg-transparent text-base text-ink-950 placeholder:text-ink-600 focus:outline-none"
             />
             <button
               type="submit"
-              aria-label="Search"
+              aria-label={t.landing.search}
               className="grid h-9 w-9 shrink-0 place-items-center rounded-[11px] bg-ink-950 text-ink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -89,27 +87,27 @@ export default async function LandingPage() {
         </form>
         {user ? (
           <Link href="/dashboard" className="mt-3 inline-block text-sm font-bold text-accent hover:underline">
-            Go to your dashboard →
+            {t.landing.toDashboard}
           </Link>
         ) : (
           <p className="mt-3 flex items-center gap-2 text-[13px] font-semibold text-ink-600">
             <span aria-hidden="true" className="h-2 w-2 rounded-full bg-success" />
-            {facts.guestLimit} free generations · no sign-up needed
+            {t.landing.freeLine(facts.guestLimit)}
           </p>
         )}
       </section>
 
       {tools.length > 0 && (
         <section className="mt-7">
-          <SectionHeader title="Tools" href="/tools" link="See all" />
-          <ToolTiles tools={tools} />
+          <SectionHeader title={t.landing.tools} href="/tools" link={t.landing.seeAll} />
+          <ToolTiles tools={tools} labels={t.landing.tiles} locale={locale} />
         </section>
       )}
 
       {templates.length > 0 && (
         <section className="mt-7">
-          <SectionHeader title="Start from a template" href="/templates" link={`All ${templates.length}`} />
-          <TemplateStrip templates={templates} />
+          <SectionHeader title={t.landing.templates} href="/templates" link={t.landing.allTemplates(templates.length)} />
+          <TemplateStrip templates={templates.map((template) => localizeTemplate(template, locale))} />
         </section>
       )}
 
@@ -121,28 +119,26 @@ export default async function LandingPage() {
             </svg>
           </span>
           <div className="min-w-0">
-            <h2 className="font-extrabold">Keep every result</h2>
-            <p className="text-[13px] text-ink-50/80">Your history and company profile — free.</p>
+            <h2 className="font-extrabold">{t.landing.keepTitle}</h2>
+            <p className="text-[13px] text-ink-50/80">{t.landing.keepText}</p>
           </div>
           <Link
             href="/register"
             className="ml-auto shrink-0 rounded-md bg-surface px-3.5 py-2 text-sm font-extrabold text-ink-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
-            Sign up
+            {t.nav.signUp}
           </Link>
         </section>
       )}
 
       <section className="mt-7">
-        <SectionHeader title="Plans" href="/pricing" link="Compare" />
+        <SectionHeader title={t.landing.plans} href="/pricing" link={t.landing.compare} />
         <div className="grid grid-cols-2 gap-3">
           <Link href="/pricing" className="rounded-lg bg-surface p-4 shadow-sm ring-1 ring-ink-200/60">
-            <h3 className="text-sm font-extrabold text-ink-600">Free</h3>
+            <h3 className="text-sm font-extrabold text-ink-600">{t.landing.free}</h3>
             <p className="mt-0.5 text-[26px] font-extrabold tracking-tight text-ink-950">$0</p>
             <p className="mt-1 text-[13px] font-semibold leading-snug text-ink-600">
-              {typeof facts.freeGenerations === "number"
-                ? `${facts.freeGenerations} generations a month`
-                : "A monthly allowance of generations"}
+              {t.landing.freeAllowance(facts.freeGenerations)}
             </p>
           </Link>
           <Link href="/pricing" className="rounded-lg bg-accent p-4 text-accent-contrast shadow-sm">
@@ -151,22 +147,21 @@ export default async function LandingPage() {
               {typeof facts.proPrice === "number" ? (
                 <>
                   ${Number(facts.proPrice)}
-                  <span className="text-[13px] font-semibold">/mo</span>
+                  <span className="text-[13px] font-semibold">{t.landing.perMonth}</span>
                 </>
               ) : (
                 "Pro"
               )}
             </p>
             <p className="mt-1 text-[13px] font-semibold leading-snug">
-              {typeof facts.proGenerations === "number" ? `${facts.proGenerations} a month` : "More generations"} ·
-              all templates · {facts.trialDays} days free
+              {t.landing.proLine(facts.proGenerations, facts.trialDays)}
             </p>
           </Link>
         </div>
       </section>
 
       <section className="mt-7">
-        <SectionHeader title="Questions" href="/faq" link="All" />
+        <SectionHeader title={t.landing.questions} href="/faq" link={t.landing.all} />
         <div className="space-y-2">
           {questions.map((entry) => (
             <details key={entry.question} className="group rounded-lg bg-surface shadow-sm ring-1 ring-ink-200/60">

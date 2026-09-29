@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { getLocale, getMessages } from "@/lib/i18n/server";
+import { INTL_LOCALE } from "@/lib/i18n/config";
 
 const PREVIEW_LENGTH = 140;
 
@@ -18,7 +20,7 @@ const PREVIEW_LENGTH = 140;
  * that "open" means viewing the record, not reopening the editor, and no
  * mechanism for the latter exists anywhere in the project to reuse.
  */
-export function HistoryItem({
+export async function HistoryItem({
   generation,
 }: {
   generation: {
@@ -29,6 +31,7 @@ export function HistoryItem({
     output: string;
   };
 }) {
+  const [locale, t] = await Promise.all([getLocale(), getMessages()]);
   const preview =
     generation.output.length > PREVIEW_LENGTH
       ? `${generation.output.slice(0, PREVIEW_LENGTH)}…`
@@ -40,11 +43,11 @@ export function HistoryItem({
         <div className="flex items-center justify-between gap-3">
           <h3 className="font-medium text-ink-950">{generation.toolName}</h3>
           <time className="shrink-0 text-xs text-ink-600" dateTime={generation.createdAt}>
-            {new Date(generation.createdAt).toLocaleDateString()}
+            {new Date(generation.createdAt).toLocaleDateString(INTL_LOCALE[locale], { timeZone: "UTC" })}
           </time>
         </div>
         {generation.templateName && <Badge>{generation.templateName}</Badge>}
-        <p className="text-sm text-ink-600">{preview || "(empty result)"}</p>
+        <p className="text-sm text-ink-600">{preview || t.common.emptyResult}</p>
       </Card>
     </Link>
   );

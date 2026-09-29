@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef } from "react";
 import Link from "next/link";
 import { Button, buttonClasses } from "@/components/ui/Button";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 /**
  * The contextual sign-up modal from the architecture doc (§8, §9 "Sign Up
@@ -27,6 +28,7 @@ export function SignUpPrompt({
   title: string;
   message: string;
 }) {
+  const t = useMessages();
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
@@ -49,19 +51,16 @@ export function SignUpPrompt({
           {title}
         </h2>
         <p className="text-sm text-ink-600">{message}</p>
-        <p className="text-sm text-ink-600">
-          It&apos;s free, and everything you&apos;ve created so far carries over to your
-          account.
-        </p>
+        <p className="text-sm text-ink-600">{t.signUpPrompt.carriesOver}</p>
         <div className="flex flex-col gap-2">
           <Link href="/register" className={buttonClasses("primary", "w-full")}>
-            Create a free account
+            {t.common.createFreeAccount}
           </Link>
           <Link href="/login" className={buttonClasses("secondary", "w-full")}>
-            I already have an account
+            {t.signUpPrompt.haveAccount}
           </Link>
           <Button type="button" variant="secondary" className="w-full border-0" onClick={onClose}>
-            Not now
+            {t.signUpPrompt.notNow}
           </Button>
         </div>
       </div>

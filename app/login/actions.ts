@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { safeRedirectPath } from "@/lib/safe-redirect";
+import { getMessages } from "@/lib/i18n/server";
+import { authErrorMessage } from "@/lib/i18n/auth";
 
 export interface AuthFormState {
   error: string | null;
@@ -20,16 +22,17 @@ export async function signIn(
   // `next` comes from the query string via a hidden field — validated so
   // it can only ever point back into this app (see lib/safe-redirect.ts).
   const next = safeRedirectPath(formData.get("next"), "/dashboard");
+  const t = await getMessages();
 
   if (!email || !password) {
-    return { error: "Enter your email and password.", email };
+    return { error: t.auth.enterEmailAndPassword, email };
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: error.message, email };
+    return { error: authErrorMessage(error.message, t), email };
   }
 
   // Guest → user merge is triggered client-side (components/auth/AuthSyncListener.tsx)

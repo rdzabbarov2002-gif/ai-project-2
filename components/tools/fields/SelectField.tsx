@@ -4,8 +4,10 @@ import { Select } from "@/components/ui/Select";
 import { FieldWrapper } from "./FieldWrapper";
 import type { FieldComponentProps } from "./types";
 import type { SelectFieldConfig } from "@/lib/tool-config/schema";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 export function SelectField({ field, value, onChange, error }: FieldComponentProps<SelectFieldConfig>) {
+  const t = useMessages();
   return (
     <FieldWrapper
       label={field.label}
@@ -22,7 +24,7 @@ export function SelectField({ field, value, onChange, error }: FieldComponentPro
         required={field.required}
       >
         <option value="" disabled>
-          {field.placeholder ?? "Select…"}
+          {field.placeholder ?? t.common.select}
         </option>
         {field.options.map((option) => (
           <option key={option.value} value={option.value}>

@@ -4,6 +4,9 @@ import { runGeneration } from "@/lib/generation/pipeline";
 import { GenerationError } from "@/lib/generation/errors";
 import { AIProviderError, type AIProviderErrorKind } from "@/lib/ai-provider";
 import { logger } from "@/lib/logger";
+import { localeFromCookieHeader } from "@/lib/i18n/config";
+import { MESSAGES } from "@/lib/i18n/messages";
+import type { Locale } from "@/lib/i18n/config";
 
 /**
  * Vercel's default serverless timeout (10s on Hobby, 15s on Pro) is shorter
@@ -28,7 +31,7 @@ export async function POST(request: Request) {
     const result = await runGeneration(body);
     return NextResponse.json(result);
   } catch (error) {
-    return toErrorResponse(error);
+    return toErrorResponse(error, localeFromCookieHeader(request.headers.get("cookie")));
   }
 }
 
@@ -38,10 +41,14 @@ export async function POST(request: Request) {
  * internal detail worth knowing was already `logger.error`'d where it
  * happened (see save.ts, identity.ts) before reaching this point.
  */
-function toErrorResponse(error: unknown): NextResponse {
+function toErrorResponse(error: unknown, locale: Locale): NextResponse {
+  // In the visitor's language (lib/i18n), by the error's code — English,
+  // and any code without a translation, keep the message below.
+  const translated = MESSAGES[locale].generateErrors;
+
   if (error instanceof GenerationError) {
     return NextResponse.json(
-      { error: { code: error.code, message: error.message } },
+      { error: { code: error.code, message: translated[error.code] ?? error.message } },
       { status: error.httpStatus },
     );
   }
@@ -53,14 +60,22 @@ function toErrorResponse(error: unknown): NextResponse {
       provider: error.provider,
       kind: error.kind,
     });
-    return NextResponse.json({ error: { code: "ai_provider_error", message } }, { status });
+    return NextResponse.json(
+      { error: { code: "ai_provider_error", message: translated[`ai:${publicKind(error.kind)}`] ?? message } },
+      { status },
+    );
   }
 
   logger.error("api/generate: unhandled error", { error });
   return NextResponse.json(
-    { error: { code: "internal_error", message: "Something went wrong. Please try again." } },
+    { error: { code: "internal_error", message: translated.internal_error ?? "Something went wrong. Please try again." } },
     { status: 500 },
   );
+}
+
+/** The provider failures a visitor gets a specific message for; the rest are "other". */
+function publicKind(kind: AIProviderErrorKind): string {
+  return ["rate_limited", "overloaded", "network", "timeout"].includes(kind) ? kind : "other";
 }
 
 function mapProviderError(kind: AIProviderErrorKind): { status: number; message: string } {

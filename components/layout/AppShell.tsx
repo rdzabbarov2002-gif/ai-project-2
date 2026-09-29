@@ -5,6 +5,8 @@ import { MobileTabBar } from "./MobileTabBar";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import { LegalLinks } from "./LegalLinks";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { getMessages } from "@/lib/i18n/server";
 
 /**
  * The one responsive navigation frame (architecture doc §7): guests get
@@ -15,13 +17,14 @@ import { LegalLinks } from "./LegalLinks";
  * does no data fetching. The footer (LegalLinks) is on every page; signed
  * in, it also links to the feedback form.
  */
-export function AppShell({ user, children }: { user: { email?: string } | null; children: ReactNode }) {
+export async function AppShell({ user, children }: { user: { email?: string } | null; children: ReactNode }) {
+  const t = await getMessages();
   const skipLink = (
     <a
       href="#content"
       className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:shadow-lg"
     >
-      Skip to content
+      {t.common.skipToContent}
     </a>
   );
 
@@ -46,7 +49,10 @@ export function AppShell({ user, children }: { user: { email?: string } | null; 
       <div className="min-w-0 flex-1 pb-24 md:pb-0">
         <header className="flex items-center justify-between border-b border-ink-200 bg-surface px-4 py-3 md:hidden">
           <Logo href="/dashboard" compact />
-          <ThemeToggle />
+          <div className="flex items-center gap-1.5">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
         </header>
         <div id="content">{children}</div>
         <footer className="px-4 py-8">

@@ -8,6 +8,8 @@ import { FavoriteButton } from "@/components/history/FavoriteButton";
 import { Select } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
+import { getLocale, getMessages } from "@/lib/i18n/server";
+import { localizeText } from "@/lib/i18n/catalog";
 
 const PAGE_SIZE = 10;
 
@@ -43,6 +45,7 @@ export default async function HistoryPage(props: {
   };
   const filtered = Boolean(filters.toolSlug || filters.favoritesOnly);
 
+  const [locale, t] = await Promise.all([getLocale(), getMessages()]);
   const [{ items, hasMore }, tools] = await Promise.all([
     listUserGenerations(supabase, user.id, {
       offset: (page - 1) * PAGE_SIZE,
@@ -63,33 +66,33 @@ export default async function HistoryPage(props: {
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <h1 className="font-display text-xl font-semibold text-ink-950">History</h1>
+      <h1 className="font-display text-xl font-semibold text-ink-950">{t.history.title}</h1>
 
       <form method="get" className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Select
           name="tool"
           defaultValue={filters.toolSlug ?? ""}
-          aria-label="Filter by tool"
+          aria-label={t.history.filterByTool}
           className="sm:max-w-xs"
         >
-          <option value="">All tools</option>
+          <option value="">{t.history.allTools}</option>
           {tools.map((tool) => (
             <option key={tool.slug} value={tool.slug}>
-              {tool.name}
+              {localizeText(tool.name, locale)}
             </option>
           ))}
         </Select>
         <label className="flex items-center gap-2 text-sm text-ink-800">
           <Checkbox name="favorites" value="1" defaultChecked={filters.favoritesOnly} />
-          Favorites only
+          {t.history.favoritesOnly}
         </label>
         <div className="flex gap-3">
           <Button type="submit" variant="secondary">
-            Apply
+            {t.common.apply}
           </Button>
           {filtered && (
             <Link href="/history" className="self-center text-sm text-accent hover:underline">
-              Clear
+              {t.common.clear}
             </Link>
           )}
         </div>
@@ -97,16 +100,20 @@ export default async function HistoryPage(props: {
 
       {items.length === 0 ? (
         <div className="rounded-md border border-dashed border-ink-200 p-8 text-center text-sm text-ink-600">
-          {filtered
-            ? "No generations match these filters."
-            : "No generations yet — results you create will show up here."}
+          {filtered ? t.history.noMatches : t.history.none}
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((generation) => (
             <div key={generation.id} className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
-                <HistoryItem generation={generation} />
+                <HistoryItem
+                  generation={{
+                    ...generation,
+                    toolName: localizeText(generation.toolName, locale),
+                    templateName: localizeText(generation.templateName, locale),
+                  }}
+                />
               </div>
               <FavoriteButton id={generation.id} isFavorite={generation.isFavorite} />
             </div>
@@ -118,14 +125,14 @@ export default async function HistoryPage(props: {
         <div className="flex items-center justify-between text-sm">
           {page > 1 ? (
             <Link href={pageHref(page - 1)} className="text-accent hover:underline">
-              ← Previous
+              {t.history.previous}
             </Link>
           ) : (
             <span />
           )}
           {hasMore && (
             <Link href={pageHref(page + 1)} className="text-accent hover:underline">
-              Next →
+              {t.history.next}
             </Link>
           )}
         </div>

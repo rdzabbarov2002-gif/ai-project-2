@@ -10,6 +10,8 @@ import { ToolGrid } from "@/components/tools/gallery/ToolGrid";
 import { HistoryItem } from "@/components/history/HistoryItem";
 import { Card } from "@/components/ui/Card";
 import { buttonClasses } from "@/components/ui/Button";
+import { getLocale, getMessages } from "@/lib/i18n/server";
+import { localizeText, localizeTool } from "@/lib/i18n/catalog";
 
 const RECENT_COUNT = 5;
 
@@ -30,6 +32,7 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const supabase = await createClient();
 
+  const [locale, t] = await Promise.all([getLocale(), getMessages()]);
   const [summary, tools, recent, { count: profileCount }] = await Promise.all([
     resolveUsageSummary(supabase, user.id),
     listActiveTools(supabase),
@@ -43,7 +46,7 @@ export default async function DashboardPage() {
   return (
     <main className="mx-auto max-w-4xl space-y-8 p-6">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="font-display text-xl font-semibold text-ink-950">Dashboard</h1>
+        <h1 className="font-display text-xl font-semibold text-ink-950">{t.dashboard.title}</h1>
         {/* Desktop has sign-out in the sidebar (Stage 14); phones get it here. */}
         <div className="md:hidden">
           <SignOutButton />
@@ -53,13 +56,11 @@ export default async function DashboardPage() {
       {!profileCount && (
         <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <h2 className="font-medium text-ink-950">Add your company profile</h2>
-            <p className="text-sm text-ink-600">
-              Every tool tailors its results to it — takes about a minute.
-            </p>
+            <h2 className="font-medium text-ink-950">{t.dashboard.addProfile}</h2>
+            <p className="text-sm text-ink-600">{t.dashboard.addProfileText}</p>
           </div>
           <Link href="/onboarding" className={buttonClasses("primary", "shrink-0")}>
-            Set it up
+            {t.dashboard.setUp}
           </Link>
         </Card>
       )}
@@ -71,37 +72,44 @@ export default async function DashboardPage() {
           limit={summary.planLimits.maxGenerationsPerMonth}
         />
         <Link href="/settings/billing" className="text-sm text-accent hover:underline">
-          Plans & billing →
+          {t.dashboard.plansLink}
         </Link>
       </div>
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-medium text-ink-950">Start creating</h2>
+          <h2 className="font-medium text-ink-950">{t.dashboard.start}</h2>
           <Link href="/templates" className="text-sm text-accent hover:underline">
-            Browse templates →
+            {t.dashboard.browseTemplates}
           </Link>
         </div>
-        <ToolGrid tools={tools} />
+        <ToolGrid tools={tools.map((tool) => localizeTool(tool, locale))} />
       </section>
 
       <section className="max-w-2xl space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-medium text-ink-950">Recent generations</h2>
+          <h2 className="font-medium text-ink-950">{t.dashboard.recent}</h2>
           {recent.items.length > 0 && (
             <Link href="/history" className="text-sm text-accent hover:underline">
-              View all →
+              {t.dashboard.viewAll}
             </Link>
           )}
         </div>
         {recent.items.length === 0 ? (
           <div className="rounded-md border border-dashed border-ink-200 p-6 text-center text-sm text-ink-600">
-            Nothing yet — pick a tool above to create your first result.
+            {t.dashboard.nothingYet}
           </div>
         ) : (
           <div className="space-y-3">
             {recent.items.map((generation) => (
-              <HistoryItem key={generation.id} generation={generation} />
+              <HistoryItem
+                key={generation.id}
+                generation={{
+                  ...generation,
+                  toolName: localizeText(generation.toolName, locale),
+                  templateName: localizeText(generation.templateName, locale),
+                }}
+              />
             ))}
           </div>
         )}

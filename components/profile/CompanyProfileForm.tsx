@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { FieldWrapper } from "@/components/tools/fields/FieldWrapper";
 import { saveCompanyProfile, type CompanyProfileFormState } from "@/app/(auth)/profile/actions";
 import { WebsiteAutofill } from "./WebsiteAutofill";
+import { useMessages } from "@/components/providers/LocaleProvider";
 import type { SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
 
 /**
@@ -34,10 +35,11 @@ export interface CompanyProfileFormValues {
 const initialState: CompanyProfileFormState = { error: null, success: false };
 
 function SubmitButton() {
+  const t = useMessages();
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "Saving…" : "Save"}
+      {pending ? t.common.saving : t.common.save}
     </Button>
   );
 }
@@ -78,6 +80,7 @@ export function CompanyProfileForm({
 }: {
   initialProfile: CompanyProfileFormValues | null;
 }) {
+  const t = useMessages();
   const [state, formAction] = useActionState(saveCompanyProfile, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const [formKey, setFormKey] = useState(0);
@@ -119,7 +122,7 @@ export function CompanyProfileForm({
       >
         {initialProfile?.id && <input type="hidden" name="id" value={initialProfile.id} />}
 
-        <FieldWrapper label="Company name" required htmlFor="profile-name">
+        <FieldWrapper label={t.profile.companyName} required htmlFor="profile-name">
           <Input
             id="profile-name"
             name="name"
@@ -129,13 +132,13 @@ export function CompanyProfileForm({
           />
         </FieldWrapper>
 
-        <FieldWrapper label="Niche / industry" htmlFor="profile-niche">
+        <FieldWrapper label={t.profile.niche} htmlFor="profile-niche">
           <Input id="profile-niche" name="niche" defaultValue={valueOf("niche")} maxLength={200} />
         </FieldWrapper>
 
         <FieldWrapper
-          label="Tone of voice"
-          helpText="e.g. friendly, professional, bold."
+          label={t.profile.tone}
+          helpText={t.profile.toneHelp}
           htmlFor="profile-toneOfVoice"
         >
           <Input
@@ -146,7 +149,7 @@ export function CompanyProfileForm({
           />
         </FieldWrapper>
 
-        <FieldWrapper label="Target audience" htmlFor="profile-targetAudience">
+        <FieldWrapper label={t.profile.audience} htmlFor="profile-targetAudience">
           <Textarea
             id="profile-targetAudience"
             name="targetAudience"
@@ -156,7 +159,7 @@ export function CompanyProfileForm({
           />
         </FieldWrapper>
 
-        <FieldWrapper label="Unique selling point" htmlFor="profile-usp">
+        <FieldWrapper label={t.profile.usp} htmlFor="profile-usp">
           <Textarea
             id="profile-usp"
             name="usp"
@@ -166,7 +169,7 @@ export function CompanyProfileForm({
           />
         </FieldWrapper>
 
-        <FieldWrapper label="Website URL" htmlFor="profile-websiteUrl">
+        <FieldWrapper label={t.profile.website} htmlFor="profile-websiteUrl">
           <Input
             id="profile-websiteUrl"
             name="websiteUrl"
@@ -176,7 +179,7 @@ export function CompanyProfileForm({
         </FieldWrapper>
 
         {state.error && <p className="text-sm text-danger">{state.error}</p>}
-        {state.success && <p className="text-sm text-success">Saved.</p>}
+        {state.success && <p className="text-sm text-success">{t.common.saved}</p>}
 
         <SubmitButton />
       </form>

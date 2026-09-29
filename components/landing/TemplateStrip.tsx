@@ -22,8 +22,8 @@ export function TemplateStrip({ templates, limit = 8 }: { templates: TemplateLis
                 {template.category}
               </span>
               {template.isPremium && (
-                <span className="rounded-sm bg-upgrade-subtle px-1.5 py-0.5 text-[10.5px] font-extrabold text-upgrade-ink">
-                  PRO
+                <span className="rounded-sm bg-upgrade-subtle px-1.5 py-0.5 text-[10.5px] font-extrabold uppercase text-upgrade-ink">
+                  Pro
                 </span>
               )}
             </span>

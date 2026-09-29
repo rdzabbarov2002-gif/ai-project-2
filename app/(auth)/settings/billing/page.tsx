@@ -9,6 +9,9 @@ import { DeleteAccountForm } from "@/components/account/DeleteAccountForm";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { openBillingPortal } from "./actions";
+import { getLocale, getMessages } from "@/lib/i18n/server";
+import { INTL_LOCALE, type Locale } from "@/lib/i18n/config";
+import type { Messages } from "@/lib/i18n/messages";
 
 /** Statuses in which the person still has a subscription to manage. */
 const PAYING = ["active", "trialing", "past_due", "unpaid"];
@@ -29,6 +32,7 @@ export default async function BillingSettingsPage(props: {
   const user = await requireUser();
   const supabase = await createClient();
 
+  const [locale, t] = await Promise.all([getLocale(), getMessages()]);
   const [summary, planOptions, paid] = await Promise.all([
     resolveUsageSummary(supabase, user.id),
     listPlanOptions(supabase),
@@ -42,16 +46,15 @@ export default async function BillingSettingsPage(props: {
   return (
     <main className="mx-auto max-w-4xl space-y-8 p-6">
       <div className="max-w-2xl space-y-6">
-        <h1 className="font-display text-xl font-semibold text-ink-950">Billing & Plan</h1>
+        <h1 className="font-display text-xl font-semibold text-ink-950">{t.billing.title}</h1>
         {searchParams.checkout === "success" && (
           <p role="status" className="text-sm text-ink-950">
-            Thank you — your subscription is starting. It can take a few seconds to show here;
-            refresh if it doesn&apos;t.
+            {t.billing.thanks}
           </p>
         )}
         {searchParams.billing === "unavailable" && (
           <p role="alert" className="text-sm text-danger">
-            Payments aren&apos;t available right now. Please try again in a few minutes.
+            {t.billing.unavailable}
           </p>
         )}
         <UsageCard
@@ -59,62 +62,68 @@ export default async function BillingSettingsPage(props: {
           used={summary.used}
           limit={summary.planLimits.maxGenerationsPerMonth}
         />
-        {paid.latest && <SubscriptionCard subscription={paid.latest} manage={billingEnabled()} />}
+        {paid.latest && (
+          <SubscriptionCard subscription={paid.latest} manage={billingEnabled()} locale={locale} t={t} />
+        )}
       </div>
 
       {planOptions.length > 0 && (
         <section className="space-y-3">
-          <h2 className="font-medium text-ink-950">Plans</h2>
+          <h2 className="font-medium text-ink-950">{t.billing.plans}</h2>
           <PlanComparison
             plans={planOptions}
             currentSlug={summary.planLimits.planSlug}
             actions={actions}
           />
-          <p className="text-xs text-ink-600">
-            Prices exclude tax, which is added at checkout for your country. Usage resets at
-            the start of each calendar month (UTC).
-          </p>
+          <p className="text-xs text-ink-600">{t.billing.footnote}</p>
         </section>
       )}
 
       <section className="max-w-2xl space-y-3">
-        <h2 className="font-medium text-ink-950">Delete account</h2>
-        <p className="text-sm text-ink-600">
-          Permanently deletes your account, company profile and generation history. This
-          can&apos;t be undone.
-        </p>
+        <h2 className="font-medium text-ink-950">{t.billing.deleteTitle}</h2>
+        <p className="text-sm text-ink-600">{t.billing.deleteText}</p>
         <DeleteAccountForm />
       </section>
     </main>
   );
 }
 
-const formatDate = (value: string | null) =>
-  value
-    ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(value))
-    : "the end of the period";
-
 /** The paid subscription, in words — as the webhook last stored it. */
-function SubscriptionCard({ subscription, manage }: { subscription: PaidSubscription; manage: boolean }) {
-  const { status, planName, periodEnd, trialEnd, cancelAtPeriodEnd } = subscription;
+function SubscriptionCard({
+  subscription,
+  manage,
+  locale,
+  t,
+}: {
+  subscription: PaidSubscription;
+  manage: boolean;
+  locale: Locale;
+  t: Messages;
+}) {
+  const formatDate = (value: string | null) =>
+    value
+      ? new Intl.DateTimeFormat(INTL_LOCALE[locale], { dateStyle: "medium", timeZone: "UTC" }).format(new Date(value))
+      : t.billing.endOfPeriod;
+  const { status, periodEnd, trialEnd, cancelAtPeriodEnd } = subscription;
+  const planName = t.plans.names[subscription.planName.toLowerCase()] ?? subscription.planName;
   let text: string;
   let problem = false;
   if (status === "trialing") {
     text = cancelAtPeriodEnd
-      ? `${planName} free trial until ${formatDate(trialEnd)}. It ends then — you won't be charged.`
-      : `${planName} free trial until ${formatDate(trialEnd)}, then your card is charged.`;
+      ? t.billing.trialEnding(planName, formatDate(trialEnd))
+      : t.billing.trial(planName, formatDate(trialEnd));
   } else if (status === "active") {
     text = cancelAtPeriodEnd
-      ? `${planName} until ${formatDate(periodEnd)}. It won't renew.`
-      : `${planName}, renews on ${formatDate(periodEnd)}.`;
+      ? t.billing.ending(planName, formatDate(periodEnd))
+      : t.billing.renews(planName, formatDate(periodEnd));
   } else if (status === "past_due" || status === "unpaid") {
     problem = true;
-    text = `Your last payment for ${planName} failed. Update your card to get ${planName} back — until then you're on the Free plan.`;
+    text = t.billing.failed(planName);
   } else if (status === "incomplete") {
     problem = true;
-    text = `The first payment for ${planName} wasn't completed.`;
+    text = t.billing.incomplete(planName);
   } else {
-    text = `Your ${planName} subscription has ended.`;
+    text = t.billing.ended(planName);
   }
 
   return (
@@ -123,7 +132,7 @@ function SubscriptionCard({ subscription, manage }: { subscription: PaidSubscrip
       {manage && PAYING.includes(status) && (
         <form action={openBillingPortal}>
           <Button type="submit" variant="secondary">
-            {problem ? "Update payment method" : "Manage billing"}
+            {problem ? t.billing.updatePayment : t.billing.manage}
           </Button>
         </form>
       )}

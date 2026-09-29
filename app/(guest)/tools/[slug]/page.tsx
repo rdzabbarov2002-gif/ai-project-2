@@ -11,6 +11,8 @@ import { GuestProfileDraftCard } from "@/components/profile/GuestProfileDraftCar
 import { appSettings } from "@/config/settings";
 import { pageMetadata, site } from "@/config/site";
 import { listActiveTools } from "@/lib/tools/catalog";
+import { getLocale, getMessages } from "@/lib/i18n/server";
+import { localizeSchema, localizeText } from "@/lib/i18n/catalog";
 
 /** The tool's name and description in search results and link previews. */
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
@@ -68,15 +70,18 @@ export default async function ToolPage(props: {
 }) {
   const [params, searchParams] = await Promise.all([props.params, props.searchParams]);
   const supabase = await createClient();
-  const tool = await resolveTool(supabase, params.slug);
+  const [tool, locale, t] = await Promise.all([resolveTool(supabase, params.slug), getLocale(), getMessages()]);
 
   if (!tool) {
     return (
       <main className="p-8">
-        <p className="text-ink-600">This tool isn&apos;t available.</p>
+        <p className="text-ink-600">{t.tools.unavailable}</p>
       </main>
     );
   }
+  // What people read, in their language (lib/i18n/catalog.ts); the form's
+  // names and values — what the request sends — stay as they are.
+  const toolName = localizeText(tool.name, locale);
 
   // Independent lookups — run together so the auth check adds no latency.
   const [template, user] = await Promise.all([
@@ -85,7 +90,8 @@ export default async function ToolPage(props: {
       : resolveDefaultTemplate(supabase, tool.id),
     getUser(),
   ]);
-  const schema = parseToolConfigSchema(template?.configSchema ?? tool.configSchema);
+  const schema = localizeSchema(parseToolConfigSchema(template?.configSchema ?? tool.configSchema), locale);
+  const templateName = template ? localizeText(template.name, locale) : null;
   const isGuest = !user;
 
   const fromId = searchParams.from && UUID.test(searchParams.from) ? searchParams.from : null;
@@ -115,17 +121,16 @@ export default async function ToolPage(props: {
   return (
     <main className="mx-auto max-w-5xl space-y-6 p-6">
       <div className="space-y-1">
-        <h1 className="font-display text-xl font-semibold text-ink-950">{tool.name}</h1>
+        <h1 className="font-display text-xl font-semibold text-ink-950">{toolName}</h1>
         {template && searchParams.template && (
-          <p className="text-sm text-ink-600">Template: {template.name}</p>
+          <p className="text-sm text-ink-600">{t.tools.template(templateName ?? template.name)}</p>
         )}
         {usage && usage.remaining !== null && (
           <p className={usage.remaining <= 2 ? "text-sm text-danger" : "text-sm text-ink-600"}>
-            {usage.remaining} of {usage.planLimits.maxGenerationsPerMonth} generations left this
-            month.{" "}
+            {t.tools.left(usage.remaining, usage.planLimits.maxGenerationsPerMonth)}{" "}
             {usage.remaining <= 2 && (
               <Link href="/settings/billing" className="text-accent underline">
-                See plans
+                {t.tools.seePlans}
               </Link>
             )}
           </p>
@@ -133,7 +138,7 @@ export default async function ToolPage(props: {
       </div>
       {template && premiumLocked ? (
         <div className="max-w-2xl">
-          <PremiumTemplateNotice toolSlug={tool.slug} templateName={template.name} />
+          <PremiumTemplateNotice toolSlug={tool.slug} templateName={templateName ?? template.name} />
         </div>
       ) : (
         <>
@@ -143,7 +148,7 @@ export default async function ToolPage(props: {
             </div>
           )}
           <ToolRunner
-            tool={{ slug: tool.slug, name: tool.name }}
+            tool={{ slug: tool.slug, name: toolName }}
             templateSlug={template?.slug}
             schema={schema}
             isGuest={isGuest}

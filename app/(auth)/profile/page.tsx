@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { CompanyProfileForm } from "@/components/profile/CompanyProfileForm";
+import { getMessages } from "@/lib/i18n/server";
 
 /** The form's "Autofill from website" server action fetches a website and
  *  calls the AI gateway — longer than Vercel's default function limit. */
@@ -37,6 +38,7 @@ export const maxDuration = 60;
 export default async function CompanyProfilePage() {
   const user = await requireUser();
   const supabase = await createClient();
+  const t = await getMessages();
 
   const { data: profile } = await supabase
     .from("company_profiles")
@@ -48,7 +50,7 @@ export default async function CompanyProfilePage() {
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <h1 className="font-display text-xl font-semibold text-ink-950">Company Profile</h1>
+      <h1 className="font-display text-xl font-semibold text-ink-950">{t.profile.title}</h1>
       <CompanyProfileForm
         initialProfile={
           profile

@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { openBillingPortal, startCheckout } from "@/app/(auth)/settings/billing/actions";
+import { getMessages } from "@/lib/i18n/server";
+import type { Messages } from "@/lib/i18n/messages";
 
 export interface PlanOption {
   slug: "free" | "pro" | "enterprise";
@@ -35,7 +37,7 @@ export type PlanActions =
  * are plain forms posting to the billing Server Actions, which redirect
  * to Stripe.
  */
-export function PlanComparison({
+export async function PlanComparison({
   plans,
   currentSlug,
   actions,
@@ -45,6 +47,7 @@ export function PlanComparison({
   currentSlug: PlanOption["slug"] | null;
   actions: PlanActions;
 }) {
+  const t = await getMessages();
   const currentIndex = plans.findIndex((plan) => plan.slug === currentSlug);
 
   return (
@@ -58,29 +61,27 @@ export function PlanComparison({
           >
             <div className="space-y-1">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="font-medium text-ink-950">{plan.name}</h3>
-                {isCurrent && <Badge>Current plan</Badge>}
+                <h3 className="font-medium text-ink-950">{t.plans.names[plan.slug] ?? plan.name}</h3>
+                {isCurrent && <Badge>{t.plans.current}</Badge>}
               </div>
               <p className="text-lg font-semibold text-ink-950">
                 {plan.priceMonth === null
-                  ? "Custom pricing"
+                  ? t.plans.customPricing
                   : plan.priceMonth === 0
-                    ? "Free"
-                    : `$${plan.priceMonth}/month`}
+                    ? t.plans.free
+                    : t.plans.perMonth(plan.priceMonth)}
               </p>
             </div>
 
             <ul className="flex-1 space-y-2 text-sm text-ink-800">
               <li>
                 {plan.generationsPerMonth === null
-                  ? "Unlimited generations"
-                  : `${plan.generationsPerMonth} generations per month`}
+                  ? t.plans.unlimited
+                  : t.plans.generationsPerMonth(plan.generationsPerMonth)}
               </li>
-              <li>{plan.tools === "all" ? "Every tool" : `${plan.tools} tools`}</li>
+              <li>{plan.tools === "all" ? t.plans.everyTool : t.plans.tools(plan.tools)}</li>
               <li>
-                {plan.premiumTemplates
-                  ? "Full template library, including Pro templates"
-                  : "Standard template library"}
+                {plan.premiumTemplates ? t.plans.fullLibrary : t.plans.standardLibrary}
               </li>
             </ul>
 
@@ -89,6 +90,7 @@ export function PlanComparison({
               isCurrent={isCurrent}
               isUpgrade={currentSlug === null || index > currentIndex}
               actions={actions}
+              t={t}
             />
           </Card>
         );
@@ -102,22 +104,25 @@ function PlanButton({
   isCurrent,
   isUpgrade,
   actions,
+  t,
 }: {
   plan: PlanOption;
   isCurrent: boolean;
   isUpgrade: boolean;
   actions: PlanActions;
+  t: Messages;
 }) {
+  const name = t.plans.names[plan.slug] ?? plan.name;
   if (isCurrent) {
     return actions.kind === "checkout" && actions.paying ? (
       <form action={openBillingPortal}>
         <Button type="submit" variant="secondary" className="w-full">
-          Manage billing
+          {t.plans.manageBilling}
         </Button>
       </form>
     ) : (
       <Button variant="secondary" disabled>
-        Your plan
+        {t.plans.yourPlan}
       </Button>
     );
   }
@@ -127,7 +132,7 @@ function PlanButton({
     // Custom pricing is agreed in person; the feedback form reaches us.
     return (
       <Link href="/feedback" className={buttonClasses("secondary")}>
-        Contact us
+        {t.plans.contactUs}
       </Link>
     );
   }
@@ -135,14 +140,14 @@ function PlanButton({
   switch (actions.kind) {
     case "unavailable":
       return plan.priceMonth === 0 ? null : (
-        <Button variant="upgrade" disabled title="Online payments aren't available yet">
-          Upgrade — coming soon
+        <Button variant="upgrade" disabled title={t.plans.comingSoonTitle}>
+          {t.plans.comingSoon}
         </Button>
       );
     case "signup":
       return (
         <Link href="/register" className={buttonClasses(plan.priceMonth === 0 ? "secondary" : "upgrade")}>
-          {plan.priceMonth === 0 ? "Start free" : `Start ${actions.trialDays}-day free trial`}
+          {plan.priceMonth === 0 ? t.plans.startFree : t.plans.startTrial(actions.trialDays)}
         </Link>
       );
     case "checkout":
@@ -150,7 +155,7 @@ function PlanButton({
         <form action={startCheckout}>
           <input type="hidden" name="plan" value={plan.slug} />
           <Button type="submit" variant="upgrade" className="w-full">
-            {actions.trialDays ? `Start ${actions.trialDays}-day free trial` : `Upgrade to ${plan.name}`}
+            {actions.trialDays ? t.plans.startTrial(actions.trialDays) : t.plans.upgradeTo(name)}
           </Button>
         </form>
       );

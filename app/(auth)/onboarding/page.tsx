@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { OnboardingWizard } from "@/components/profile/OnboardingWizard";
+import { getMessages } from "@/lib/i18n/server";
 
 /** Autofill (a server action on this page) fetches a website and calls the
  *  AI gateway — well past Vercel's default 10–15s function limit. */
@@ -25,22 +26,20 @@ export default async function OnboardingPage() {
     .eq("user_id", user.id);
 
   if (count && count > 0) redirect("/dashboard");
+  const t = await getMessages();
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
       <div className="space-y-1">
         <h1 className="font-display text-xl font-semibold text-ink-950">
-          Set up your company profile
+          {t.onboarding.title}
         </h1>
-        <p className="text-sm text-ink-600">
-          Takes a minute. Every tool uses it to tailor ads, emails and posts to your business —
-          you can change it any time.
-        </p>
+        <p className="text-sm text-ink-600">{t.onboarding.lead}</p>
       </div>
       <OnboardingWizard />
       <p className="text-sm">
         <Link href="/dashboard" className="text-ink-600 hover:underline">
-          Skip for now
+          {t.onboarding.skipForNow}
         </Link>
       </p>
     </main>

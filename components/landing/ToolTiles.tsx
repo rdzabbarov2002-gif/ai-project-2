@@ -2,6 +2,8 @@ import Link from "next/link";
 import clsx from "clsx";
 import type { ReactNode } from "react";
 import type { ToolListItem } from "@/lib/tools/types";
+import type { Locale } from "@/lib/i18n/config";
+import { localizeText } from "@/lib/i18n/catalog";
 
 type Tone = "blue" | "green" | "pink" | "amber";
 
@@ -22,15 +24,16 @@ const ICONS = {
 
 /**
  * How a tool looks as a tile, by its category (the data, not the tool's
- * identity): a short label, a hint of what it writes, an icon and a tone.
- * A tool in a category not listed here still gets a tile — its own name
- * and description, the next tone in turn.
+ * identity): an icon and a tone here, a short label and a hint of what it
+ * writes from the dictionary (`labels`, lib/i18n). A tool in a category
+ * not listed here still gets a tile — its own name and description, the
+ * next tone in turn.
  */
-const BY_CATEGORY: Record<string, { label: string; hint: string; icon: keyof typeof ICONS; tone: Tone }> = {
-  Ads: { label: "Ads", hint: "Facebook, Instagram, Google…", icon: "megaphone", tone: "blue" },
-  Email: { label: "Emails", hint: "Outreach & newsletters", icon: "mail", tone: "green" },
-  Social: { label: "Social posts", hint: "LinkedIn, X, captions", icon: "chat", tone: "pink" },
-  Content: { label: "Content", hint: "Blog, SEO, scripts", icon: "doc", tone: "amber" },
+const BY_CATEGORY: Record<string, { icon: keyof typeof ICONS; tone: Tone }> = {
+  Ads: { icon: "megaphone", tone: "blue" },
+  Email: { icon: "mail", tone: "green" },
+  Social: { icon: "chat", tone: "pink" },
+  Content: { icon: "doc", tone: "amber" },
 };
 const TONE_ORDER: Tone[] = ["blue", "green", "pink", "amber"];
 const CATEGORY_ORDER = Object.keys(BY_CATEGORY);
@@ -42,12 +45,21 @@ const rank = (tool: ToolListItem) => {
 };
 
 /** The tools as big tiles, two to a row on phones (the redesign's first screen). */
-export function ToolTiles({ tools }: { tools: ToolListItem[] }) {
+export function ToolTiles({
+  tools,
+  labels,
+  locale,
+}: {
+  tools: ToolListItem[];
+  labels: Record<string, { label: string; hint: string }>;
+  locale: Locale;
+}) {
   const ordered = [...tools].sort((a, b) => rank(a) - rank(b));
   return (
     <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
       {ordered.map((tool, index) => {
         const look = (tool.category && BY_CATEGORY[tool.category]) || null;
+        const text = (tool.category && labels[tool.category]) || null;
         return (
           <li key={tool.slug}>
             <Link
@@ -74,10 +86,10 @@ export function ToolTiles({ tools }: { tools: ToolListItem[] }) {
               </span>
               <span>
                 <span className="block text-[17px] font-extrabold leading-tight tracking-tight">
-                  {look?.label ?? tool.name}
+                  {text?.label ?? localizeText(tool.name, locale)}
                 </span>
                 <span className="mt-0.5 block text-[13px] font-semibold leading-snug">
-                  {look?.hint ?? tool.description}
+                  {text?.hint ?? localizeText(tool.description, locale)}
                 </span>
               </span>
             </Link>

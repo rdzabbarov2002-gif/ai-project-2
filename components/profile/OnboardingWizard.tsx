@@ -11,6 +11,7 @@ import { FieldWrapper } from "@/components/tools/fields/FieldWrapper";
 import { saveCompanyProfile, type CompanyProfileFormState } from "@/app/(auth)/profile/actions";
 import type { SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
 import { WebsiteAutofill } from "./WebsiteAutofill";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 /**
  * Onboarding wizard (Stage 12, architecture doc §8/§12: "Onboarding (if
@@ -38,20 +39,22 @@ const EMPTY: Values = {
   websiteUrl: "",
 };
 
-const STEPS = ["Website", "Your business", "Audience & voice"] as const;
+const STEP_COUNT = 3;
 
 const initialState: CompanyProfileFormState = { error: null, success: false };
 
 function FinishButton() {
+  const t = useMessages();
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "Saving…" : "Finish"}
+      {pending ? t.common.saving : t.onboarding.finish}
     </Button>
   );
 }
 
 export function OnboardingWizard() {
+  const t = useMessages();
   const router = useRouter();
   const [state, formAction] = useActionState(saveCompanyProfile, initialState);
   const [step, setStep] = useState(0);
@@ -82,17 +85,17 @@ export function OnboardingWizard() {
 
   function goNext() {
     if (step === 1 && values.name.trim() === "") {
-      setStepError("Please enter your company name.");
+      setStepError(t.onboarding.nameRequired);
       return;
     }
     setStepError(null);
-    setStep((current) => Math.min(current + 1, STEPS.length - 1));
+    setStep((current) => Math.min(current + 1, STEP_COUNT - 1));
   }
 
   return (
     <Card className="space-y-6">
-      <ol className="flex gap-2 text-xs" aria-label="Onboarding progress">
-        {STEPS.map((label, index) => (
+      <ol className="flex flex-wrap gap-2 text-xs" aria-label={t.onboarding.progress}>
+        {t.onboarding.steps.map((label, index) => (
           <li
             key={label}
             aria-current={index === step ? "step" : undefined}
@@ -109,15 +112,12 @@ export function OnboardingWizard() {
 
       <form action={formAction} className="space-y-4">
         <section hidden={step !== 0} className="space-y-4">
-          <p className="text-sm text-ink-600">
-            Start from your website and we&apos;ll suggest the rest — or skip this and fill it in
-            yourself.
-          </p>
+          <p className="text-sm text-ink-600">{t.onboarding.intro}</p>
           <WebsiteAutofill onFill={applySuggestions} />
         </section>
 
         <section hidden={step !== 1} className="space-y-4">
-          <FieldWrapper label="Company name" required htmlFor="onboarding-name">
+          <FieldWrapper label={t.profile.companyName} required htmlFor="onboarding-name">
             <Input
               id="onboarding-name"
               name="name"
@@ -126,7 +126,7 @@ export function OnboardingWizard() {
               maxLength={200}
             />
           </FieldWrapper>
-          <FieldWrapper label="Niche / industry" htmlFor="onboarding-niche">
+          <FieldWrapper label={t.profile.niche} htmlFor="onboarding-niche">
             <Input
               id="onboarding-niche"
               name="niche"
@@ -135,7 +135,7 @@ export function OnboardingWizard() {
               maxLength={200}
             />
           </FieldWrapper>
-          <FieldWrapper label="Website URL" htmlFor="onboarding-websiteUrl">
+          <FieldWrapper label={t.profile.website} htmlFor="onboarding-websiteUrl">
             <Input
               id="onboarding-websiteUrl"
               name="websiteUrl"
@@ -147,7 +147,7 @@ export function OnboardingWizard() {
         </section>
 
         <section hidden={step !== 2} className="space-y-4">
-          <FieldWrapper label="Target audience" htmlFor="onboarding-targetAudience">
+          <FieldWrapper label={t.profile.audience} htmlFor="onboarding-targetAudience">
             <Textarea
               id="onboarding-targetAudience"
               name="targetAudience"
@@ -158,8 +158,8 @@ export function OnboardingWizard() {
             />
           </FieldWrapper>
           <FieldWrapper
-            label="Tone of voice"
-            helpText="e.g. friendly, professional, bold."
+            label={t.profile.tone}
+            helpText={t.profile.toneHelp}
             htmlFor="onboarding-toneOfVoice"
           >
             <Input
@@ -170,7 +170,7 @@ export function OnboardingWizard() {
               maxLength={200}
             />
           </FieldWrapper>
-          <FieldWrapper label="Unique selling point" htmlFor="onboarding-usp">
+          <FieldWrapper label={t.profile.usp} htmlFor="onboarding-usp">
             <Textarea
               id="onboarding-usp"
               name="usp"
@@ -189,12 +189,12 @@ export function OnboardingWizard() {
         <div className="flex flex-wrap items-center gap-3">
           {step > 0 && (
             <Button type="button" variant="secondary" onClick={() => setStep(step - 1)}>
-              Back
+              {t.common.back}
             </Button>
           )}
-          {step < STEPS.length - 1 ? (
+          {step < STEP_COUNT - 1 ? (
             <Button type="button" onClick={goNext}>
-              {step === 0 ? "Skip — I'll fill it in" : "Next"}
+              {step === 0 ? t.onboarding.skip : t.common.next}
             </Button>
           ) : (
             <FinishButton />

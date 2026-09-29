@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { ErrorState } from "@/components/templates/ErrorState";
 import { reportClientError } from "@/lib/report-client-error";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 export default function TemplatesLibraryError({
   error,
@@ -12,6 +13,7 @@ export default function TemplatesLibraryError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useMessages();
   useEffect(() => {
     reportClientError("templates library: error boundary", error);
   }, [error]);
@@ -20,7 +22,7 @@ export default function TemplatesLibraryError({
     <main className="mx-auto max-w-5xl space-y-4 p-6">
       <ErrorState />
       <Button variant="secondary" onClick={reset}>
-        Try again
+        {t.common.tryAgain}
       </Button>
     </main>
   );

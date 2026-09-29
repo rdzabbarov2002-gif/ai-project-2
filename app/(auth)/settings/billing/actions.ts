@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { getMessages } from "@/lib/i18n/server";
 import type { User } from "@supabase/supabase-js";
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -33,6 +34,7 @@ const UNAVAILABLE = "/settings/billing?billing=unavailable";
 export async function deleteAccount(): Promise<DeleteAccountState> {
   const user = await requireUser();
   const admin = createAdminClient();
+  const t = await getMessages();
 
   const { data: customer } = await admin
     .from("billing_customers")
@@ -44,14 +46,14 @@ export async function deleteAccount(): Promise<DeleteAccountState> {
       await stripe().customers.del(customer.stripe_customer_id);
     } catch (error) {
       logger.error("account: Stripe customer not deleted", { error });
-      return { error: "We couldn't cancel your subscription, so nothing was deleted. Please try again." };
+      return { error: t.billing.cancelFailed };
     }
   }
 
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) {
     logger.error("account: delete failed", { error });
-    return { error: "We couldn't delete your account. Please try again." };
+    return { error: t.billing.deleteFailed };
   }
 
   await track("account_deleted", user.id);

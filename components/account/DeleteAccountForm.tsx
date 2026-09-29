@@ -6,10 +6,12 @@ import {
   deleteAccount,
   type DeleteAccountState,
 } from "@/app/(auth)/settings/billing/actions";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 const initialState: DeleteAccountState = { error: null };
 
 function SubmitButton() {
+  const t = useMessages();
   const { pending } = useFormStatus();
   return (
     <button
@@ -17,19 +19,20 @@ function SubmitButton() {
       disabled={pending}
       className="inline-flex items-center justify-center rounded-md border border-danger px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger focus-visible:ring-offset-2 focus-visible:ring-offset-ink-50 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? "Deleting…" : "Delete account"}
+      {pending ? t.billing.deleting : t.billing.delete}
     </button>
   );
 }
 
 export function DeleteAccountForm() {
+  const t = useMessages();
   const [state, formAction] = useActionState(deleteAccount, initialState);
 
   return (
     <form
       action={formAction}
       onSubmit={(event) => {
-        if (!window.confirm("Delete your account and all your data? This can't be undone.")) {
+        if (!window.confirm(t.billing.confirmDelete)) {
           event.preventDefault();
         }
       }}

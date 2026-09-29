@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 /**
  * Light/dark switch (Stage 14, architecture doc §11: theme through CSS
@@ -12,6 +13,7 @@ import { THEME_STORAGE_KEY } from "@/lib/theme";
  * including changes to it while open.
  */
 export function ThemeToggle({ className }: { className?: string }) {
+  const t = useMessages();
   const [dark, setDark] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     setDark(next);
   }
 
-  const label = dark ? "Switch to light theme" : "Switch to dark theme";
+  const label = dark ? t.common.toLightTheme : t.common.toDarkTheme;
   return (
     <button
       type="button"

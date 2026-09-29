@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "./Button";
 import { useToast } from "./Toast";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 /**
  * Copy-to-clipboard (architecture doc Stage 14: "Copy-to-clipboard"),
@@ -12,19 +13,20 @@ import { useToast } from "./Toast";
  * to the legacy selection-based copy before giving up with a message —
  * never an unhandled rejection.
  */
-export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
+export function CopyButton({ text, label }: { text: string; label?: string }) {
+  const t = useMessages();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
     const ok = await copyText(text);
     setCopied(ok);
-    toast(ok ? "Copied to clipboard" : "Couldn't copy — select the text and copy it instead", ok ? "success" : "error");
+    toast(ok ? t.common.copiedToast : t.common.copyFailedToast, ok ? "success" : "error");
   }
 
   return (
     <Button type="button" variant="secondary" onClick={handleCopy}>
-      {copied ? "Copied" : label}
+      {copied ? t.common.copied : (label ?? t.common.copy)}
     </Button>
   );
 }

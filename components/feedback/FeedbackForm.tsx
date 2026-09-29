@@ -5,25 +5,28 @@ import { useFormStatus } from "react-dom";
 import { sendFeedback, type FeedbackState } from "@/app/(auth)/feedback/actions";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 const initialState: FeedbackState = { error: null, sent: false };
 
 function SubmitButton() {
+  const t = useMessages();
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "Sending…" : "Send feedback"}
+      {pending ? t.common.sending : t.feedback.send}
     </Button>
   );
 }
 
 export function FeedbackForm() {
+  const t = useMessages();
   const [state, formAction] = useActionState(sendFeedback, initialState);
 
   if (state.sent) {
     return (
       <p role="status" className="text-sm text-ink-950">
-        Thank you — your message reached us. We read every one.
+        {t.feedback.thanks}
       </p>
     );
   }
@@ -31,7 +34,7 @@ export function FeedbackForm() {
   return (
     <form action={formAction} className="space-y-3">
       <label htmlFor="feedback-message" className="block text-sm font-medium text-ink-950">
-        Your message
+        {t.feedback.label}
       </label>
       <Textarea
         id="feedback-message"
@@ -39,7 +42,7 @@ export function FeedbackForm() {
         rows={6}
         required
         maxLength={2000}
-        placeholder="What worked, what didn't, what you'd like to see…"
+        placeholder={t.feedback.placeholder}
         defaultValue={state.message}
       />
       {state.error && <p className="text-sm text-danger">{state.error}</p>}

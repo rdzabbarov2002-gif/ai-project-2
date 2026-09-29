@@ -6,6 +6,8 @@ import { getSiteUrl } from "@/lib/site-url";
 import { headers } from "next/headers";
 import { track } from "@/lib/analytics";
 import { visitorIdFrom } from "@/lib/visitor";
+import { getMessages } from "@/lib/i18n/server";
+import { authErrorMessage } from "@/lib/i18n/auth";
 
 export interface AuthFormState {
   error: string | null;
@@ -19,12 +21,13 @@ export async function signUp(
 ): Promise<AuthFormState> {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
+  const t = await getMessages();
 
   if (!email || !password) {
-    return { error: "Enter your email and password.", email };
+    return { error: t.auth.enterEmailAndPassword, email };
   }
   if (password.length < 8) {
-    return { error: "Password must be at least 8 characters.", email };
+    return { error: t.auth.passwordTooShort, email };
   }
 
   const supabase = await createClient();
@@ -35,7 +38,7 @@ export async function signUp(
   });
 
   if (error) {
-    return { error: error.message, email };
+    return { error: authErrorMessage(error.message, t), email };
   }
 
   if (data.user) {

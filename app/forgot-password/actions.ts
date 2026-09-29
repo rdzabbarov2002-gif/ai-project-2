@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
+import { getMessages } from "@/lib/i18n/server";
+import { authErrorMessage } from "@/lib/i18n/auth";
 
 export interface ResetRequestState {
   error: string | null;
@@ -21,9 +23,10 @@ export async function requestPasswordReset(
   formData: FormData,
 ): Promise<ResetRequestState> {
   const email = String(formData.get("email") ?? "").trim();
+  const t = await getMessages();
 
   if (!email) {
-    return { error: "Enter your email.", sent: false };
+    return { error: t.auth.enterEmail, sent: false };
   }
 
   const supabase = await createClient();
@@ -32,7 +35,7 @@ export async function requestPasswordReset(
   });
 
   if (error) {
-    return { error: error.message, sent: false, email };
+    return { error: authErrorMessage(error.message, t), sent: false, email };
   }
 
   return { error: null, sent: true };

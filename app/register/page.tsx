@@ -9,19 +9,22 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/layout/Logo";
 import { LegalLinks } from "@/components/layout/LegalLinks";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 const initialState: AuthFormState = { error: null };
 
 function SubmitButton() {
+  const t = useMessages();
   const { pending } = useFormStatus();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? "Creating account…" : "Create account"}
+      {pending ? t.auth.creating : t.auth.create}
     </Button>
   );
 }
 
 export default function RegisterPage() {
+  const t = useMessages();
   const [state, formAction] = useActionState(signUp, initialState);
 
   return (
@@ -30,15 +33,14 @@ export default function RegisterPage() {
           (guest)/(auth) layouts and their navigation (Stage 14). */}
       <Logo />
       <Card className="w-full max-w-sm space-y-4">
-        <h1 className="font-display text-xl font-semibold">Create your account</h1>
-        <p className="text-sm text-ink-600">
-          Your generations so far will carry over — nothing is lost by signing up.
-        </p>
+        <h1 className="font-display text-xl font-semibold">{t.auth.registerTitle}</h1>
+        <p className="text-sm text-ink-600">{t.auth.registerLead}</p>
         <form action={formAction} className="space-y-3">
           <Input
             type="email"
             name="email"
-            placeholder="Email"
+            placeholder={t.auth.email}
+            aria-label={t.auth.email}
             required
             autoComplete="email"
             defaultValue={state.email}
@@ -46,7 +48,8 @@ export default function RegisterPage() {
           <Input
             type="password"
             name="password"
-            placeholder="Password (min. 8 characters)"
+            placeholder={t.auth.passwordMin}
+            aria-label={t.auth.password}
             required
             minLength={8}
             autoComplete="new-password"
@@ -55,13 +58,13 @@ export default function RegisterPage() {
           <SubmitButton />
         </form>
         <p className="text-sm text-ink-600">
-          Already have an account?{" "}
+          {t.auth.haveAccount}{" "}
           <Link href="/login" className="text-accent underline">
-            Sign in
+            {t.nav.signIn}
           </Link>
         </p>
       </Card>
-      <LegalLinks />
+      <LegalLinks language />
     </main>
   );
 }

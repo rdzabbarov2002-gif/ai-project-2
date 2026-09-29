@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { getMessages } from "@/lib/i18n/server";
 import { requireUser } from "@/lib/supabase/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
@@ -35,10 +36,12 @@ export async function sendFeedback(
   formData: FormData,
 ): Promise<FeedbackState> {
   const user = await requireUser();
+  const t = await getMessages();
   const message = String(formData.get("message") ?? "");
   const parsed = FeedbackSchema.safeParse({ message });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]!.message, sent: false, message };
+    const tooLong = parsed.error.issues.some((issue) => issue.code === "too_big");
+    return { error: tooLong ? t.feedback.tooLong : t.feedback.tooShort, sent: false, message };
   }
 
   const admin = createAdminClient();
@@ -50,7 +53,7 @@ export async function sendFeedback(
     .gte("created_at", since);
   if ((count ?? 0) >= MAX_PER_HOUR) {
     return {
-      error: "That's a lot of feedback for one hour — please try again later.",
+      error: t.feedback.tooMany,
       sent: false,
       message,
     };
@@ -61,7 +64,7 @@ export async function sendFeedback(
     .insert({ user_id: user.id, message: parsed.data.message });
   if (error) {
     logger.error("feedback: insert failed", { error });
-    return { error: "We couldn't send that. Please try again.", sent: false, message };
+    return { error: t.feedback.failed, sent: false, message };
   }
 
   await track("feedback_sent", user.id);

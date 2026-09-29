@@ -9,14 +9,16 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Logo } from "@/components/layout/Logo";
 import { LegalLinks } from "@/components/layout/LegalLinks";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 const initialState: AuthFormState = { error: null };
 
 function SubmitButton() {
+  const t = useMessages();
   const { pending } = useFormStatus();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? "Signing in…" : "Sign in"}
+      {pending ? t.auth.signingIn : t.nav.signIn}
     </Button>
   );
 }
@@ -29,13 +31,12 @@ function SubmitButton() {
 export default function LoginPage(props: {
   searchParams: Promise<{ next?: string; error?: string }>;
 }) {
+  const t = useMessages();
   const searchParams = use(props.searchParams);
   const [state, formAction] = useActionState(signIn, initialState);
   const next = searchParams.next ?? "/dashboard";
   const linkError =
-    searchParams.error === "confirmation"
-      ? "That confirmation link is invalid or has expired. Sign in, or register again to get a new one."
-      : null;
+    searchParams.error === "confirmation" ? t.auth.badConfirmation : null;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
@@ -43,14 +44,15 @@ export default function LoginPage(props: {
           (guest)/(auth) layouts and their navigation (Stage 14). */}
       <Logo />
       <Card className="w-full max-w-sm space-y-4">
-        <h1 className="font-display text-xl font-semibold">Sign in</h1>
+        <h1 className="font-display text-xl font-semibold">{t.auth.signInTitle}</h1>
         {linkError && <p className="text-sm text-danger">{linkError}</p>}
         <form action={formAction} className="space-y-3">
           <input type="hidden" name="next" value={next} />
           <Input
             type="email"
             name="email"
-            placeholder="Email"
+            placeholder={t.auth.email}
+            aria-label={t.auth.email}
             required
             autoComplete="email"
             defaultValue={state.email}
@@ -58,26 +60,27 @@ export default function LoginPage(props: {
           <Input
             type="password"
             name="password"
-            placeholder="Password"
+            placeholder={t.auth.password}
+            aria-label={t.auth.password}
             required
             autoComplete="current-password"
           />
           <p className="text-right text-sm">
             <Link href="/forgot-password" className="text-accent hover:underline">
-              Forgot password?
+              {t.auth.forgot}
             </Link>
           </p>
           {state.error && <p className="text-sm text-danger">{state.error}</p>}
           <SubmitButton />
         </form>
         <p className="text-sm text-ink-600">
-          No account yet?{" "}
+          {t.auth.noAccount}{" "}
           <Link href="/register" className="text-accent underline">
-            Create one
+            {t.auth.createOne}
           </Link>
         </p>
       </Card>
-      <LegalLinks />
+      <LegalLinks language />
     </main>
   );
 }

@@ -12,6 +12,8 @@ import { FieldRenderer } from "./FieldRenderer";
 import { buildInitialValues } from "@/lib/tool-config/initialValues";
 import { findMissingRequiredFields } from "@/lib/tool-config/validateValues";
 import type { ToolConfigSchema } from "@/lib/tool-config/schema";
+import { useMessages } from "@/components/providers/LocaleProvider";
+import type { Messages } from "@/lib/i18n/messages";
 
 export interface ToolRunnerProps {
   tool: { slug: string; name: string };
@@ -62,13 +64,13 @@ interface GenerateError {
  * out of generations (`guest_limit_reached`) gets the sign-up modal
  * instead (SignUpPrompt).
  */
-const ERROR_ACTIONS: Record<string, { href: string; label: string }> = {
+const ERROR_ACTIONS: Record<string, { href: string; label: keyof Messages["runner"] }> = {
   // Signed out since the page rendered (session expired) — no guest token
   // was sent, so the API has no identity to use.
-  unauthorized: { href: "/login", label: "Sign in again" },
-  usage_limit_reached: { href: "/settings/billing", label: "See plans and limits" },
-  template_not_in_plan: { href: "/settings/billing", label: "View plans" },
-  tool_not_in_plan: { href: "/settings/billing", label: "View plans" },
+  unauthorized: { href: "/login", label: "signInAgain" },
+  usage_limit_reached: { href: "/settings/billing", label: "seePlansAndLimits" },
+  template_not_in_plan: { href: "/settings/billing", label: "viewPlans" },
+  tool_not_in_plan: { href: "/settings/billing", label: "viewPlans" },
 };
 
 export function ToolRunner({
@@ -79,6 +81,7 @@ export function ToolRunner({
   guestGenerationLimit,
   initialValues,
 }: ToolRunnerProps) {
+  const t = useMessages();
   const { session, ensureSession } = useGuestSession();
   const [values, setValues] = useState<Record<string, unknown>>(() => ({
     ...buildInitialValues(schema),
@@ -118,7 +121,7 @@ export function ToolRunner({
     const missing = findMissingRequiredFields(schema, values);
     if (missing.length > 0) {
       setFieldErrors(
-        Object.fromEntries(missing.map((name) => [name, "This field is required."])),
+        Object.fromEntries(missing.map((name) => [name, t.runner.required])),
       );
       return;
     }
@@ -157,8 +160,8 @@ export function ToolRunner({
           code: error?.code ?? "unknown",
           message:
             error?.code === "unauthorized"
-              ? "Your session has expired — please sign in again."
-              : (error?.message ?? "Something went wrong. Please try again."),
+              ? t.runner.sessionExpired
+              : (error?.message ?? t.common.somethingWentWrong),
         });
         if (error?.code === "guest_limit_reached") setSignUpOpen(true);
         return;
@@ -168,7 +171,7 @@ export function ToolRunner({
     } catch {
       setSubmitError({
         code: "network",
-        message: "Network error. Please check your connection and try again.",
+        message: t.runner.network,
       });
     } finally {
       setSubmitting(false);
@@ -181,9 +184,7 @@ export function ToolRunner({
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-8">
       <form onSubmit={handleSubmit} className="space-y-4">
         {schema.fields.length === 0 ? (
-          <p className="text-sm text-ink-600">
-            This tool has no configurable inputs — just generate.
-          </p>
+          <p className="text-sm text-ink-600">{t.runner.noInputs}</p>
         ) : (
           schema.fields.map((field) => (
             <FieldRenderer
@@ -204,7 +205,7 @@ export function ToolRunner({
                 href={ERROR_ACTIONS[submitError.code]!.href}
                 className="text-accent hover:underline"
               >
-                {ERROR_ACTIONS[submitError.code]!.label}
+                {t.runner[ERROR_ACTIONS[submitError.code]!.label] as string}
               </Link>
             )}
             {submitError.code === "guest_limit_reached" && (
@@ -213,23 +214,23 @@ export function ToolRunner({
                 className="text-accent hover:underline"
                 onClick={() => setSignUpOpen(true)}
               >
-                Create a free account to continue
+                {t.runner.createAccountToContinue}
               </button>
             )}
           </div>
         )}
 
         <Button type="submit" disabled={submitting}>
-          {submitting ? "Generating…" : `Generate with ${tool.name}`}
+          {submitting ? t.runner.generating : t.runner.generateWith(tool.name)}
         </Button>
 
         {isGuest && guestGenerationLimit !== undefined && (
           <p className="text-xs text-ink-600">
-            Guest mode — up to {guestGenerationLimit} free generations, no sign-up needed.{" "}
+            {t.runner.guestHintBefore(guestGenerationLimit)}{" "}
             <Link href="/register" className="text-accent underline">
-              Create a free account
+              {t.runner.guestHintLink}
             </Link>{" "}
-            to save your results and get more.
+            {t.runner.guestHintAfter}
           </p>
         )}
       </form>
@@ -237,19 +238,19 @@ export function ToolRunner({
       <SignUpPrompt
         open={signUpOpen}
         onClose={() => setSignUpOpen(false)}
-        title="You've used your free generations"
-        message="Guest mode includes a few generations to try things out. A free account gives you a monthly allowance, your history, and a company profile that tailors every result."
+        title={t.runner.limitTitle}
+        message={t.runner.limitMessage}
       />
 
       <section
-        aria-label="Result"
+        aria-label={t.runner.resultLabel}
         aria-live="polite"
         aria-busy={submitting}
         className="lg:sticky lg:top-6"
       >
         {submitting ? (
           <Card className="space-y-3">
-            <p className="sr-only">Generating…</p>
+            <p className="sr-only">{t.runner.generating}</p>
             <Skeleton className="h-5 w-24" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-11/12" />
@@ -258,46 +259,40 @@ export function ToolRunner({
           </Card>
         ) : !result ? (
           <div className="hidden rounded-lg border border-dashed border-ink-200 p-8 text-center text-sm text-ink-600 lg:block">
-            Your result will appear here.
+            {t.runner.placeholder}
           </div>
         ) : (
           <Card className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-medium text-ink-950">Result</h2>
+              <h2 className="font-medium text-ink-950">{t.runner.result}</h2>
               <div className="flex gap-2">
                 <Button type="button" variant="secondary" onClick={() => void generate()}>
-                  Regenerate
+                  {t.runner.regenerate}
                 </Button>
                 <CopyButton text={result.output} />
               </div>
             </div>
             <p className="whitespace-pre-wrap text-sm text-ink-950">{result.output}</p>
             {!result.saved && (
-              <p className="text-xs text-upgrade-ink">
-                This result wasn&apos;t saved to your history — copy it now if you want to
-                keep it.
-              </p>
+              <p className="text-xs text-upgrade-ink">{t.runner.notSaved}</p>
             )}
             {result.remaining !== "unlimited" && (
               <p className="text-xs text-ink-600">
-                {isGuest
-                  ? `${result.remaining} free guest generations left.`
-                  : `${result.remaining} generations left this period.`}
+                {isGuest ? t.runner.guestLeft(result.remaining) : t.runner.periodLeft(result.remaining)}
               </p>
             )}
             {isGuest && (
               // The "save to history" value trigger (architecture doc §8):
               // offered right where the result is, not as a blocking modal.
               <div className="rounded-md bg-accent-subtle p-3 text-sm text-ink-950">
-                Want to keep this?{" "}
+                {t.runner.keepBefore}{" "}
                 <Link
                   href="/register"
                   className="font-medium text-accent underline"
                 >
-                  Sign up free
+                  {t.runner.keepLink}
                 </Link>{" "}
-                to save it to your history — everything you&apos;ve created as a guest
-                carries over.
+                {t.runner.keepAfter}
               </div>
             )}
           </Card>

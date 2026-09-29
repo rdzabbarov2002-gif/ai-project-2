@@ -1,4 +1,5 @@
 import { setFavorite } from "@/app/(auth)/history/actions";
+import { getMessages } from "@/lib/i18n/server";
 
 /**
  * Star toggle for one generation. A plain <form> posting to the setFavorite
@@ -7,8 +8,9 @@ import { setFavorite } from "@/app/(auth)/history/actions";
  * HistoryItem rather than inside it: HistoryItem is a link, and a button
  * nested in a link is invalid, unpredictable markup.
  */
-export function FavoriteButton({ id, isFavorite }: { id: string; isFavorite: boolean }) {
-  const label = isFavorite ? "Remove from favorites" : "Add to favorites";
+export async function FavoriteButton({ id, isFavorite }: { id: string; isFavorite: boolean }) {
+  const t = await getMessages();
+  const label = isFavorite ? t.history.removeFavorite : t.history.addFavorite;
   return (
     <form action={setFavorite}>
       <input type="hidden" name="id" value={id} />
