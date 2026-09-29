@@ -74,7 +74,7 @@ export default async function LandingPage() {
               name="q"
               aria-label="Search templates"
               placeholder="e.g. Instagram ad, newsletter…"
-              className="min-w-0 flex-1 bg-transparent text-[15px] text-ink-950 placeholder:text-ink-600 focus:outline-none"
+              className="min-w-0 flex-1 bg-transparent text-base text-ink-950 placeholder:text-ink-600 focus:outline-none"
             />
             <button
               type="submit"
