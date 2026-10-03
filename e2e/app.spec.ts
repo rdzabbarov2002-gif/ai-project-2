@@ -1,0 +1,218 @@
+import { expect, test } from "@playwright/test";
+import { adminInsert, adminSelect, createUser, emailLink, signIn, uniqueEmail } from "./helpers";
+
+/**
+ * In a browser, against the local Supabase stack and a stand-in for the
+ * Anthropic API (e2e/mock-anthropic.mjs):
+ * - sign-up with email confirmation, sign-in, sign-out, the return to a
+ *   protected page after signing in, password reset and account deletion
+ *   (emails are read from the stack's inbox, Mailpit);
+ * - the feedback form;
+ * - the core path — generate, see the result, find it in history and
+ *   favorite it — and the server's two limits: the plan's monthly
+ *   allowance and the per-minute rate limit.
+ */
+
+const MOCK_OUTPUT = "E2E mock copy: fresh roasted coffee, delivered weekly.";
+const AD_INPUTS = { platform: "Facebook", productOrService: "Coffee beans", callToAction: "Shop Now" };
+
+test("sign up, confirm the email, sign out and sign back in", async ({ page }) => {
+  const email = uniqueEmail("signup");
+  const password = "e2e-password-1";
+
+  await page.goto("/register");
+  await page.getByPlaceholder("Email").fill(email);
+  await page.getByPlaceholder(/Password/).fill(password);
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/register\/check-email$/);
+
+  await page.goto(await emailLink(email));
+  await expect(page).toHaveURL(/\/onboarding$/);
+
+  await page.locator("button:visible", { hasText: "Sign out" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard$/);
+
+  await signIn(page, email, password);
+  await expect(page).toHaveURL(/\/dashboard$/);
+});
+
+test("a protected page sends you to sign in, then back to it", async ({ page }) => {
+  const email = uniqueEmail("next");
+  const password = "e2e-password-1";
+  await createUser(email, password);
+
+  await page.goto("/history");
+  await expect(page).toHaveURL(/\/login\?next=%2Fhistory$/);
+  await signIn(page, email, password);
+  await expect(page).toHaveURL(/\/history$/);
+});
+
+test("reset a forgotten password by email", async ({ page }) => {
+  const email = uniqueEmail("reset");
+  await createUser(email, "old-password-1");
+
+  await page.goto("/login");
+  await page.getByRole("link", { name: "Forgot password?" }).click();
+  await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
+  await page.getByPlaceholder("Email").fill(email);
+  await page.getByRole("button", { name: "Send reset link" }).click();
+  await expect(page.getByText("Check your email")).toBeVisible();
+
+  const link = await emailLink(email);
+  await page.goto(link);
+  await expect(page).toHaveURL(/\/reset-password$/);
+  await page.getByPlaceholder(/New password/).fill("new-password-2");
+  await page.getByRole("button", { name: "Update password" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  // The link works once; opened again, it says so and offers a new one.
+  await page.goto(link);
+  await expect(page).toHaveURL(/\/forgot-password\?error=expired(#|$)/);
+  await expect(page.getByText("That reset link is invalid or has expired")).toBeVisible();
+  await page.goto("/dashboard");
+
+  await page.locator("button:visible", { hasText: "Sign out" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto("/login");
+  await signIn(page, email, "old-password-1");
+  await expect(page.getByText(/invalid/i)).toBeVisible();
+  // React resets a form after its action runs; the email must survive it.
+  await expect(page.getByPlaceholder("Email")).toHaveValue(email);
+  await signIn(page, email, "new-password-2");
+  await expect(page).toHaveURL(/\/dashboard$/);
+});
+
+test("delete the account", async ({ page }) => {
+  const email = uniqueEmail("delete");
+  const password = "e2e-password-1";
+  await createUser(email, password);
+
+  await page.goto("/login?next=/settings/billing");
+  await signIn(page, email, password);
+  await expect(page).toHaveURL(/\/settings\/billing$/);
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Delete account" }).click();
+  await expect(page).toHaveURL(/\/$/);
+
+  await page.goto("/login");
+  await signIn(page, email, password);
+  await expect(page.getByText(/invalid/i)).toBeVisible();
+});
+
+test("send feedback from the footer", async ({ page }) => {
+  const email = uniqueEmail("feedback");
+  const password = "e2e-password-1";
+  const userId = await createUser(email, password);
+
+  await page.goto("/login");
+  await signIn(page, email, password);
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  await page.getByRole("link", { name: "Send feedback" }).click();
+  await expect(page.getByRole("heading", { name: "Send feedback" })).toBeVisible();
+  await page.getByLabel("Your message").fill("   ");
+  await page.getByRole("button", { name: "Send feedback" }).click();
+  await expect(page.getByText("Write a few words first.")).toBeVisible();
+  await expect(page.getByLabel("Your message")).toHaveValue("   ");
+
+  await page.getByLabel("Your message").fill("The ad tool saved me an hour.");
+  await page.getByRole("button", { name: "Send feedback" }).click();
+  await expect(page.getByText("your message reached us")).toBeVisible();
+
+  const rows = await adminSelect<{ message: string }>("feedback", `user_id=eq.${userId}&select=message`);
+  expect(rows).toEqual([{ message: "The ad tool saved me an hour." }]);
+});
+
+test("generate a result and find it in history", async ({ page }) => {
+  const email = uniqueEmail("generate");
+  const password = "e2e-password-1";
+  const userId = await createUser(email, password);
+
+  await page.goto("/login?next=/tools/ad-generator");
+  await signIn(page, email, password);
+  await expect(page).toHaveURL(/\/tools\/ad-generator$/);
+
+  await page.getByLabel("Platform").selectOption(AD_INPUTS.platform);
+  await page.getByLabel("Product or service being advertised").fill(AD_INPUTS.productOrService);
+  await page.getByLabel("Call to action").selectOption(AD_INPUTS.callToAction);
+  await page.getByRole("button", { name: /Generate with/ }).click();
+  await expect(page.getByText(MOCK_OUTPUT)).toBeVisible();
+
+  await page.goto("/history");
+  await page.getByRole("link", { name: /AI Ad Generator/ }).first().click();
+  await expect(page.getByText(MOCK_OUTPUT)).toBeVisible();
+
+  // Saved with what it cost and how long the AI call took.
+  const [row] = await adminSelect<{ input_tokens: number; output_tokens: number; duration_ms: number }>(
+    "generations",
+    `user_id=eq.${userId}&select=input_tokens,output_tokens,duration_ms`,
+  );
+  expect(row).toMatchObject({ input_tokens: 812, output_tokens: 64 });
+  expect(row!.duration_ms).toBeGreaterThanOrEqual(0);
+
+  // Favorite it from the list: the star turns, and it's saved.
+  await page.goto("/history");
+  await page.getByRole("button", { name: "Add to favorites" }).click();
+  await expect(page.getByRole("button", { name: "Remove from favorites" })).toBeVisible();
+  const [saved] = await adminSelect<{ is_favorite: boolean }>(
+    "generations",
+    `user_id=eq.${userId}&select=is_favorite`,
+  );
+  expect(saved!.is_favorite).toBe(true);
+  await page.goto("/history?favorites=1");
+  await expect(page.getByRole("button", { name: "Remove from favorites" })).toBeVisible();
+});
+
+test("the server refuses a generation over the plan's monthly limit", async ({ page }) => {
+  const email = uniqueEmail("limit");
+  const password = "e2e-password-1";
+  const userId = await createUser(email, password);
+
+  // Use up this month's Free allowance directly in the database.
+  const [free] = await adminSelect<{ max_generations_per_month: number }>(
+    "plan_limits",
+    "select=max_generations_per_month,plans!inner(slug)&plans.slug=eq.free",
+  );
+  const now = new Date();
+  const month = (offset: number) =>
+    new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1)).toISOString().slice(0, 10);
+  await adminInsert("usage_counters", {
+    user_id: userId,
+    period_start: month(0),
+    period_end: month(1),
+    generations_count: free!.max_generations_per_month,
+  });
+
+  await page.goto("/login");
+  await signIn(page, email, password);
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  const res = await page.request.post("/api/generate", {
+    data: { toolSlug: "ad-generator", inputParams: AD_INPUTS },
+  });
+  expect(res.status()).toBe(429);
+  expect((await res.json()).error.code).toBe("usage_limit_reached");
+});
+
+test("the seventh generation within a minute is rate limited", async ({ page }) => {
+  const email = uniqueEmail("burst");
+  const password = "e2e-password-1";
+  await createUser(email, password);
+
+  await page.goto("/login");
+  await signIn(page, email, password);
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  const statuses: number[] = [];
+  for (let i = 0; i < 7; i++) {
+    const res = await page.request.post("/api/generate", {
+      data: { toolSlug: "ad-generator", inputParams: AD_INPUTS },
+    });
+    statuses.push(res.status());
+    if (res.status() === 429) expect((await res.json()).error.code).toBe("rate_limited");
+  }
+  expect(statuses).toEqual([200, 200, 200, 200, 200, 200, 429]);
+});

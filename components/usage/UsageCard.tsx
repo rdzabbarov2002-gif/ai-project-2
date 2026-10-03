@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/Card";
+import { getMessages } from "@/lib/i18n/server";
 
 /**
  * Pure presentational — no data fetching, no hooks, no "use client"
@@ -17,13 +18,6 @@ import { Card } from "@/components/ui/Card";
  */
 export interface UsageCardProps {
   planSlug: "free" | "pro" | "enterprise";
-  /** Subscription status (Settings/Billing only — Stage 13's brief asks
-   *  for it there, not on the Dashboard). Omitted entirely when absent,
-   *  not rendered as an empty state — there is always a real value once
-   *  a `subscriptions` row exists (migration 0009's signup trigger
-   *  creates one for every user), so "missing" only happens for an edge
-   *  case already worth just not showing a status line for. */
-  status?: string;
   used: number;
   /** null = unlimited (mirrors PlanLimits.maxGenerationsPerMonth's own
    *  null-means-unlimited convention, Stage 5) — kept as the same
@@ -32,13 +26,8 @@ export interface UsageCardProps {
   limit: number | null;
 }
 
-const PLAN_LABELS: Record<UsageCardProps["planSlug"], string> = {
-  free: "Free",
-  pro: "Pro",
-  enterprise: "Enterprise",
-};
-
-export function UsageCard({ planSlug, status, used, limit }: UsageCardProps) {
+export async function UsageCard({ planSlug, used, limit }: UsageCardProps) {
+  const t = await getMessages();
   const isUnlimited = limit === null;
   const remaining = isUnlimited ? null : Math.max(0, limit - used);
   const percentage = isUnlimited
@@ -50,22 +39,21 @@ export function UsageCard({ planSlug, status, used, limit }: UsageCardProps) {
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="font-medium text-ink-950">Plan: {PLAN_LABELS[planSlug]}</h2>
-        {status && <span className="text-xs text-ink-600">{status}</span>}
+        <h2 className="font-medium text-ink-950">{t.usage.plan(t.plans.names[planSlug] ?? planSlug)}</h2>
       </div>
 
       <dl className="grid grid-cols-3 gap-2 text-sm">
         <div>
-          <dt className="text-ink-600">Used</dt>
+          <dt className="text-ink-600">{t.usage.used}</dt>
           <dd className="font-medium text-ink-950">{used}</dd>
         </div>
         <div>
-          <dt className="text-ink-600">Limit</dt>
-          <dd className="font-medium text-ink-950">{isUnlimited ? "Unlimited" : limit}</dd>
+          <dt className="text-ink-600">{t.usage.limit}</dt>
+          <dd className="font-medium text-ink-950">{isUnlimited ? t.usage.unlimited : limit}</dd>
         </div>
         <div>
-          <dt className="text-ink-600">Remaining</dt>
-          <dd className="font-medium text-ink-950">{isUnlimited ? "Unlimited" : remaining}</dd>
+          <dt className="text-ink-600">{t.usage.remaining}</dt>
+          <dd className="font-medium text-ink-950">{isUnlimited ? t.usage.unlimited : remaining}</dd>
         </div>
       </dl>
 

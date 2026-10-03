@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline — AI Marketing Workspace</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        font-family: system-ui, sans-serif; background: #f2f3f7; color: #101223; padding: 24px;
+      }
+      main { max-width: 360px; text-align: center; }
+      h1 { font-size: 20px; margin: 16px 0 8px; }
+      p { color: #54596c; line-height: 1.5; margin: 0 0 20px; }
+      button {
+        font: inherit; font-size: 14px; font-weight: 500; border: 0; border-radius: 10px;
+        padding: 10px 16px; background: #1e56e0; color: #fff; cursor: pointer;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #0c0d16; color: #f0f1f5; }
+        p { color: #a3a8b8; }
+        button { background: #7aa2ff; color: #0c0d16; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="" width="56" height="56" />
+      <h1>You're offline</h1>
+      <p>AI Marketing Workspace needs a connection to generate and load your work. Check your connection and try again.</p>
+      <button type="button" onclick="location.reload()">Try again</button>
+    </main>
+  </body>
+</html>

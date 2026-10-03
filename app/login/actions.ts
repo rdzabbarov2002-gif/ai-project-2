@@ -2,9 +2,15 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { safeRedirectPath } from "@/lib/safe-redirect";
+import { getMessages } from "@/lib/i18n/server";
+import { authErrorMessage } from "@/lib/i18n/auth";
 
 export interface AuthFormState {
   error: string | null;
+  /** Sent back with an error so the form keeps it: React resets a form's
+   *  fields after its action runs, to their defaultValue. */
+  email?: string;
 }
 
 export async function signIn(
@@ -13,17 +19,20 @@ export async function signIn(
 ): Promise<AuthFormState> {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/dashboard");
+  // `next` comes from the query string via a hidden field — validated so
+  // it can only ever point back into this app (see lib/safe-redirect.ts).
+  const next = safeRedirectPath(formData.get("next"), "/dashboard");
+  const t = await getMessages();
 
   if (!email || !password) {
-    return { error: "Enter your email and password." };
+    return { error: t.auth.enterEmailAndPassword, email };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: error.message };
+    return { error: authErrorMessage(error.message, t), email };
   }
 
   // Guest → user merge is triggered client-side (components/auth/AuthSyncListener.tsx)

@@ -15,7 +15,7 @@ import type { RadioFieldConfig } from "@/lib/tool-config/schema";
 export function RadioField({ field, value, onChange, error }: FieldComponentProps<RadioFieldConfig>) {
   return (
     <FieldWrapper label={field.label} required={field.required} helpText={field.helpText} error={error}>
-      <div className="space-y-1.5">
+      <div role="radiogroup" aria-label={field.label} className="space-y-1.5">
         {field.options.map((option) => (
           <label key={option.value} className="flex items-center gap-2 text-sm text-ink-950">
             <input

@@ -1,0 +1,49 @@
+# Local development stack for the Supabase CLI (`npx supabase start`,
+# needs Docker). Only settings that differ from the CLI's defaults are
+# listed; everything else (ports 54321 API / 54322 DB / 54323 Studio /
+# 54324 local mail inbox) is the CLI default.
+project_id = "ai-marketing-workspace"
+
+[db]
+# Same major version as a new hosted Supabase project.
+major_version = 17
+
+[db.seed]
+# The data (plans, tools, templates) is seeded by the migrations
+# themselves; supabase/seed.sql is only the concatenated copy for the
+# SQL Editor setup path (supabase/README.md), so it must not run again here.
+enabled = false
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = [
+  "http://localhost:3000/auth/callback",
+  "http://127.0.0.1:3000/auth/callback",
+]
+# Same rule as the sign-up and reset forms.
+minimum_password_length = 8
+
+[auth.rate_limit]
+# The CLI default is 2 emails an hour, which the end-to-end tests (sign-up,
+# password reset) exceed. Local stack only; hosted projects keep their own.
+email_sent = 100
+
+[auth.email]
+# As on a hosted project: new accounts confirm their email before signing in.
+# Locally the emails land in the inbox at http://127.0.0.1:54324.
+enable_confirmations = true
+
+# Services the app doesn't use — not starting them keeps the first
+# `supabase start` (image downloads) and every restart shorter. Turn one
+# back on when a feature needs it.
+[realtime]
+enabled = false
+
+[storage]
+enabled = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false

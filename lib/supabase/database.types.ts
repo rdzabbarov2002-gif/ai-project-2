@@ -1,277 +1,412 @@
-/**
- * Hand-written to match supabase/migrations/*.sql exactly, because
- * `supabase gen types typescript` requires a live, linked project and
- * network access — neither available in this environment. Once the
- * project exists (after running Stage 3's migrations), regenerate this
- * file for real:
- *
- *   npx supabase gen types typescript --project-id <ref> > lib/supabase/database.types.ts
- *
- * and diff it against this version — they should match. Until then, this
- * is what gives `createClient<Database>()` real autocomplete and type
- * checking instead of `any`.
- */
 
-export interface Database {
-  public: {
-    Tables: {
-      users: {
-        Row: {
-          id: string;
-          email: string;
-          plan_id: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id: string;
-          email: string;
-          plan_id?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["users"]["Insert"]>;
-      };
-      company_profiles: {
-        Row: {
-          id: string;
-          user_id: string;
-          name: string;
-          niche: string | null;
-          tone_of_voice: string | null;
-          target_audience: string | null;
-          usp: string | null;
-          website_url: string | null;
-          logo_url: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          name: string;
-          niche?: string | null;
-          tone_of_voice?: string | null;
-          target_audience?: string | null;
-          usp?: string | null;
-          website_url?: string | null;
-          logo_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["company_profiles"]["Insert"]>;
-      };
-      guest_sessions: {
-        Row: {
-          id: string;
-          session_token: string;
-          company_profile_draft: Record<string, unknown> | null;
-          created_at: string;
-          expires_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          session_token: string;
-          company_profile_draft?: Record<string, unknown> | null;
-          created_at?: string;
-          expires_at: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["guest_sessions"]["Insert"]>;
-      };
-      tools: {
-        Row: {
-          id: string;
-          slug: string;
-          name: string;
-          description: string | null;
-          icon: string | null;
-          category: string | null;
-          config_schema: Record<string, unknown>;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          slug: string;
-          name: string;
-          description?: string | null;
-          icon?: string | null;
-          category?: string | null;
-          config_schema?: Record<string, unknown>;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["tools"]["Insert"]>;
-      };
-      templates: {
-        Row: {
-          id: string;
-          tool_id: string;
-          slug: string;
-          name: string;
-          category: string;
-          prompt_template: string;
-          required_fields: unknown[];
-          is_premium: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          tool_id: string;
-          slug: string;
-          name: string;
-          category: string;
-          prompt_template?: string;
-          required_fields?: unknown[];
-          is_premium?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["templates"]["Insert"]>;
-      };
-      plans: {
-        Row: {
-          id: string;
-          slug: "free" | "pro" | "enterprise";
-          name: string;
-          price_month: number | null;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          slug: "free" | "pro" | "enterprise";
-          name: string;
-          price_month?: number | null;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["plans"]["Insert"]>;
-      };
-      plan_limits: {
-        Row: {
-          id: string;
-          plan_id: string;
-          max_generations_per_month: number | null;
-          max_saved_results: number | null;
-          max_company_profiles: number | null;
-          allowed_tool_ids: "all" | string[];
-          allowed_ai_models: "all" | string[];
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          plan_id: string;
-          max_generations_per_month?: number | null;
-          max_saved_results?: number | null;
-          max_company_profiles?: number | null;
-          allowed_tool_ids?: "all" | string[];
-          allowed_ai_models?: "all" | string[];
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["plan_limits"]["Insert"]>;
-      };
-      usage_counters: {
-        Row: {
-          id: string;
-          user_id: string;
-          period_start: string;
-          period_end: string;
-          generations_count: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          period_start: string;
-          period_end: string;
-          generations_count?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["usage_counters"]["Insert"]>;
-      };
-      subscriptions: {
-        Row: {
-          id: string;
-          user_id: string;
-          plan_id: string;
-          status: "active" | "trialing" | "past_due" | "canceled";
-          provider_ref: string | null;
-          period_end: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          plan_id: string;
-          status?: "active" | "trialing" | "past_due" | "canceled";
-          provider_ref?: string | null;
-          period_end?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["subscriptions"]["Insert"]>;
-      };
-      generations: {
-        Row: {
-          id: string;
-          user_id: string | null;
-          guest_session_id: string | null;
-          company_profile_id: string | null;
-          tool_id: string;
-          template_id: string | null;
-          ai_provider: string;
-          ai_model: string;
-          input_params: Record<string, unknown>;
-          output: string;
-          is_favorite: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id?: string | null;
-          guest_session_id?: string | null;
-          company_profile_id?: string | null;
-          tool_id: string;
-          template_id?: string | null;
-          ai_provider: string;
-          ai_model: string;
-          input_params?: Record<string, unknown>;
-          output?: string;
-          is_favorite?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["generations"]["Insert"]>;
-      };
-    };
-    Functions: {
-      /**
-       * Matches supabase/migrations/0011_increment_usage_counter.sql.
-       * service_role only — see that file for why it's revoked from
-       * anon/authenticated.
-       */
-      increment_usage_counter: {
-        Args: {
-          p_user_id: string;
-          p_period_start: string;
-          p_period_end: string;
-        };
-        Returns: Database["public"]["Tables"]["usage_counters"]["Row"];
-      };
-    };
-  };
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+
+export type Database = {
+  
+  "public": {
+          Tables: {
+            "billing_customers": {
+                  Row: {
+                    "created_at": string,"stripe_customer_id": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"stripe_customer_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"stripe_customer_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "billing_customers_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"billing_reconciliations": {
+                  Row: {
+                    "checked": number,"created_at": string,"fixed": number,"id": string
+                  }
+                  Insert: {
+                    "checked": number,"created_at"?: string,"fixed": number,"id"?: string
+                  }
+                  Update: {
+                    "checked"?: number,"created_at"?: string,"fixed"?: number,"id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"company_profiles": {
+                  Row: {
+                    "created_at": string,"id": string,"logo_url": string | null,"name": string,"niche": string | null,"target_audience": string | null,"tone_of_voice": string | null,"updated_at": string,"user_id": string,"usp": string | null,"website_url": string | null
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"logo_url"?: string | null,"name": string,"niche"?: string | null,"target_audience"?: string | null,"tone_of_voice"?: string | null,"updated_at"?: string,"user_id": string,"usp"?: string | null,"website_url"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"logo_url"?: string | null,"name"?: string,"niche"?: string | null,"target_audience"?: string | null,"tone_of_voice"?: string | null,"updated_at"?: string,"user_id"?: string,"usp"?: string | null,"website_url"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "company_profiles_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"feedback": {
+                  Row: {
+                    "created_at": string,"id": string,"message": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"message": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"message"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "feedback_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"generations": {
+                  Row: {
+                    "ai_model": string,"ai_provider": string,"company_profile_id": string | null,"created_at": string,"duration_ms": number | null,"guest_session_id": string | null,"id": string,"input_params": NonNullable<Json>,"input_tokens": number | null,"is_favorite": boolean,"output": string,"output_tokens": number | null,"template_id": string | null,"tool_id": string,"updated_at": string,"user_id": string | null
+                  }
+                  Insert: {
+                    "ai_model": string,"ai_provider": string,"company_profile_id"?: string | null,"created_at"?: string,"duration_ms"?: number | null,"guest_session_id"?: string | null,"id"?: string,"input_params"?: NonNullable<Json>,"input_tokens"?: number | null,"is_favorite"?: boolean,"output"?: string,"output_tokens"?: number | null,"template_id"?: string | null,"tool_id": string,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Update: {
+                    "ai_model"?: string,"ai_provider"?: string,"company_profile_id"?: string | null,"created_at"?: string,"duration_ms"?: number | null,"guest_session_id"?: string | null,"id"?: string,"input_params"?: NonNullable<Json>,"input_tokens"?: number | null,"is_favorite"?: boolean,"output"?: string,"output_tokens"?: number | null,"template_id"?: string | null,"tool_id"?: string,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "generations_company_profile_id_fkey"
+      columns: ["company_profile_id"]
+isOneToOne: false
+      referencedRelation: "company_profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "generations_guest_session_id_fkey"
+      columns: ["guest_session_id"]
+isOneToOne: false
+      referencedRelation: "guest_sessions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "generations_template_id_fkey"
+      columns: ["template_id"]
+isOneToOne: false
+      referencedRelation: "templates"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "generations_tool_id_fkey"
+      columns: ["tool_id"]
+isOneToOne: false
+      referencedRelation: "tools"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "generations_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"guest_sessions": {
+                  Row: {
+                    "company_profile_draft": Json | null,"created_at": string,"expires_at": string,"id": string,"session_token": string,"updated_at": string
+                  }
+                  Insert: {
+                    "company_profile_draft"?: Json | null,"created_at"?: string,"expires_at": string,"id"?: string,"session_token": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "company_profile_draft"?: Json | null,"created_at"?: string,"expires_at"?: string,"id"?: string,"session_token"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"plan_limits": {
+                  Row: {
+                    "allowed_ai_models": NonNullable<Json>,"allowed_tool_ids": NonNullable<Json>,"created_at": string,"id": string,"max_company_profiles": number | null,"max_generations_per_month": number | null,"max_saved_results": number | null,"plan_id": string,"premium_templates": boolean,"updated_at": string
+                  }
+                  Insert: {
+                    "allowed_ai_models"?: NonNullable<Json>,"allowed_tool_ids"?: NonNullable<Json>,"created_at"?: string,"id"?: string,"max_company_profiles"?: number | null,"max_generations_per_month"?: number | null,"max_saved_results"?: number | null,"plan_id": string,"premium_templates"?: boolean,"updated_at"?: string
+                  }
+                  Update: {
+                    "allowed_ai_models"?: NonNullable<Json>,"allowed_tool_ids"?: NonNullable<Json>,"created_at"?: string,"id"?: string,"max_company_profiles"?: number | null,"max_generations_per_month"?: number | null,"max_saved_results"?: number | null,"plan_id"?: string,"premium_templates"?: boolean,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "plan_limits_plan_id_fkey"
+      columns: ["plan_id"]
+isOneToOne: true
+      referencedRelation: "plans"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"plans": {
+                  Row: {
+                    "created_at": string,"id": string,"is_active": boolean,"name": string,"price_month": number | null,"slug": string,"updated_at": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"is_active"?: boolean,"name": string,"price_month"?: number | null,"slug": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"is_active"?: boolean,"name"?: string,"price_month"?: number | null,"slug"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"stripe_events": {
+                  Row: {
+                    "created_at": string,"id": string,"type": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id": string,"type": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"type"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"subscriptions": {
+                  Row: {
+                    "cancel_at_period_end": boolean,"created_at": string,"id": string,"period_end": string | null,"plan_id": string,"provider_ref": string | null,"status": string,"trial_end": string | null,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "cancel_at_period_end"?: boolean,"created_at"?: string,"id"?: string,"period_end"?: string | null,"plan_id": string,"provider_ref"?: string | null,"status"?: string,"trial_end"?: string | null,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "cancel_at_period_end"?: boolean,"created_at"?: string,"id"?: string,"period_end"?: string | null,"plan_id"?: string,"provider_ref"?: string | null,"status"?: string,"trial_end"?: string | null,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "subscriptions_plan_id_fkey"
+      columns: ["plan_id"]
+isOneToOne: false
+      referencedRelation: "plans"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "subscriptions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"templates": {
+                  Row: {
+                    "category": string,"config_schema": Json | null,"created_at": string,"id": string,"is_default": boolean,"is_premium": boolean,"name": string,"prompt_template": string,"required_fields": NonNullable<Json>,"slug": string,"tool_id": string,"updated_at": string
+                  }
+                  Insert: {
+                    "category": string,"config_schema"?: Json | null,"created_at"?: string,"id"?: string,"is_default"?: boolean,"is_premium"?: boolean,"name": string,"prompt_template"?: string,"required_fields"?: NonNullable<Json>,"slug": string,"tool_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "category"?: string,"config_schema"?: Json | null,"created_at"?: string,"id"?: string,"is_default"?: boolean,"is_premium"?: boolean,"name"?: string,"prompt_template"?: string,"required_fields"?: NonNullable<Json>,"slug"?: string,"tool_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "templates_tool_id_fkey"
+      columns: ["tool_id"]
+isOneToOne: false
+      referencedRelation: "tools"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"tools": {
+                  Row: {
+                    "category": string | null,"config_schema": NonNullable<Json>,"created_at": string,"description": string | null,"icon": string | null,"id": string,"is_active": boolean,"name": string,"slug": string,"updated_at": string
+                  }
+                  Insert: {
+                    "category"?: string | null,"config_schema"?: NonNullable<Json>,"created_at"?: string,"description"?: string | null,"icon"?: string | null,"id"?: string,"is_active"?: boolean,"name": string,"slug": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "category"?: string | null,"config_schema"?: NonNullable<Json>,"created_at"?: string,"description"?: string | null,"icon"?: string | null,"id"?: string,"is_active"?: boolean,"name"?: string,"slug"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"usage_counters": {
+                  Row: {
+                    "created_at": string,"generations_count": number,"id": string,"period_end": string,"period_start": string,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"generations_count"?: number,"id"?: string,"period_end": string,"period_start": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"generations_count"?: number,"id"?: string,"period_end"?: string,"period_start"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "usage_counters_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"users": {
+                  Row: {
+                    "created_at": string,"email": string,"id": string,"updated_at": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"email": string,"id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"email"?: string,"id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                }
+          }
+          Views: {
+            [_ in never]: never
+          }
+          Functions: {
+            "increment_usage_counter":
+{ Args: { "p_period_end": string,"p_period_start": string,"p_user_id": string }; Returns: {
+              "created_at": string,
+"generations_count": number,
+"id": string,
+"period_end": string,
+"period_start": string,
+"updated_at": string,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "usage_counters"
+        isOneToOne: true
+        isSetofReturn: false
+      } }
+          }
+          Enums: {
+            [_ in never]: never
+          }
+          CompositeTypes: {
+            [_ in never]: never
+          }
+        }
 }
+
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
+
+export const Constants = {
+  "public": {
+          Enums: {
+            
+          }
+        }
+} as const
+

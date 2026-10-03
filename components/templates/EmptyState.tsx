@@ -1,3 +1,7 @@
+"use client";
+
+import { useMessages } from "@/components/providers/LocaleProvider";
+
 /** Independent from components/tools/gallery/EmptyState.tsx: that
  *  component's `reason` union type is literally typed to
  *  "no-tools" | "no-results" — widening it to also accept a templates
@@ -5,10 +9,8 @@
  *  objective need (the component's own logic isn't shared, just the
  *  three-line JSX shape is coincidentally similar). */
 export function EmptyState({ reason }: { reason: "no-templates" | "no-results" }) {
-  const message =
-    reason === "no-templates"
-      ? "No templates are available yet — check back soon."
-      : "No templates match your search or filter.";
+  const t = useMessages();
+  const message = reason === "no-templates" ? t.templates.none : t.templates.noMatches;
 
   return (
     <div className="rounded-md border border-dashed border-ink-200 p-8 text-center text-sm text-ink-600">

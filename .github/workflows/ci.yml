@@ -1,0 +1,130 @@
+name: CI
+
+# Stage 15: the checks every change has to pass before it can ship —
+# the same commands a contributor runs locally (see README.md).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      # The build needs no secrets: Supabase/Anthropic settings are read at
+      # runtime, and the NEXT_PUBLIC_* values are only inlined when present.
+      - name: Build
+        run: npm run build
+
+  # The database checks, against a throwaway local Postgres built from
+  # supabase/migrations. The CLI version is pinned: the generated types
+  # depend on it (same version as `npm run db:types`).
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE: npx --yes supabase@2.118.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Start Postgres (applies every migration to an empty database)
+        run: $SUPABASE db start
+
+      - name: Reset from scratch
+        run: $SUPABASE db reset
+
+      - name: RLS and privilege tests
+        run: $SUPABASE test db
+
+      - name: Security Advisor
+        run: $SUPABASE db advisors --local --type security --fail-on warn
+
+      # No warnings, and no unindexed foreign keys (reported as INFO). With
+      # nothing to report the command prints nothing at all, hence -s.
+      - name: Performance Advisor
+        run: |
+          $SUPABASE db advisors --local --type performance -o json > performance.json
+          jq -s -e '[.[][] | select(.level != "INFO" or .name == "unindexed_foreign_keys")] | length == 0' performance.json \
+            || { cat performance.json; exit 1; }
+
+      - name: Generated types are up to date
+        run: |
+          npm run db:types
+          git diff --exit-code lib/supabase/database.types.ts
+
+  # End to end (e2e/): the sign-in flows, the core product path, payments
+  # and accessibility (axe, 360px, both themes) — the built app against a
+  # local Supabase stack (whose mail inbox the tests read) and stand-ins
+  # for the Anthropic API and Stripe that Playwright starts. Runs in the
+  # Chrome preinstalled on the runner.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE: npx --yes supabase@2.118.0
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Required at server start (lib/env.ts); generations go to the local
+      # stand-in (e2e/mock-anthropic.mjs), never to the real API.
+      ANTHROPIC_API_KEY: e2e-not-used
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Start Supabase (database, Auth, mail inbox)
+        run: $SUPABASE start -x studio,postgres-meta
+
+      - name: Point the app at it
+        run: |
+          eval "$($SUPABASE status -o env)"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "MAILPIT_URL=$MAILPIT_URL"
+          } >> "$GITHUB_ENV"
+
+      - name: Build
+        run: npm run build
+
+      - name: End-to-end tests
+        run: npm run test:e2e

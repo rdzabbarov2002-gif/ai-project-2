@@ -1,6 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/Input";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 /**
  * `placeholder`/`ariaLabel` are optional, defaulting to the original
@@ -15,21 +16,22 @@ import { Input } from "@/components/ui/Input";
 export function SearchBar({
   value,
   onChange,
-  placeholder = "Search tools…",
-  ariaLabel = "Search tools",
+  placeholder,
+  ariaLabel,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   ariaLabel?: string;
 }) {
+  const t = useMessages();
   return (
     <Input
       type="search"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      aria-label={ariaLabel}
+      placeholder={placeholder ?? t.tools.searchPlaceholder}
+      aria-label={ariaLabel ?? t.tools.searchLabel}
       className="sm:max-w-xs"
     />
   );

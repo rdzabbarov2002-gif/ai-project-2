@@ -1,4 +1,5 @@
 import { ToolConfigSchemaSchema, type ToolConfigSchema } from "./schema";
+import { logger } from "@/lib/logger";
 
 const EMPTY_SCHEMA: ToolConfigSchema = { fields: [] };
 
@@ -15,10 +16,9 @@ const EMPTY_SCHEMA: ToolConfigSchema = { fields: [] };
 export function parseToolConfigSchema(raw: unknown): ToolConfigSchema {
   const result = ToolConfigSchemaSchema.safeParse(raw);
   if (!result.success) {
-    console.error(
-      "[tool-config] invalid config_schema, falling back to an empty form:",
-      result.error.message,
-    );
+    logger.error("tool-config: invalid config_schema, falling back to an empty form", {
+      error: result.error.message,
+    });
     return EMPTY_SCHEMA;
   }
   return result.data;

@@ -12,8 +12,16 @@ export function TextareaField({
   error,
 }: FieldComponentProps<TextareaFieldConfig>) {
   return (
-    <FieldWrapper label={field.label} required={field.required} helpText={field.helpText} error={error}>
+    <FieldWrapper
+      label={field.label}
+      required={field.required}
+      helpText={field.helpText}
+      error={error}
+      htmlFor={`field-${field.name}`}
+    >
       <Textarea
+        id={`field-${field.name}`}
+        aria-invalid={error ? true : undefined}
         value={typeof value === "string" ? value : ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={field.placeholder}

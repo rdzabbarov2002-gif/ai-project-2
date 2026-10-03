@@ -4,8 +4,10 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 export function SignOutButton() {
+  const t = useMessages();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -20,7 +22,7 @@ export function SignOutButton() {
 
   return (
     <Button variant="secondary" onClick={handleSignOut} disabled={isPending}>
-      {isPending ? "Signing out…" : "Sign out"}
+      {isPending ? t.nav.signingOut : t.nav.signOut}
     </Button>
   );
 }

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Marketing</title>
+    <style>
+      :root { color-scheme: light dark; --bg: #f2f3f7; --ink: #101223; --muted: #54596c; --accent: #1e56e0; --on-accent: #fff; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #0c0d16; --ink: #f0f1f5; --muted: #a3a8b8; --accent: #7aa2ff; --on-accent: #0c0d16; } }
+      body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box;
+        font-family: system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+      main { max-width: 340px; text-align: center; }
+      svg { display: block; margin: 0 auto; }
+      h1 { font-size: 20px; margin: 16px 0 8px; }
+      p { color: var(--muted); line-height: 1.5; margin: 0 0 20px; }
+      button { font: inherit; font-size: 16px; font-weight: 600; border: 0; border-radius: 12px; min-height: 48px; padding: 0 22px;
+        background: var(--accent); color: var(--on-accent); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <svg width="56" height="56" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1E56E0"/><path d="M16 6.5l2.4 6.1 6.1 2.4-6.1 2.4L16 23.5l-2.4-6.1-6.1-2.4 6.1-2.4z" fill="#fff"/></svg>
+      <h1 id="title">You're offline</h1>
+      <p id="text">AI Marketing needs an internet connection. Check your connection and try again.</p>
+      <button type="button" id="retry">Try again</button>
+    </main>
+    <script>
+      // The app's site address; the Android workflow rewrites it together with capacitor.config.json.
+      var SITE = "https://ai-project-2-git-claude-stoic-franklin-0o9nt2-ai-project-4892.vercel.app";
+      if ((navigator.language || "").toLowerCase().indexOf("ru") === 0) {
+        document.documentElement.lang = "ru";
+        document.getElementById("title").textContent = "Нет подключения";
+        document.getElementById("text").textContent = "Для работы AI Marketing нужен интернет. Проверьте подключение и попробуйте ещё раз.";
+        document.getElementById("retry").textContent = "Повторить";
+      }
+      document.getElementById("retry").addEventListener("click", function () { location.href = SITE; });
+    </script>
+  </body>
+</html>

@@ -13,13 +13,17 @@ import type { UsagePeriod } from "@/lib/generation/period";
 export interface UsageCheckResult {
   allowed: boolean;
   remaining: number | "unlimited";
-  reason?: "monthly_limit_reached" | "tool_not_in_plan";
+  reason?: "monthly_limit_reached" | "tool_not_in_plan" | "template_not_in_plan";
 }
 
 export async function checkUsage(params: {
   userId?: string;
   guestSessionId?: string;
   toolSlug: string;
+  /** Stage 10: whether the requested template is flagged `is_premium` —
+   *  an entitlement check of the same kind as tool-in-plan, so it lives
+   *  here with it rather than as a separate gate in the pipeline. */
+  templateIsPremium?: boolean;
   planLimits: PlanLimits;
   period: UsagePeriod;
   /** Service-role client — required because usage_counters has no
@@ -38,6 +42,10 @@ export async function checkUsage(params: {
     return { allowed: false, remaining: 0, reason: "tool_not_in_plan" };
   }
 
+  if (params.templateIsPremium && !planLimits.premiumTemplates) {
+    return { allowed: false, remaining: 0, reason: "template_not_in_plan" };
+  }
+
   if (planLimits.maxGenerationsPerMonth === null) {
     return { allowed: true, remaining: "unlimited" };
   }
@@ -54,8 +62,9 @@ export async function checkUsage(params: {
 
   // "Remaining after this one" — the request currently being checked
   // hasn't been saved yet, so it isn't in `currentCount`; subtracting 1
-  // here reports what the caller will have left once it goes through,
-  // which is what a UI usage indicator (Stage 13) actually wants to show.
+  // here reports what the caller will have left once it goes through
+  // (returned with the generated result). Passive "left right now"
+  // displays use resolveUsageSummary (./usageSummary.ts) instead.
   return { allowed: true, remaining: planLimits.maxGenerationsPerMonth - currentCount - 1 };
 }
 

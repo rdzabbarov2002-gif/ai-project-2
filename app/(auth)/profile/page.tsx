@@ -1,6 +1,11 @@
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { CompanyProfileForm } from "@/components/profile/CompanyProfileForm";
+import { getMessages } from "@/lib/i18n/server";
+
+/** The form's "Autofill from website" server action fetches a website and
+ *  calls the AI gateway — longer than Vercel's default function limit. */
+export const maxDuration = 60;
 
 /**
  * Own direct read via the existing Supabase server client — deliberately
@@ -24,10 +29,16 @@ import { CompanyProfileForm } from "@/components/profile/CompanyProfileForm";
  * consistent for the same reason: a user with several profiles (Stage 3,
  * future agency use) sees and edits whichever one the pipeline itself
  * would currently pick as their default company context.
+ *
+ * No loading.tsx here, on purpose: with a loading boundary around the
+ * page, Next.js 15 sometimes never renders the page a Server Action sends
+ * back after revalidatePath (vercel/next.js#87529) — the Save button stayed
+ * on "Saving…" in about one try in four. Don't add one back until that is fixed.
  */
 export default async function CompanyProfilePage() {
   const user = await requireUser();
-  const supabase = createClient();
+  const supabase = await createClient();
+  const t = await getMessages();
 
   const { data: profile } = await supabase
     .from("company_profiles")
@@ -39,7 +50,7 @@ export default async function CompanyProfilePage() {
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <h1 className="font-display text-xl font-semibold text-ink-950">Company Profile</h1>
+      <h1 className="font-display text-xl font-semibold text-ink-950">{t.profile.title}</h1>
       <CompanyProfileForm
         initialProfile={
           profile

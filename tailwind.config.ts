@@ -11,6 +11,16 @@ import type { Config } from "tailwindcss";
  * near-black/near-white, not tinted, per the design system rationale in
  * /config/design-tokens.md.
  */
+/**
+ * Stage 14: every color is a CSS variable (RGB channels, defined in
+ * app/globals.css for light and `.dark`), so the whole UI switches theme
+ * without a single component knowing — components keep using the same
+ * semantic names (`ink-950`, `accent`, `surface`…). `<alpha-value>` keeps
+ * opacity modifiers like `bg-ink-950/50` working. Values and the contrast
+ * checks behind them are documented in config/design-tokens.md.
+ */
+const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
+
 const config: Config = {
   darkMode: ["class"],
   content: [
@@ -21,25 +31,44 @@ const config: Config = {
     extend: {
       colors: {
         ink: {
-          950: "#0E0F12",
-          800: "#23262E",
-          600: "#4B4F58",
-          400: "#8A8E96",
-          200: "#D8DAdE",
-          50: "#F7F7F8",
+          950: token("ink-950"),
+          800: token("ink-800"),
+          600: token("ink-600"),
+          400: token("ink-400"),
+          200: token("ink-200"),
+          50: token("ink-50"),
         },
+        /** Raised surfaces (cards, inputs, dialogs) — white in light mode. */
+        surface: token("surface"),
         accent: {
-          DEFAULT: "#3730E0",
-          hover: "#2C24B8",
-          subtle: "#EEEDFC",
+          DEFAULT: token("accent"),
+          hover: token("accent-hover"),
+          subtle: token("accent-subtle"),
+          /** Text on an accent background. */
+          contrast: token("accent-contrast"),
         },
         upgrade: {
-          DEFAULT: "#F5A623",
-          hover: "#D8901A",
-          subtle: "#FDF3E1",
+          DEFAULT: token("upgrade"),
+          hover: token("upgrade-hover"),
+          subtle: token("upgrade-subtle"),
+          /** Text on an upgrade (amber) background. */
+          contrast: token("upgrade-contrast"),
+          /** Amber-toned text on `upgrade-subtle` (e.g. the "Pro" badge). */
+          ink: token("upgrade-ink"),
         },
-        success: "#1E9E6B",
-        danger: "#D64545",
+        success: token("success"),
+        danger: token("danger"),
+        /** Pastel tile backgrounds and their text (landing page tools). */
+        tone: {
+          blue: token("tone-blue"),
+          "blue-ink": token("tone-blue-ink"),
+          green: token("tone-green"),
+          "green-ink": token("tone-green-ink"),
+          pink: token("tone-pink"),
+          "pink-ink": token("tone-pink-ink"),
+          amber: token("tone-amber"),
+          "amber-ink": token("tone-amber-ink"),
+        },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
@@ -49,6 +78,7 @@ const config: Config = {
         sm: "6px",
         md: "10px",
         lg: "16px",
+        xl: "22px",
       },
       spacing: {
         18: "4.5rem",

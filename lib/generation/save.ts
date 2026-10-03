@@ -5,6 +5,8 @@ import type { Identity } from "./identity";
 import type { UsagePeriod } from "./period";
 import type { AIGenerateResult } from "@/lib/ai-provider";
 import type { ResolvedTool, ResolvedTemplate } from "./catalog";
+import type { TablesInsert } from "@/lib/supabase/database.types";
+import { logger } from "@/lib/logger";
 
 export interface SaveGenerationParams {
   /** Request-scoped, RLS-enforced client — used for signed-in writes. */
@@ -17,6 +19,8 @@ export interface SaveGenerationParams {
   companyProfileId: string | null;
   inputParams: Record<string, unknown>;
   result: AIGenerateResult;
+  /** How long the AI call took — with the token counts, what pricing is set from. */
+  durationMs: number;
 }
 
 export interface SaveGenerationOutcome {
@@ -53,14 +57,17 @@ export async function saveGeneration(
     template_id: params.template?.id ?? null,
     ai_provider: params.result.provider,
     ai_model: params.result.model,
-    input_params: params.inputParams,
+    input_params: params.inputParams as TablesInsert<"generations">["input_params"],
     output: params.result.text,
+    input_tokens: params.result.usage.inputTokens,
+    output_tokens: params.result.usage.outputTokens,
+    duration_ms: params.durationMs,
   };
 
   const { data, error } = await client.from("generations").insert(row).select("id").single();
 
   if (error || !data) {
-    console.error("[generations] save failed:", error?.message);
+    logger.error("generations: save failed", { error: error ?? "no row returned" });
     return { id: null, saved: false };
   }
 
@@ -102,6 +109,6 @@ export async function incrementUsage(
     // succeeded) is already saved. Losing an increment means this one
     // period undercounts by one — worth logging, not worth failing an
     // otherwise-successful request over.
-    console.error("[usage_counters] increment failed:", error.message);
+    logger.error("usage_counters: increment failed", { error });
   }
 }

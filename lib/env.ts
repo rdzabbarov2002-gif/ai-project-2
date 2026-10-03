@@ -1,0 +1,112 @@
+import { z } from "zod";
+import { AI_PROVIDER_NAMES } from "@/lib/ai-provider/types";
+
+/**
+ * The environment contract: every variable the app reads, checked once
+ * when the server starts (instrumentation.ts). A missing or malformed
+ * value stops the server with the variable's name, instead of surfacing
+ * later as a 500 on the first request that happens to need it — e.g. a
+ * deploy without SUPABASE_SERVICE_ROLE_KEY used to look healthy until the
+ * first guest tried to generate something.
+ *
+ * Only names and problems are ever reported, never values: most of these
+ * are secrets and error output ends up in logs.
+ *
+ * An empty value counts as unset: `.env.example` is meant to be copied
+ * as-is, and `FOO=` there means "use the default", not "invalid".
+ *
+ * The rest of the code keeps reading `process.env` where it did before
+ * (lib/supabase/*, config/settings.ts, lib/ai-provider/*) — this module
+ * guarantees those reads find valid values, it doesn't replace them.
+ */
+
+const blankAsUndefined = (value: unknown) => (value === "" ? undefined : value);
+
+const required = <T extends z.ZodTypeAny>(schema: T) => z.preprocess(blankAsUndefined, schema);
+const optional = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess(blankAsUndefined, schema.optional());
+
+const url = z.string().url("must be a full URL (https://…)");
+const positiveInt = z.string().regex(/^[1-9]\d*$/, "must be a positive whole number");
+
+const envSchema = z.object({
+  // Required — see .env.example for where each value comes from.
+  NEXT_PUBLIC_SUPABASE_URL: required(url),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: required(z.string()),
+  SUPABASE_SERVICE_ROLE_KEY: required(z.string()),
+  ANTHROPIC_API_KEY: required(z.string()),
+
+  // Optional — the app has a default for each.
+  NEXT_PUBLIC_SITE_URL: optional(url),
+  DEFAULT_AI_PROVIDER: optional(z.enum(AI_PROVIDER_NAMES)),
+  DEFAULT_AI_MODEL: optional(z.string()),
+  GUEST_GENERATION_LIMIT: optional(positiveInt),
+  MAX_GENERATIONS_PER_MINUTE: optional(positiveInt),
+  NEXT_PUBLIC_SENTRY_DSN: optional(url),
+  POSTHOG_KEY: optional(z.string()),
+  POSTHOG_HOST: optional(url),
+  // Payments (Phase 6): on when the secret key is set — see the check below.
+  STRIPE_SECRET_KEY: optional(z.string()),
+  STRIPE_WEBHOOK_SECRET: optional(z.string()),
+  STRIPE_API_BASE: optional(url),
+  CRON_SECRET: optional(z.string()),
+  // Alert threshold for the daily AI spend check (app/api/cron/ai-spend).
+  AI_DAILY_BUDGET_USD: optional(z.string().regex(/^\d+(\.\d+)?$/, "must be a number of dollars")),
+  // "true": the Content Security Policy only reports (lib/csp.ts).
+  CSP_REPORT_ONLY: optional(z.enum(["true", "false"])),
+  // Where people write to us (config/site.ts): the footer, FAQ, legal pages.
+  NEXT_PUBLIC_SUPPORT_EMAIL: optional(z.string().email("must be an email address")),
+  // Who runs the service, for the Privacy Policy and Terms (config/site.ts).
+  LEGAL_OPERATOR: optional(z.string()),
+  LEGAL_COUNTRY: optional(z.string()),
+  EMAIL_PROVIDER: optional(z.string()),
+  // Set by Vercel: production, preview or development.
+  VERCEL_ENV: optional(z.string()),
+}).superRefine((env, ctx) => {
+  // Production can't launch without a way for people to reach us, or
+  // with placeholders in its Privacy Policy and Terms.
+  if (env.VERCEL_ENV === "production") {
+    for (const name of ["NEXT_PUBLIC_SUPPORT_EMAIL", "LEGAL_OPERATOR", "LEGAL_COUNTRY", "EMAIL_PROVIDER"] as const) {
+      if (!env[name]) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [name], message: "is required in production" });
+      }
+    }
+  }
+  // Payments half set up would take money without ever hearing back.
+  if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["STRIPE_WEBHOOK_SECRET"],
+      message: "is required when STRIPE_SECRET_KEY is set",
+    });
+  }
+});
+
+type EnvSource = Record<string, string | undefined>;
+
+/** Problems with `env`, one line per variable; empty when it's valid. */
+export function checkEnv(env: EnvSource): string[] {
+  const result = envSchema.safeParse(env);
+  if (result.success) return [];
+
+  return result.error.issues.map((issue) => {
+    const name = issue.path.join(".");
+    const missing = issue.code === "invalid_type" && issue.received === "undefined";
+    return `${name}: ${missing ? "is required" : issue.message}`;
+  });
+}
+
+/** Throws one error naming every missing or invalid variable. */
+export function assertEnv(env: EnvSource = process.env): void {
+  const problems = checkEnv(env);
+  if (problems.length === 0) return;
+
+  throw new Error(
+    [
+      "Invalid environment configuration — the server can't start:",
+      ...problems.map((problem) => `  - ${problem}`),
+      "Set these in .env.local (local development) or in the hosting provider's",
+      "environment variables; .env.example documents each one.",
+    ].join("\n"),
+  );
+}

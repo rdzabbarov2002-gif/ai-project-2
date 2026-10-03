@@ -7,6 +7,7 @@ import { SearchBar } from "@/components/tools/gallery/SearchBar";
 import { CategoryFilter } from "@/components/tools/gallery/CategoryFilter";
 import { TemplateGrid } from "./TemplateGrid";
 import { EmptyState } from "./EmptyState";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 /**
  * Same shape as components/tools/gallery/ToolGallery.tsx (Stage 7): owns
@@ -19,8 +20,15 @@ import { EmptyState } from "./EmptyState";
  * because those render a different item shape and carry
  * tools-specific text, not because sharing was rejected in general.
  */
-export function TemplateGallery({ templates }: { templates: TemplateListItem[] }) {
-  const [search, setSearch] = useState("");
+export function TemplateGallery({
+  templates,
+  initialSearch = "",
+}: {
+  templates: TemplateListItem[];
+  initialSearch?: string;
+}) {
+  const t = useMessages();
+  const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState<string | null>(null);
 
   const categories = useMemo(() => deriveCategories(templates), [templates]);
@@ -35,8 +43,8 @@ export function TemplateGallery({ templates }: { templates: TemplateListItem[] }
         <SearchBar
           value={search}
           onChange={setSearch}
-          placeholder="Search templates…"
-          ariaLabel="Search templates"
+          placeholder={t.templates.searchPlaceholder}
+          ariaLabel={t.templates.searchLabel}
         />
         {categories.length > 0 && (
           <CategoryFilter categories={categories} value={category} onChange={setCategory} />

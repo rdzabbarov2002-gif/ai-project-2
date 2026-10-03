@@ -20,4 +20,6 @@ export interface TemplateListItem {
   category: string;
   toolSlug: string;
   toolName: string;
+  /** Shown as a "Pro" badge on the card (Stage 10 completion). */
+  isPremium: boolean;
 }

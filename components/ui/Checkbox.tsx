@@ -6,7 +6,7 @@ export function Checkbox({ className, ...props }: InputHTMLAttributes<HTMLInputE
     <input
       type="checkbox"
       className={clsx(
-        "h-4 w-4 rounded-sm border border-ink-200 accent-accent",
+        "h-4 w-4 rounded-sm border border-ink-200 bg-surface accent-accent",
         "focus:outline-none focus:ring-2 focus:ring-accent",
         className,
       )}

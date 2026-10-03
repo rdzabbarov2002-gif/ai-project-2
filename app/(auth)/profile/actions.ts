@@ -1,9 +1,13 @@
 "use server";
 
 import { z } from "zod";
+import { getMessages } from "@/lib/i18n/server";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
+import { fetchWebsiteSummary, WebsiteFetchError } from "@/lib/profile-autofill/fetchWebsite";
+import { extractProfile, type SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
+import { logger } from "@/lib/logger";
 
 /**
  * The only validation layer for this form — no parallel check in the
@@ -62,6 +66,7 @@ export async function saveCompanyProfile(
   formData: FormData,
 ): Promise<CompanyProfileFormState> {
   const user = await requireUser();
+  const t = await getMessages();
 
   const parsed = CompanyProfileSchema.safeParse({
     id: emptyToUndefined(formData.get("id")),
@@ -74,10 +79,13 @@ export async function saveCompanyProfile(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input.", success: false };
+    // The one rule a person can break here is the missing name; the rest
+    // (lengths) the form's own limits already prevent.
+    const nameMissing = parsed.error.issues.some((issue) => issue.path[0] === "name");
+    return { error: nameMissing ? t.profile.nameRequired : t.common.invalidInput, success: false };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { id, ...fields } = parsed.data;
 
   const row = {
@@ -95,8 +103,8 @@ export async function saveCompanyProfile(
     : await supabase.from("company_profiles").insert(row);
 
   if (error) {
-    console.error("[profile] save failed:", error.message);
-    return { error: "Something went wrong saving your profile. Please try again.", success: false };
+    logger.error("profile: save failed", { error });
+    return { error: t.profile.saveFailed, success: false };
   }
 
   // First mutation of Server Component-displayed data via a Server Action
@@ -108,4 +116,43 @@ export async function saveCompanyProfile(
   revalidatePath("/profile");
 
   return { error: null, success: true };
+}
+
+export interface AutofillResult {
+  error: string | null;
+  profile: SuggestedProfile | null;
+  /** "metadata" = the AI step failed and only the page's own title and
+   *  description could be used — the form says so. */
+  source?: "ai" | "metadata";
+}
+
+/**
+ * Stage 12 — "autofill by URL" (architecture doc §9). Returns suggested
+ * values only; nothing is written here. The form (onboarding wizard or
+ * /profile) shows them for review and saves through saveCompanyProfile
+ * above, so that action stays the one validated write path.
+ *
+ * Signed-in only (requireUser): it makes an outbound request and an AI
+ * call on the server's behalf. The URL is untrusted input — see
+ * lib/profile-autofill/fetchWebsite.ts for the SSRF handling.
+ */
+export async function autofillCompanyProfile(url: string): Promise<AutofillResult> {
+  await requireUser();
+  const t = await getMessages();
+
+  if (typeof url !== "string" || url.trim().length === 0 || url.length > 300) {
+    return { error: t.profile.enterWebsite, profile: null };
+  }
+
+  try {
+    const site = await fetchWebsiteSummary(url);
+    const { profile, source } = await extractProfile(site);
+    return { error: null, profile, source };
+  } catch (error) {
+    if (error instanceof WebsiteFetchError) {
+      return { error: t.profile.websiteErrors[error.message] ?? error.message, profile: null };
+    }
+    logger.error("profile: autofill failed", { error });
+    return { error: t.profile.readFailed, profile: null };
+  }
 }

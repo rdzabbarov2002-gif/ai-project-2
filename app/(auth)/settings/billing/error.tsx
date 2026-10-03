@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
+import { reportClientError } from "@/lib/report-client-error";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 export default function BillingSettingsError({
   error,
@@ -10,17 +12,18 @@ export default function BillingSettingsError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useMessages();
   useEffect(() => {
-    console.error("[settings/billing]", error);
+    reportClientError("settings/billing: error boundary", error);
   }, [error]);
 
   return (
     <main className="mx-auto max-w-2xl space-y-4 p-6">
       <div className="rounded-md border border-danger p-8 text-center text-sm text-danger">
-        Couldn&apos;t load your billing details right now. Please try again shortly.
+        {t.billing.loadError}
       </div>
       <Button variant="secondary" onClick={reset}>
-        Try again
+        {t.common.tryAgain}
       </Button>
     </main>
   );

@@ -1,12 +1,16 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldWrapper } from "@/components/tools/fields/FieldWrapper";
 import { saveCompanyProfile, type CompanyProfileFormState } from "@/app/(auth)/profile/actions";
+import { WebsiteAutofill } from "./WebsiteAutofill";
+import { useMessages } from "@/components/providers/LocaleProvider";
+import type { SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
 
 /**
  * Shape matches GuestCompanyProfileDraft (lib/guest-session/types.ts) —
@@ -31,10 +35,11 @@ export interface CompanyProfileFormValues {
 const initialState: CompanyProfileFormState = { error: null, success: false };
 
 function SubmitButton() {
+  const t = useMessages();
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "Saving…" : "Save"}
+      {pending ? t.common.saving : t.common.save}
     </Button>
   );
 }
@@ -49,50 +54,132 @@ function SubmitButton() {
  * chrome — that component was already fully generic (no dependency on the
  * tool-config field system beyond the props it takes), so nothing about
  * it needed to change to fit here, unlike SearchBar in Stage 10.
+ *
+ * Stage 12 completion — autofill by URL: WebsiteAutofill's suggestions
+ * are applied by remounting the (still uncontrolled) form with them as
+ * new defaults (`formKey`), merged over whatever is currently typed in,
+ * so a half-edited form doesn't lose manual changes to fields the
+ * website said nothing about. Nothing is saved until Save.
+ *
+ * Save does the same with what was typed: React (19) resets a form's
+ * fields to their defaults once its action has run, so without it an
+ * error — or a save — would put back the values the page loaded with.
  */
+type EditableField = Exclude<keyof CompanyProfileFormValues, "id">;
+const EDITABLE_FIELDS: EditableField[] = [
+  "name",
+  "niche",
+  "toneOfVoice",
+  "targetAudience",
+  "usp",
+  "websiteUrl",
+];
+
 export function CompanyProfileForm({
   initialProfile,
 }: {
   initialProfile: CompanyProfileFormValues | null;
 }) {
-  const [state, formAction] = useFormState(saveCompanyProfile, initialState);
+  const t = useMessages();
+  const [state, formAction] = useActionState(saveCompanyProfile, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [formKey, setFormKey] = useState(0);
+  const [overrides, setOverrides] = useState<Partial<Record<EditableField, string>>>({});
+
+  const valueOf = (name: EditableField) => overrides[name] ?? initialProfile?.[name] ?? "";
+
+  /** What the form holds right now, field by field. */
+  function typedValues() {
+    const current = formRef.current ? new FormData(formRef.current) : null;
+    const values: Partial<Record<EditableField, string>> = {};
+    for (const name of EDITABLE_FIELDS) {
+      const typed = current?.get(name);
+      values[name] = typeof typed === "string" ? typed : valueOf(name);
+    }
+    return values;
+  }
+
+  function applySuggestions(suggested: SuggestedProfile) {
+    const typed = typedValues();
+    const next: Partial<Record<EditableField, string>> = {};
+    for (const name of EDITABLE_FIELDS) {
+      next[name] = suggested[name] || typed[name];
+    }
+    setOverrides(next);
+    setFormKey((key) => key + 1);
+  }
 
   return (
-    <Card>
-      <form action={formAction} className="space-y-4">
+    <Card className="space-y-6">
+      <WebsiteAutofill defaultUrl={initialProfile?.websiteUrl ?? ""} onFill={applySuggestions} />
+
+      <form
+        key={formKey}
+        ref={formRef}
+        action={formAction}
+        onSubmit={() => setOverrides(typedValues())}
+        className="space-y-4"
+      >
         {initialProfile?.id && <input type="hidden" name="id" value={initialProfile.id} />}
 
-        <FieldWrapper label="Company name" required>
-          <Input name="name" defaultValue={initialProfile?.name ?? ""} required maxLength={200} />
+        <FieldWrapper label={t.profile.companyName} required htmlFor="profile-name">
+          <Input
+            id="profile-name"
+            name="name"
+            defaultValue={valueOf("name")}
+            required
+            maxLength={200}
+          />
         </FieldWrapper>
 
-        <FieldWrapper label="Niche / industry">
-          <Input name="niche" defaultValue={initialProfile?.niche ?? ""} maxLength={200} />
+        <FieldWrapper label={t.profile.niche} htmlFor="profile-niche">
+          <Input id="profile-niche" name="niche" defaultValue={valueOf("niche")} maxLength={200} />
         </FieldWrapper>
 
-        <FieldWrapper label="Tone of voice" helpText="e.g. friendly, professional, bold.">
-          <Input name="toneOfVoice" defaultValue={initialProfile?.toneOfVoice ?? ""} maxLength={200} />
+        <FieldWrapper
+          label={t.profile.tone}
+          helpText={t.profile.toneHelp}
+          htmlFor="profile-toneOfVoice"
+        >
+          <Input
+            id="profile-toneOfVoice"
+            name="toneOfVoice"
+            defaultValue={valueOf("toneOfVoice")}
+            maxLength={200}
+          />
         </FieldWrapper>
 
-        <FieldWrapper label="Target audience">
+        <FieldWrapper label={t.profile.audience} htmlFor="profile-targetAudience">
           <Textarea
+            id="profile-targetAudience"
             name="targetAudience"
-            defaultValue={initialProfile?.targetAudience ?? ""}
+            defaultValue={valueOf("targetAudience")}
             maxLength={500}
             rows={3}
           />
         </FieldWrapper>
 
-        <FieldWrapper label="Unique selling point">
-          <Textarea name="usp" defaultValue={initialProfile?.usp ?? ""} maxLength={500} rows={3} />
+        <FieldWrapper label={t.profile.usp} htmlFor="profile-usp">
+          <Textarea
+            id="profile-usp"
+            name="usp"
+            defaultValue={valueOf("usp")}
+            maxLength={500}
+            rows={3}
+          />
         </FieldWrapper>
 
-        <FieldWrapper label="Website URL">
-          <Input name="websiteUrl" defaultValue={initialProfile?.websiteUrl ?? ""} maxLength={300} />
+        <FieldWrapper label={t.profile.website} htmlFor="profile-websiteUrl">
+          <Input
+            id="profile-websiteUrl"
+            name="websiteUrl"
+            defaultValue={valueOf("websiteUrl")}
+            maxLength={300}
+          />
         </FieldWrapper>
 
         {state.error && <p className="text-sm text-danger">{state.error}</p>}
-        {state.success && <p className="text-sm text-success">Saved.</p>}
+        {state.success && <p className="text-sm text-success">{t.common.saved}</p>}
 
         <SubmitButton />
       </form>

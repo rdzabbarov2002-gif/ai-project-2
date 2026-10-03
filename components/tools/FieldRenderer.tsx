@@ -2,6 +2,7 @@
 
 import { FIELD_COMPONENTS } from "./fields";
 import type { FieldComponentProps } from "./fields/types";
+import { useMessages } from "@/components/providers/LocaleProvider";
 
 /**
  * ToolRunner's only dependency on "what field types exist" — it renders
@@ -17,13 +18,12 @@ import type { FieldComponentProps } from "./fields/types";
  * an empty one.
  */
 export function FieldRenderer({ field, value, onChange, error }: FieldComponentProps) {
+  const t = useMessages();
   const Component = FIELD_COMPONENTS[field.type];
 
   if (!Component) {
     return (
-      <p className="text-sm text-danger">
-        Unsupported field type &quot;{field.type}&quot; for &quot;{field.label}&quot;.
-      </p>
+      <p className="text-sm text-danger">{t.runner.unsupportedField(field.type, field.label)}</p>
     );
   }
 

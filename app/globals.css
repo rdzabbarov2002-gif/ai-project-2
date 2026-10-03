@@ -2,11 +2,96 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Design tokens as RGB channels (see tailwind.config.ts and
+ * config/design-tokens.md). Light is the default; `.dark` on <html> is set
+ * before first paint by the inline script in app/layout.tsx, from the
+ * saved preference or, failing that, the system setting.
+ * Every text/background pair used in the UI meets WCAG AA (4.5:1) in both
+ * themes — the table is in config/design-tokens.md.
+ */
 :root {
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-display: "Inter", system-ui, sans-serif;
+  --font-sans: var(--font-manrope), var(--font-manrope-cyrillic), system-ui, sans-serif;
+  --font-display: var(--font-manrope), var(--font-manrope-cyrillic), system-ui, sans-serif;
+
+  --ink-950: 16 18 35;
+  --ink-800: 38 42 60;
+  --ink-600: 84 89 108;
+  --ink-400: 132 137 154;
+  --ink-200: 216 219 228;
+  --ink-50: 242 243 247;
+  --surface: 255 255 255;
+
+  --accent: 30 86 224;
+  --accent-hover: 23 70 190;
+  --accent-subtle: 232 238 255;
+  --accent-contrast: 255 255 255;
+
+  --upgrade: 245 166 35;
+  --upgrade-hover: 216 144 26;
+  --upgrade-subtle: 253 243 225;
+  --upgrade-contrast: 14 15 18;
+  --upgrade-ink: 122 74 0;
+
+  --success: 23 127 86;
+  --danger: 194 52 52;
+
+  /* Tool tiles on the landing page: a pastel background and its text. */
+  --tone-blue: 220 230 255;
+  --tone-blue-ink: 27 63 166;
+  --tone-green: 217 245 231;
+  --tone-green-ink: 13 107 69;
+  --tone-pink: 255 224 236;
+  --tone-pink-ink: 163 33 79;
+  --tone-amber: 255 239 210;
+  --tone-amber-ink: 138 83 0;
+
+  color-scheme: light;
+}
+
+.dark {
+  --ink-950: 240 241 245;
+  --ink-800: 214 217 225;
+  --ink-600: 163 168 184;
+  --ink-400: 120 125 140;
+  --ink-200: 50 54 72;
+  --ink-50: 12 13 22;
+  --surface: 24 26 38;
+
+  --accent: 122 162 255;
+  --accent-hover: 153 184 255;
+  --accent-subtle: 30 40 80;
+  --accent-contrast: 12 13 22;
+
+  --upgrade: 245 166 35;
+  --upgrade-hover: 255 184 77;
+  --upgrade-subtle: 58 42 12;
+  --upgrade-contrast: 14 15 18;
+  --upgrade-ink: 248 201 119;
+
+  --success: 76 199 148;
+  --danger: 240 122 122;
+
+  --tone-blue: 28 38 72;
+  --tone-blue-ink: 170 195 255;
+  --tone-green: 16 46 36;
+  --tone-green-ink: 134 222 180;
+  --tone-pink: 60 22 38;
+  --tone-pink-ink: 255 168 200;
+  --tone-amber: 58 42 12;
+  --tone-amber-ink: 248 201 119;
+
+  color-scheme: dark;
 }
 
 body {
   @apply bg-ink-50 text-ink-950 antialiased;
+}
+
+/* A row that scrolls sideways without showing a scrollbar (landing templates). */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

@@ -34,7 +34,7 @@ export async function listTemplates(
 ): Promise<TemplateListItem[]> {
   const { data, error } = await supabase
     .from("templates")
-    .select("slug, name, category, tools!inner(slug, name, is_active)")
+    .select("slug, name, category, is_premium, tools!inner(slug, name, is_active)")
     .eq("tools.is_active", true)
     .order("name", { ascending: true });
 
@@ -43,10 +43,8 @@ export async function listTemplates(
   }
 
   return (data ?? []).map((row) => {
-    // Cast, not inferred — same caveat as lib/generation/plan.ts (Stage 5):
-    // database.types.ts is hand-written and doesn't carry the
-    // `Relationships` metadata supabase-js uses to type a `!inner` embed
-    // precisely.
+    // Cast, not inferred — same approach as lib/generation/plan.ts: the
+    // embed's shape is asserted here rather than trusted from inference.
     const tool = row.tools as unknown as { slug: string; name: string; is_active: boolean };
     return {
       slug: row.slug,
@@ -54,6 +52,7 @@ export async function listTemplates(
       category: row.category,
       toolSlug: tool.slug,
       toolName: tool.name,
+      isPremium: row.is_premium,
     };
   });
 }
