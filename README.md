@@ -240,6 +240,22 @@ timeout — on the Hobby plan 60s is the maximum.
 - **Dependencies** — Dependabot opens weekly update PRs
   (`.github/dependabot.yml`); CI checks each one.
 
+## Android app
+
+`mobile/` wraps the site in a native Android shell (Capacitor 8). The app
+opens `server.url` from `mobile/capacitor.config.json`, so it always shows
+the current site: changes to the site need no new app build.
+
+- **Get the APK:** every push that touches `mobile/` runs **Actions →
+  Android app**; the APK is in the run's artifacts (a zip). On the phone:
+  unzip it, open the `.apk` and allow installing from that source. A manual
+  run (**Run workflow**) can point the app at another site address.
+- **Build locally** (JDK 21 and the Android SDK):
+  `cd mobile && npm ci && ./scripts/prepare-android.sh && cd android && ./gradlew assembleDebug`.
+- Icons and launch screens live in `mobile/resources/android/res/` and are
+  copied over the generated project (`mobile/android/`, not in git). Why a
+  shell, and what Google Play and iOS still need: `docs/decisions.md`.
+
 ## Scripts
 
 | Command | What it does |
@@ -311,5 +327,6 @@ lib/              generation/ (pipeline), ai-provider/, supabase/, limits/,
 supabase/         migrations/ (source of truth), tests/ (RLS), config.toml (local stack),
                   schema.sql, seed.sql
 tests/            unit tests
+mobile/           Android app (Capacitor shell around the site), its icons and build script
 docs/             architecture, decisions, per-stage audits, reports
 ```

@@ -1,0 +1,74 @@
+name: Android app
+
+# Builds the Android app (mobile/, Capacitor) into an APK that installs
+# directly on a phone. The app is a native shell that opens the site at
+# server.url in mobile/capacitor.config.json; a manual run can point a
+# build at another address (Actions → Android app → Run workflow).
+on:
+  push:
+    paths:
+      - "mobile/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+    inputs:
+      site_url:
+        description: "Site the app opens (https://…). Empty: the one in mobile/capacitor.config.json"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      # Capacitor 8 builds with JDK 21.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install
+        run: npm ci
+
+      - name: Generate the Android project
+        env:
+          SITE_URL: ${{ inputs.site_url }}
+          APP_VERSION_CODE: ${{ github.run_number }}
+        run: ./scripts/prepare-android.sh
+
+      # The same debug key for every build, so a new APK installs over the
+      # previous one instead of asking to uninstall it first.
+      - name: Debug signing key
+        run: mkdir -p ~/.android && cp debug.keystore ~/.android/debug.keystore
+
+      - name: Build the APK
+        working-directory: mobile/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Name the APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "ai-marketing-1.0.${{ github.run_number }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai-marketing-android-1.0.${{ github.run_number }}
+          path: mobile/ai-marketing-*.apk
+          if-no-files-found: error
+          retention-days: 30
