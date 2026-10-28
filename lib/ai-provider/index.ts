@@ -6,6 +6,7 @@ import { OpenaiProvider } from "./openai";
 import { GeminiProvider } from "./gemini";
 import { MistralProvider } from "./mistral";
 import { GrokProvider } from "./grok";
+import { appSettings } from "@/config/settings";
 
 /**
  * Provider factory — the single place that maps a config-driven name to an
@@ -22,7 +23,8 @@ const registry: Record<AIProviderName, () => AIProvider> = {
   gemini: () => new GeminiProvider(),
   mistral: () => new MistralProvider(),
   grok: () => new GrokProvider(),
-  "openai-compatible": () => new OpenaiProvider(), // shares the OpenAI wire format
+  // Same SDK and wire format (the Responses API); OPENAI_BASE_URL points it at another host.
+  "openai-compatible": () => new OpenaiProvider(),
 };
 
 export function getProvider(name: AIProviderName): AIProvider {
@@ -43,8 +45,7 @@ export function getProvider(name: AIProviderName): AIProvider {
 }
 
 export function getDefaultProvider(): AIProvider {
-  const configured = (process.env.DEFAULT_AI_PROVIDER as AIProviderName) || "claude";
-  return getProvider(configured);
+  return getProvider(appSettings.defaultAIProvider as AIProviderName);
 }
 
 export * from "./types";

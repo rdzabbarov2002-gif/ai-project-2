@@ -35,6 +35,8 @@ describe("POST /api/generate errors", () => {
     ["network", 503, "Couldn't reach the AI provider. Please try again shortly."],
     ["timeout", 504, "The request took too long. Please try again."],
     ["authentication", 500, "Something went wrong generating your content. Please try again."],
+    // No key, or an account out of credit: our setup, never shown as such.
+    ["configuration", 500, "Something went wrong generating your content. Please try again."],
     ["unknown", 500, "Something went wrong generating your content. Please try again."],
   ] as const)("provider %s → %i with a plain message", async (kind, status, message) => {
     runGeneration.mockRejectedValue(

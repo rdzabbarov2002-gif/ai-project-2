@@ -38,10 +38,10 @@ accounts, switch *Confirm email* off for a while.
 
 ## 4. AI key
 
-console.anthropic.com → Billing: add a little credit ($5) → Settings →
-Limits: a monthly spend limit ($10) → API Keys: create one named
-`staging`. Without a valid key the pages work and a generation shows an
-error.
+platform.openai.com → Settings → Billing: add a little credit ($5),
+auto-recharge off → Limits: a monthly budget ($10) → API keys: create
+one named `staging`. Without a key the pages work and a generation shows
+an error.
 
 ## 5. Vercel
 
@@ -54,7 +54,7 @@ error.
    | `NEXT_PUBLIC_SUPABASE_URL` | Data API → Project URL |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | API Keys → *Legacy API keys* → `anon` |
    | `SUPABASE_SERVICE_ROLE_KEY` | API Keys → *Legacy API keys* → `service_role` (secret) |
-   | `ANTHROPIC_API_KEY` | the key from step 4 |
+   | `OPENAI_API_KEY` | the key from step 4 (can be added later) |
    | `NEXT_PUBLIC_SUPPORT_EMAIL` (optional) | your email — shown as "Contact" |
 
    The legacy keys are the kind the app is tested with. Deploy. That

@@ -3,7 +3,7 @@ import { adminInsert, adminSelect, createUser, emailLink, signIn, uniqueEmail } 
 
 /**
  * In a browser, against the local Supabase stack and a stand-in for the
- * Anthropic API (e2e/mock-anthropic.mjs):
+ * AI provider (e2e/mock-ai.mjs):
  * - sign-up with email confirmation, sign-in, sign-out, the return to a
  *   protected page after signing in, password reset and account deletion
  *   (emails are read from the stack's inbox, Mailpit);

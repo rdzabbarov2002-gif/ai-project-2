@@ -4,7 +4,7 @@ A guest-first PWA where a small business describes itself once and then uses
 AI tools and ready-made templates to produce ads, emails, social posts and
 long-form content — without writing prompts. Built with Next.js 15 (App
 Router), Supabase (Postgres + Auth + RLS) and an AI Provider Gateway
-(Claude today, other providers pluggable).
+(GPT by OpenAI today, Claude ready to switch to, other providers pluggable).
 
 The architecture and the 15-stage plan are in
 `docs/ai-marketing-workspace-architecture.md`; every stage has its own audit
@@ -30,8 +30,8 @@ completion of stages 8–15 and the first real build, test and integration run.
 
 ## Running it locally
 
-Requirements: Node.js ≥ 20.19, Docker (for the local database) and an
-Anthropic API key.
+Requirements: Node.js ≥ 22, Docker (for the local database) and an
+OpenAI API key.
 
 1. `npm install`
 2. `npx supabase start` — starts Postgres, Auth and the API in Docker
@@ -46,7 +46,7 @@ Anthropic API key.
    | `NEXT_PUBLIC_SUPABASE_URL` | `API_URL` |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `ANON_KEY` |
    | `SUPABASE_SERVICE_ROLE_KEY` | `SERVICE_ROLE_KEY` |
-   | `ANTHROPIC_API_KEY` | your Anthropic key |
+   | `OPENAI_API_KEY` | your OpenAI key |
 
 4. `npm run dev` → http://localhost:3000. Studio (database browser) is at
    http://127.0.0.1:54323, and emails Auth sends locally land in the
@@ -70,9 +70,9 @@ naming the variable. `.env.example` describes each.
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase anon (public) key |
 | `SUPABASE_SERVICE_ROLE_KEY` | yes | Server-only key for guest sessions, merge, usage counters |
-| `ANTHROPIC_API_KEY` | yes | Claude — generation and profile autofill |
+| `OPENAI_API_KEY` | in production | GPT — generation and profile autofill; without it elsewhere, generating fails with a configuration error |
 | `NEXT_PUBLIC_SITE_URL` | no | Origin for email-confirmation links (auto-detected otherwise) |
-| `DEFAULT_AI_PROVIDER` / `DEFAULT_AI_MODEL` | no | Defaults `claude` / `claude-sonnet-5` |
+| `DEFAULT_AI_PROVIDER` / `DEFAULT_AI_MODEL` | no | Defaults `openai` / `gpt-6.1-terra`; `claude` / `claude-sonnet-5` with `ANTHROPIC_API_KEY` switches to Claude |
 | `GUEST_GENERATION_LIMIT` | no | Guest allowance, default 3 |
 | `MAX_GENERATIONS_PER_MINUTE` | no | Burst limit per user/guest, default 6 |
 | `NEXT_PUBLIC_SENTRY_DSN` | no | Error tracking; off when unset |
@@ -108,7 +108,7 @@ branch: `docs/staging.md`.
    in each as below.
 2. **Vercel** — import the repository. Under Project Settings →
    Environment Variables, give **Production** the prod project's values
-   and **Preview** the staging project's, plus `ANTHROPIC_API_KEY` for
+   and **Preview** the staging project's, plus `OPENAI_API_KEY` for
    both. Every pull request then gets its own preview URL, and every
    merge to `main` deploys to production.
 3. **Sentry** (optional, recommended) — create a Next.js project and set
@@ -158,7 +158,7 @@ emails an hour, delivered only to your team's addresses. For real users:
 The default email templates work as they are.
 
 `/api/generate`, `/profile` and `/onboarding` declare `maxDuration = 60`
-because a Claude call routinely takes longer than the default serverless
+because an AI call routinely takes longer than the default serverless
 timeout — on the Hobby plan 60s is the maximum.
 
 ### Operations
@@ -195,8 +195,8 @@ timeout — on the Hobby plan 60s is the maximum.
 - **Cost and speed of generations** — every generation stores its token
   counts and how long the AI call took (`generations.input_tokens`,
   `output_tokens`, `duration_ms`). In the Supabase SQL Editor (prices:
-  Claude Sonnet 5, $2 input / $10 output per million tokens — check
-  Anthropic's pricing page when they change):
+  GPT-6.1 Terra, $2 input / $10 output per million tokens — check
+  OpenAI's pricing page when they change):
 
   ```sql
   select ai_model, count(*) as generations,
@@ -280,7 +280,7 @@ runs the end-to-end tests against a local Supabase stack.
 `tests/` holds the unit tests: the seeded tool/template data (every form
 parses, every placeholder maps to a field, `schema.sql`/`seed.sql` match the
 migrations), prompt assembly, plan limits and entitlements, rate limiting,
-the Claude provider's request shape and retries, the SSRF guard of profile
+the OpenAI and Claude providers' request shapes and retries, the SSRF guard of profile
 autofill, the open-redirect guard, the environment check and the logger,
 the Content Security Policy and its report endpoint, the health check and
 the AI spend alert.
@@ -304,7 +304,7 @@ signature and replay checks, the nightly reconciliation and deleting a
 paying account. `e2e/csp.spec.ts` runs the key pages and a generation
 under the enforced Content Security Policy and fails on any violation.
 The AI and Stripe are local stand-ins
-(`e2e/mock-anthropic.mjs`, `e2e/mock-stripe.mjs`, started by Playwright;
+(`e2e/mock-ai.mjs`, `e2e/mock-stripe.mjs`, started by Playwright;
 the Stripe one sends signed webhook events like Stripe), so the tests
 cost nothing and need no keys. It needs the local Supabase stack running (the tests
 read emails from its inbox) and a browser: `npx playwright install

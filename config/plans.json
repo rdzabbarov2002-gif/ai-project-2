@@ -10,7 +10,7 @@
         "max_saved_results": 20,
         "max_company_profiles": 1,
         "allowed_tool_ids": ["ad-generator", "email-generator", "social-generator", "content-generator"],
-        "allowed_ai_models": ["claude"],
+        "allowed_ai_models": ["claude", "openai"],
         "premium_templates": false
       }
     },

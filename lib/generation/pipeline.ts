@@ -2,7 +2,7 @@ import "server-only";
 import { createClient as createUserClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider, AIProviderError, type AIProviderName } from "@/lib/ai-provider";
-import { appSettings } from "@/config/settings";
+import { AI_MODEL_BY_PROVIDER, appSettings } from "@/config/settings";
 import { resolveIdentity, type Identity } from "./identity";
 import { resolveTool, resolveTemplate } from "./catalog";
 import { resolvePlanLimits } from "./plan";
@@ -232,21 +232,21 @@ const GUEST_LIMIT_REJECTION = {
 };
 
 /**
- * Exactly one provider is actually implemented today (Stage 4 — Claude;
- * the other four are typed stubs). This still resolves the choice through
- * the plan's `allowedAiModels` rather than hardcoding "claude" outright,
- * so turning on a second provider later (post-MVP, per the architecture
- * doc's own roadmap) is extending this list and the map below — not
+ * Two providers are actually implemented: OpenAI (GPT, the default) and
+ * Claude; the other three are typed stubs. The choice still goes through
+ * the plan's `allowedAiModels` rather than being hardcoded, so turning on
+ * another provider is extending this list and the map below — not
  * touching the pipeline that calls it.
  *
  * `DEFAULT_AI_PROVIDER` (config/settings.ts) decides which implemented
- * provider is tried first when a plan allows several — until Phase 1 that
- * env var was documented but read by nothing on this path.
+ * provider is tried first when a plan allows several, and
+ * `DEFAULT_AI_MODEL` replaces that provider's model.
  */
-const IMPLEMENTED_PROVIDERS: AIProviderName[] = ["claude"];
+const IMPLEMENTED_PROVIDERS: AIProviderName[] = ["openai", "claude"];
 
 const MODEL_BY_PROVIDER: Partial<Record<AIProviderName, string>> = {
-  claude: appSettings.defaultAIModel,
+  ...AI_MODEL_BY_PROVIDER,
+  [appSettings.defaultAIProvider]: appSettings.defaultAIModel,
 };
 
 function selectProviderAndModel(planLimits: {

@@ -2,11 +2,11 @@
 // dashboard → a tool → a generation → history — a few times each, and the
 // run fails if 1% or more of the requests fail, or if a generation the app
 // answered wasn't saved. The AI must be the local
-// stand-in (e2e/mock-anthropic.mjs): the script stops at the first
+// stand-in (e2e/mock-ai.mjs): the script stops at the first
 // generation that isn't the stand-in's answer, before any real spend.
 //
-//   node e2e/mock-anthropic.mjs &     # MOCK_AI_DELAY_MS=2000 for a realistic AI call
-//   ANTHROPIC_BASE_URL=http://127.0.0.1:4010 npm run start &
+//   node e2e/mock-ai.mjs &     # MOCK_AI_DELAY_MS=2000 for a realistic AI call
+//   OPENAI_BASE_URL=http://127.0.0.1:4010/v1 npm run start &
 //   node scripts/load-smoke.mjs [--users 50] [--rounds 3]
 //
 // Needs NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY and
@@ -151,7 +151,7 @@ try {
   const seconds = (performance.now() - started) / 1000;
 
   if (aborted) {
-    console.error(`Stopped: ${aborted}. Start the app with ANTHROPIC_BASE_URL=http://127.0.0.1:4010.`);
+    console.error(`Stopped: ${aborted}. Start the app with OPENAI_BASE_URL=http://127.0.0.1:4010/v1.`);
     process.exitCode = 1;
   } else {
     let total = 0;

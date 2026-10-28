@@ -1,6 +1,6 @@
 -- ============================================================
--- AI Marketing Workspace — seed data (through Stage 15)
--- Generated from migrations/0010, 0013, 0014, 0015, 0017. Run AFTER schema.sql.
+-- AI Marketing Workspace — seed data (through migration 0025)
+-- Generated from migrations/0010, 0013, 0014, 0015, 0017, 0025. Run AFTER schema.sql.
 -- Safe to re-run any time (idempotent).
 -- ============================================================
 
@@ -1718,4 +1718,18 @@ on conflict (slug) do update
 update public.templates
 set is_default = true
 where slug in ('ad-generator-default', 'email-generator-default', 'social-generator-default');
+
+-- ---------- migrations/0025_openai_provider.sql ----------
+-- GPT (OpenAI) writes the content now (config/settings.ts,
+-- docs/decisions.md). Free allowed only Claude, which would have left
+-- Free users and guests with no provider at all; it gets OpenAI too.
+-- Claude stays allowed, so switching back is DEFAULT_AI_PROVIDER=claude
+-- with no migration. Pro (claude, openai, gemini) and Enterprise ("all")
+-- already include OpenAI. Mirrors config/plans.json. Idempotent.
+
+update public.plan_limits pl
+set allowed_ai_models = '["claude", "openai"]'::jsonb
+from public.plans p
+where p.id = pl.plan_id
+  and p.slug = 'free';
 

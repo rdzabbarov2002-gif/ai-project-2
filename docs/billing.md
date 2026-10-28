@@ -114,8 +114,11 @@ deliver: Developers → Webhooks shows the failures and can resend them.
 
 ## Margins
 
-AI cost per generation, at Claude Sonnet 5's $2 / $10 per million input /
-output tokens (Phase 4, README → Cost and speed of generations):
+AI cost per generation, at GPT-6.1 Terra's $2 / $10 per million input /
+output tokens — the default model, priced like Claude Sonnet 5 before it;
+check OpenAI's pricing page (Phase 4, README → Cost and speed of
+generations). Reasoning tokens are billed as output and fit inside the
+same 8,192 cap:
 
 - **Worst case, a hard ceiling:** output is capped at 8,192 tokens and
   the form fields limit the input to about 3,000 tokens — $0.006 + $0.082

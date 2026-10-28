@@ -16,7 +16,7 @@ export const site = {
   /** How long usage statistics, error reports and logs are kept at most (Privacy). */
   statisticsRetention: "12 months",
   /** When the Privacy Policy or Terms last changed — update with their text. */
-  legalUpdated: "2026-09-27",
+  legalUpdated: "2026-10-28",
   /** How long support takes to answer, at most (FAQ, support). */
   supportResponseHours: 24,
 };

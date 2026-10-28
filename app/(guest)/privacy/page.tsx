@@ -115,7 +115,7 @@ export default async function PrivacyPage() {
             your device, with the page address and device type — no cookies.
           </li>
           <li>
-            Anthropic — generates the text: your tool inputs and company profile are sent to it
+            OpenAI — generates the text: your tool inputs and company profile are sent to it
             for each generation.
           </li>
           <li>Sentry — error reports.</li>

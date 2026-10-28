@@ -53,7 +53,7 @@ run up an unbounded bill:
 
 | Service | Where | What to set |
 |---|---|---|
-| Anthropic (AI) | Console → Settings → Limits | Monthly spend limit (e.g. 3× the expected monthly AI cost — `docs/billing.md`, "Margins"), plus the email notification threshold if offered. At the limit the API refuses calls: generations fail with the "AI is unavailable" message, the rest of the app works |
+| OpenAI (AI) | platform.openai.com → Settings → Billing and Limits | Prepaid credit with auto-recharge off, and a monthly budget (e.g. 3× the expected monthly AI cost — `docs/billing.md`, "Margins") with its email alert. With the credit or budget used up the API refuses calls (`insufficient_quota`, logged as a configuration error): generations fail with the general error message, the rest of the app works |
 | Supabase | Organization → Billing → Spend cap | **On** (the default on Pro): usage beyond the plan's quota is stopped instead of billed |
 | Vercel | Team Settings → Billing → Spend Management (Pro) | A monthly budget with email alerts at 50/75/100%, and "pause production deployments" at 100% if a pause is preferable to a bill. Hobby has no charges beyond its limits |
 | Sentry | Settings → Subscription | Free plan: fixed quota, nothing to set. Paid: on-demand budget $0 |
@@ -75,8 +75,8 @@ it can't spend money. It creates its accounts and deletes them after.
 
 ```bash
 npx supabase start && npm run build
-MOCK_AI_DELAY_MS=2000 node e2e/mock-anthropic.mjs &
-ANTHROPIC_BASE_URL=http://127.0.0.1:4010 npm run start &
+MOCK_AI_DELAY_MS=2000 node e2e/mock-ai.mjs &
+OPENAI_BASE_URL=http://127.0.0.1:4010/v1 npm run start &
 npm run test:load    # --users 50 --rounds 3 are the defaults
 ```
 
@@ -106,20 +106,20 @@ stand-in): `BASE_URL=https://<staging> npm run test:load -- --allow-remote`.
 
 ### The AI provider's rate limits
 
-Anthropic limits each organization by tier: requests per minute (RPM),
-input tokens per minute (ITPM) and output tokens per minute (OTPM) — see
-Console → Settings → Limits for the current numbers. A generation is one
-request, about 1,500–3,000 input tokens, and 1,500 output tokens on
-average (8,192 at most). The app doesn't retry a rate-limited request:
+OpenAI limits each organization by usage tier and model: requests per
+minute (RPM) and tokens per minute (TPM, input and output together) —
+see platform.openai.com → Settings → Limits for the current numbers. A
+generation is one request, about 1,500–3,000 input tokens, and 1,500
+output tokens on average, reasoning included (8,192 at most). The app doesn't retry a rate-limited request:
 the person sees "The AI provider is busy right now. Please try again
 shortly.", and the error goes to Sentry.
 
 What the limits must cover: at peak, **people generating at the same time
 × 2** requests a minute (an answer takes about 30 s, and people read it
-before generating again). For 50 at once: 100 RPM, ~300,000 ITPM, ~150,000
-OTPM. Before launch, compare with the organization's tier; if it's lower,
-move up a tier (Console → Billing: tiers rise with credit purchased) or
-ask Anthropic for a higher limit. During the beta (10–20 people) the
+before generating again). For 50 at once: 100 RPM and ~450,000 TPM. Before
+launch, compare with the organization's tier for the model; if it's
+lower, move up a tier (tiers rise with the amount paid and time since the
+first payment) or ask OpenAI for a higher limit. During the beta (10–20 people) the
 first tiers are usually enough — check the numbers anyway.
 
 ## Performance
@@ -193,7 +193,7 @@ production data or money:
 | Variable | Production | Preview (staging) |
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `…_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | the **prod** Supabase project | the **staging** project |
-| `ANTHROPIC_API_KEY` | its own key (Console → API Keys, named `prod`) | another key (`staging`), in a workspace with a low spend limit |
+| `OPENAI_API_KEY` | its own key (platform.openai.com → API keys, in a project named `prod`) | another key, in a `staging` project with a low budget |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | **live** mode (`sk_live_…`) | **test** mode (`sk_test_…`) |
 | `CRON_SECRET` | `openssl rand -hex 32` | a different one |
 | `NEXT_PUBLIC_SENTRY_DSN` | the same project; events are tagged `production`/`preview` | same |
@@ -226,8 +226,8 @@ Everything above that needs your accounts:
   enforced ("Content Security Policy").
 - [ ] Uptime monitor on `/api/health`; the Sentry alerts; each alert
   fired once and seen on the phone and in the inbox.
-- [ ] Spending limits at Anthropic, Supabase, Vercel, Sentry, PostHog.
-- [ ] Anthropic rate-limit tier checked against the expected peak.
+- [ ] Spending limits at OpenAI, Supabase, Vercel, Sentry, PostHog.
+- [ ] OpenAI rate-limit tier checked against the expected peak.
 - [ ] Speed Insights enabled; mobile p75 read once the beta has traffic.
 - [ ] Production Supabase: Advisors 0 ERROR; the query check above.
 - [ ] `curl -sI https://<domain>/`: HSTS, nosniff, Referrer-Policy, CSP,

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AI_PROVIDER_NAMES } from "@/lib/ai-provider/types";
+import { AI_PROVIDER_NAMES, type AIProviderName } from "@/lib/ai-provider/types";
 
 /**
  * The environment contract: every variable the app reads, checked once
@@ -29,15 +29,24 @@ const optional = <T extends z.ZodTypeAny>(schema: T) =>
 const url = z.string().url("must be a full URL (https://…)");
 const positiveInt = z.string().regex(/^[1-9]\d*$/, "must be a positive whole number");
 
+/** The variable holding each implemented AI provider's key. */
+const AI_KEY_BY_PROVIDER: Partial<Record<AIProviderName, "OPENAI_API_KEY" | "ANTHROPIC_API_KEY">> = {
+  openai: "OPENAI_API_KEY",
+  "openai-compatible": "OPENAI_API_KEY",
+  claude: "ANTHROPIC_API_KEY",
+};
+
 const envSchema = z.object({
   // Required — see .env.example for where each value comes from.
   NEXT_PUBLIC_SUPABASE_URL: required(url),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: required(z.string()),
   SUPABASE_SERVICE_ROLE_KEY: required(z.string()),
-  ANTHROPIC_API_KEY: required(z.string()),
 
   // Optional — the app has a default for each.
   NEXT_PUBLIC_SITE_URL: optional(url),
+  // The generating provider's key is required in production (below).
+  OPENAI_API_KEY: optional(z.string()),
+  ANTHROPIC_API_KEY: optional(z.string()),
   DEFAULT_AI_PROVIDER: optional(z.enum(AI_PROVIDER_NAMES)),
   DEFAULT_AI_MODEL: optional(z.string()),
   GUEST_GENERATION_LIMIT: optional(positiveInt),
@@ -71,6 +80,15 @@ const envSchema = z.object({
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: [name], message: "is required in production" });
       }
     }
+  }
+  // Nor without the key of the provider that writes the content (OpenAI
+  // unless DEFAULT_AI_PROVIDER says otherwise). Previews and local
+  // development run without it — every page works, a generation fails
+  // with a configuration error — so a deployment can be set up before
+  // the key exists.
+  const aiKey = AI_KEY_BY_PROVIDER[env.DEFAULT_AI_PROVIDER ?? "openai"];
+  if (env.VERCEL_ENV === "production" && aiKey && !env[aiKey]) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [aiKey], message: "is required in production" });
   }
   // Payments half set up would take money without ever hearing back.
   if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET) {

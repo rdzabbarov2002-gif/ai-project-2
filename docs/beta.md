@@ -28,7 +28,7 @@ they come back, and would they pay — the go/no-go for monetization
 - [ ] Site URL and redirect URLs point at the production domain.
 - [ ] `NEXT_PUBLIC_SENTRY_DSN` and `POSTHOG_KEY` are set in Vercel
       (Production) — errors and the funnel are what you'll measure with.
-- [ ] A monthly spending limit is set in the Anthropic console.
+- [ ] A monthly budget is set at platform.openai.com (Settings → Limits).
 - [ ] Privacy Policy and Terms are reviewed and every `[placeholder]` is
       filled in (company name, contact email, retention period, email
       provider).

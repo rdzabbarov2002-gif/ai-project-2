@@ -15,15 +15,20 @@ provider. Please try again shortly." Everything else works, and a failed
 generation doesn't count against anyone's allowance.
 
 **Do:**
-1. status.anthropic.com — an outage there: nothing to fix, wait.
-2. Anthropic Console → Usage and Limits: the **spend limit** reached
-   (raise it, or wait for the month) or the **rate limit** tier too low
-   for the traffic (`docs/production.md`, "The AI provider's rate
+1. status.openai.com — an outage there: nothing to fix, wait.
+2. platform.openai.com → Settings → Billing and Limits: the **credit or
+   budget** used up — a `configuration` error with `insufficient_quota`
+   in the logs (top up or raise the budget) — or the **rate limit** tier
+   too low for the traffic (`docs/production.md`, "The AI provider's rate
    limits").
 3. An `authentication` error: the key was revoked or rotated — see 4.
-4. A long outage of one model: switch `DEFAULT_AI_MODEL` to another
-   Claude model in Vercel and redeploy (run the provider tests first:
-   `npm test`).
+   An `invalid_request` error naming the model: `DEFAULT_AI_MODEL` is a
+   model the key can't use.
+4. A long outage of one model: switch `DEFAULT_AI_MODEL` to another GPT
+   model in Vercel and redeploy (run the provider tests first:
+   `npm test`). A long outage of OpenAI itself: switch to Claude —
+   `DEFAULT_AI_PROVIDER=claude`, `DEFAULT_AI_MODEL=claude-sonnet-5` and
+   an `ANTHROPIC_API_KEY` (`docs/decisions.md`, §4).
 
 ## 2. The database is down
 
@@ -71,7 +76,7 @@ then revoke the old one.
 | Key | Where to rotate | Meanwhile | Check misuse |
 |---|---|---|---|
 | `SUPABASE_SERVICE_ROLE_KEY` — full database access | Supabase → Project Settings → API Keys: new secret key, delete the leaked one (legacy JWT keys: rotate the JWT secret — this signs everyone out and changes the anon key too, so set `NEXT_PUBLIC_SUPABASE_ANON_KEY` as well) | guests' generations and billing fail until the redeploy | Supabase → Logs (API, Postgres) |
-| `ANTHROPIC_API_KEY` | Console → API Keys: create, then disable the old | generations fail until the redeploy | Console → Usage |
+| `OPENAI_API_KEY` | platform.openai.com → API keys: create, then revoke the old | generations fail until the redeploy | Settings → Usage |
 | `STRIPE_SECRET_KEY` | Dashboard → Developers → API keys → Roll (the old key can stay valid for a few hours) | — | Dashboard → Developers → Logs |
 | `STRIPE_WEBHOOK_SECRET` | Webhooks → the endpoint → Roll secret | events fail with 400 until the redeploy; Stripe retries them | — |
 | `CRON_SECRET` | `openssl rand -hex 32` | the nightly jobs answer 401 until the redeploy | Vercel logs for `/api/cron/` |

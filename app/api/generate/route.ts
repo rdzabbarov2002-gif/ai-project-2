@@ -10,9 +10,9 @@ import type { Locale } from "@/lib/i18n/config";
 
 /**
  * Vercel's default serverless timeout (10s on Hobby, 15s on Pro) is shorter
- * than a typical Claude generation, which would cut requests off mid-call
- * in production. 60s is the Hobby ceiling; ClaudeProvider keeps a whole
- * call, its retry included, within 50s of it (lib/ai-provider/claude.ts).
+ * than a typical AI generation, which would cut requests off mid-call in
+ * production. 60s is the Hobby ceiling; every provider keeps a whole call,
+ * its retry included, within 50s of it (lib/ai-provider/retry.ts).
  */
 export const maxDuration = 60;
 

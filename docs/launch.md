@@ -183,7 +183,7 @@ Every day, about 20 minutes, the same order:
    one: a severity (below), an owner, a line in the log.
 2. **Uptime** — the monitor's incidents; each one explained.
 3. **Costs** — the AI spend check's result (Vercel logs,
-   `ai: daily spend`), Anthropic Console → Usage, Vercel and Supabase
+   `ai: daily spend`), platform.openai.com → Usage, Vercel and Supabase
    usage pages; compare with the spending limits.
 4. **Feedback and support** — the support inbox and the `feedback` table
    (`README.md`, "Feedback"): answer everything within 24 hours; recurring

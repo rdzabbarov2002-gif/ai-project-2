@@ -40,7 +40,7 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      # The build needs no secrets: Supabase/Anthropic settings are read at
+      # The build needs no secrets: Supabase/OpenAI settings are read at
       # runtime, and the NEXT_PUBLIC_* values are only inlined when present.
       - name: Build
         run: npm run build
@@ -88,7 +88,7 @@ jobs:
   # End to end (e2e/): the sign-in flows, the core product path, payments
   # and accessibility (axe, 360px, both themes) — the built app against a
   # local Supabase stack (whose mail inbox the tests read) and stand-ins
-  # for the Anthropic API and Stripe that Playwright starts. Runs in the
+  # for the AI provider and Stripe that Playwright starts. Runs in the
   # Chrome preinstalled on the runner.
   e2e:
     runs-on: ubuntu-latest
@@ -96,9 +96,9 @@ jobs:
     env:
       SUPABASE: npx --yes supabase@2.118.0
       NEXT_TELEMETRY_DISABLED: "1"
-      # Required at server start (lib/env.ts); generations go to the local
-      # stand-in (e2e/mock-anthropic.mjs), never to the real API.
-      ANTHROPIC_API_KEY: e2e-not-used
+      # Needed for a generation to be attempted at all; it goes to the
+      # local stand-in (e2e/mock-ai.mjs), never to the real API.
+      OPENAI_API_KEY: e2e-not-used
     steps:
       - uses: actions/checkout@v4
 

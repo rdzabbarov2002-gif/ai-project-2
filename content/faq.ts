@@ -89,7 +89,7 @@ function faqEn(facts: FaqFacts): FaqEntry[] {
       id: "ai",
       question: "Which AI does it use, and is my data used to train it?",
       answer:
-        "Claude, by Anthropic. What you type into a tool and your company profile are sent to Anthropic to write each result, and aren't used to train AI models. We don't sell your data or show ads.",
+        "GPT, by OpenAI. What you type into a tool and your company profile are sent to OpenAI to write each result, and aren't used to train AI models. We don't sell your data or show ads.",
     },
     {
       id: "results",
@@ -174,7 +174,7 @@ function faqRu(facts: FaqFacts): FaqEntry[] {
       id: "ai",
       question: "Какой ИИ используется и обучают ли его на моих данных?",
       answer:
-        "Claude от компании Anthropic. То, что вы вводите в инструмент, и профиль компании отправляются в Anthropic, чтобы написать каждый результат, и не используются для обучения моделей. Мы не продаём ваши данные и не показываем рекламу.",
+        "GPT от компании OpenAI. То, что вы вводите в инструмент, и профиль компании отправляются в OpenAI, чтобы написать каждый результат, и не используются для обучения моделей. Мы не продаём ваши данные и не показываем рекламу.",
     },
     {
       id: "results",

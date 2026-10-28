@@ -4,14 +4,13 @@ import { defineConfig } from "@playwright/test";
  * End-to-end tests (e2e/): the sign-in flows, the core product path,
  * payments and accessibility, against the app, the local Supabase stack
  * (`npx supabase start`) — whose mail inbox (Mailpit) the tests read
- * emails from — and stand-ins for the Anthropic API
- * (e2e/mock-anthropic.mjs) and Stripe (e2e/mock-stripe.mjs), started
- * here.
+ * emails from — and stand-ins for the AI providers (e2e/mock-ai.mjs)
+ * and Stripe (e2e/mock-stripe.mjs), started here.
  *
  * Locally: start the stack, then either keep `npm run dev` running (it is
  * reused) or `npm run build` first; install a browser once with
  * `npx playwright install chromium`. A reused dev server must itself run
- * with the `env` below (ANTHROPIC_BASE_URL, the STRIPE_* values), or
+ * with the `env` below (OPENAI_BASE_URL, the STRIPE_* values), or
  * generations and payments go to the real services — or fail. CI uses the Chrome preinstalled on GitHub's runners instead of
  * downloading one.
  */
@@ -32,7 +31,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "node e2e/mock-anthropic.mjs",
+      command: "node e2e/mock-ai.mjs",
       url: "http://127.0.0.1:4010",
       reuseExistingServer: !process.env.CI,
     },
@@ -48,6 +47,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: {
+        OPENAI_BASE_URL: "http://127.0.0.1:4010/v1",
         ANTHROPIC_BASE_URL: "http://127.0.0.1:4010",
         STRIPE_SECRET_KEY: "sk_test_e2e",
         STRIPE_WEBHOOK_SECRET,

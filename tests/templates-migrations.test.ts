@@ -153,6 +153,6 @@ describe("combined SQL files", () => {
   });
 
   it("seed.sql is exactly the data migrations", () => {
-    expect(body("seed.sql")).toBe(combined(["0010", "0013", "0014", "0015", "0017"]));
+    expect(body("seed.sql")).toBe(combined(["0010", "0013", "0014", "0015", "0017", "0025"]));
   });
 });

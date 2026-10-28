@@ -3,9 +3,11 @@ import type { Database } from "@/lib/supabase/database.types";
 
 /**
  * What generations cost at the AI provider, from the token counts every
- * generation stores (Phase 4). Prices: Claude Sonnet 5, the default model,
- * in USD per million tokens — update with Anthropic's pricing page
- * (docs/billing.md, "Margins", uses the same).
+ * generation stores (Phase 4). Prices: GPT-6.1 Terra, the default model
+ * (config/settings.ts), in USD per million tokens — update with OpenAI's
+ * pricing page (docs/billing.md, "Margins", uses the same). The same as
+ * Claude Sonnet 5's, the default before it. A cheaper DEFAULT_AI_MODEL
+ * makes this an overestimate, which only brings the alert sooner.
  */
 export const AI_PRICE_PER_MILLION = { input: 2, output: 10 };
 

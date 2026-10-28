@@ -1,11 +1,11 @@
 /**
  * AI Provider Gateway — shared contract.
  *
- * Every provider (Claude, OpenAI, Gemini, Mistral, Grok, or any other
- * OpenAI-compatible API) implements this single interface. Business logic
- * (app/api/generate) only ever talks to `AIProvider`, never to a specific
- * vendor SDK — swapping or adding a provider is a config change, not a
- * rewrite of the generation pipeline.
+ * Every provider (OpenAI — the default — Claude, Gemini, Mistral, Grok,
+ * or any other OpenAI-compatible API) implements this single interface.
+ * Business logic (app/api/generate) only ever talks to `AIProvider`, never
+ * to a specific vendor SDK — swapping or adding a provider is a config
+ * change, not a rewrite of the generation pipeline.
  */
 
 export interface AIGenerateParams {
@@ -14,8 +14,8 @@ export interface AIGenerateParams {
   model: string;
   maxTokens: number;
   /** Honored only by providers whose models still accept sampling
-   *  parameters — ClaudeProvider ignores it (current Claude models reject
-   *  `temperature` outright; see claude.ts). */
+   *  parameters — ClaudeProvider and OpenaiProvider ignore it (current
+   *  Claude and GPT models reject `temperature`; see claude.ts, openai.ts). */
   temperature?: number;
   /** Total time the call may take, retries included — the caller's
    *  serverless time limit has to fit it. Defaults to a per-provider value

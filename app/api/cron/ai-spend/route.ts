@@ -11,7 +11,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * Daily check of what the AI cost over the last 24 hours (vercel.json):
  * at or over the budget — AI_DAILY_BUDGET_USD, $10 by default — it's logged as
  * an error, which reaches Sentry and its alert (docs/production.md). An
- * early warning; the hard stop is the spend limit set at Anthropic.
+ * early warning; the hard stop is the budget set at OpenAI.
  *
  * Vercel Cron calls it with `Authorization: Bearer $CRON_SECRET`. To fire
  * the alert by hand, call it with `?budget=0` (any spend, even none,
