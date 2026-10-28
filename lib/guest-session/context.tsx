@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   useCallback,
   type ReactNode,
@@ -78,8 +79,15 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
     setSession(null);
   }, []);
 
+  // A new value only when the session changes — not on every render of
+  // the tree above, which would re-render every consumer.
+  const value = useMemo(
+    () => ({ session, ensureSession, setProfileDraft, clear }),
+    [session, ensureSession, setProfileDraft, clear],
+  );
+
   return (
-    <GuestSessionContext.Provider value={{ session, ensureSession, setProfileDraft, clear }}>
+    <GuestSessionContext.Provider value={value}>
       {children}
     </GuestSessionContext.Provider>
   );

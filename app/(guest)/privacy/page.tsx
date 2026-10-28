@@ -78,8 +78,17 @@ export default async function PrivacyPage() {
           </li>
           <li>
             <strong className="text-ink-950">Without an account:</strong> an anonymous session
-            identifier stored in your browser links your generations to you. Guest sessions
-            expire after 30 days. If you sign up, your guest generations move to your account.
+            identifier stored in your browser links your generations, and the short company
+            profile if you fill one in, to you. A guest session is deleted with its generations
+            30 days after it was last used. If you sign up, your guest generations and profile
+            move to your account and the guest session is deleted.
+          </li>
+          <li>
+            <strong className="text-ink-950">Abuse protection:</strong> to limit how fast and
+            how much the service can be used, we record when requests are made — under your
+            account or guest session, or, without an account, under a code computed from your IP
+            address with a secret key that changes every day (the address itself isn&apos;t
+            stored). These records are deleted within two days.
           </li>
           <li>
             <strong className="text-ink-950">Technical data:</strong> server logs kept by our
@@ -159,9 +168,10 @@ export default async function PrivacyPage() {
         <h2 className="font-medium text-ink-950">How long we keep it</h2>
         <p className="text-ink-600">
           For as long as your account exists. Deleting your account deletes your account,
-          company profile, generations and feedback. Usage statistics, error reports and
-          server logs contain no email or content and stay with the processors above for up to{" "}
-          {site.statisticsRetention}.
+          company profile, generations and feedback. A guest session, with its generations, is
+          deleted 30 days after it was last used, or when you sign up; abuse-protection records
+          within two days. Usage statistics, error reports and server logs contain no email or
+          content and stay with the processors above for up to {site.statisticsRetention}.
         </p>
       </section>
     </main>

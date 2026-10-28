@@ -163,6 +163,19 @@ isOneToOne: true
                   Relationships: [
                     
                   ]
+                },"rate_limit_events": {
+                  Row: {
+                    "created_at": string,"id": number,"subject": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: number,"subject": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: number,"subject"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"stripe_events": {
                   Row: {
                     "created_at": string,"id": string,"type": string
@@ -286,7 +299,8 @@ isOneToOne: false
         to: "usage_counters"
         isOneToOne: true
         isSetofReturn: false
-      } }
+      } },"take_rate_limit":
+{ Args: { "p_max": number,"p_subject": string,"p_window_seconds": number }; Returns: boolean }
           }
           Enums: {
             [_ in never]: never

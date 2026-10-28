@@ -51,6 +51,7 @@ const envSchema = z.object({
   DEFAULT_AI_MODEL: optional(z.string()),
   GUEST_GENERATION_LIMIT: optional(positiveInt),
   MAX_GENERATIONS_PER_MINUTE: optional(positiveInt),
+  GUEST_GENERATIONS_PER_IP_PER_DAY: optional(positiveInt),
   NEXT_PUBLIC_SENTRY_DSN: optional(url),
   POSTHOG_KEY: optional(z.string()),
   POSTHOG_HOST: optional(url),
@@ -72,12 +73,21 @@ const envSchema = z.object({
   // Set by Vercel: production, preview or development.
   VERCEL_ENV: optional(z.string()),
 }).superRefine((env, ctx) => {
-  // Production can't launch without a way for people to reach us, or
-  // with placeholders in its Privacy Policy and Terms.
+  // Production can't launch without a way for people to reach us, with
+  // placeholders in its Privacy Policy and Terms, with email links built
+  // from whatever host a request names (lib/site-url.ts), or without the
+  // nightly jobs — the clean-up the Privacy Policy promises among them.
   if (env.VERCEL_ENV === "production") {
-    for (const name of ["NEXT_PUBLIC_SUPPORT_EMAIL", "LEGAL_OPERATOR", "LEGAL_COUNTRY", "EMAIL_PROVIDER"] as const) {
+    for (const name of [
+      "NEXT_PUBLIC_SUPPORT_EMAIL",
+      "LEGAL_OPERATOR",
+      "LEGAL_COUNTRY",
+      "EMAIL_PROVIDER",
+      "NEXT_PUBLIC_SITE_URL",
+      "CRON_SECRET",
+    ] as const) {
       if (!env[name]) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [name], message: "is required in production" });
+        ctx.addIssue({ code: "custom", path: [name], message: "is required in production" });
       }
     }
   }
@@ -88,12 +98,12 @@ const envSchema = z.object({
   // the key exists.
   const aiKey = AI_KEY_BY_PROVIDER[env.DEFAULT_AI_PROVIDER ?? "openai"];
   if (env.VERCEL_ENV === "production" && aiKey && !env[aiKey]) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [aiKey], message: "is required in production" });
+    ctx.addIssue({ code: "custom", path: [aiKey], message: "is required in production" });
   }
   // Payments half set up would take money without ever hearing back.
   if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path: ["STRIPE_WEBHOOK_SECRET"],
       message: "is required when STRIPE_SECRET_KEY is set",
     });
@@ -109,7 +119,7 @@ export function checkEnv(env: EnvSource): string[] {
 
   return result.error.issues.map((issue) => {
     const name = issue.path.join(".");
-    const missing = issue.code === "invalid_type" && issue.received === "undefined";
+    const missing = issue.code === "invalid_type" && blankAsUndefined(env[name]) === undefined;
     return `${name}: ${missing ? "is required" : issue.message}`;
   });
 }

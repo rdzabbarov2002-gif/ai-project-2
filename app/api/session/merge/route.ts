@@ -40,7 +40,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  if (!body.guestSessionToken || typeof body.guestSessionToken !== "string") {
+  // The same bounds as everywhere a guest token is accepted
+  // (lib/generation/validate.ts, app/api/session/draft).
+  const token = body.guestSessionToken;
+  if (typeof token !== "string" || token.length < 10 || token.length > 200) {
     return NextResponse.json(
       { error: "missing_guest_session_token" },
       { status: 400 },
@@ -56,7 +59,7 @@ export async function POST(request: Request) {
   const { data: guestSession } = await admin
     .from("guest_sessions")
     .select("id, company_profile_draft")
-    .eq("session_token", body.guestSessionToken)
+    .eq("session_token", token)
     .maybeSingle();
 
   // No row for this token (never used to generate anything, or already
@@ -99,6 +102,15 @@ export async function POST(request: Request) {
     user.id,
     guestSession.company_profile_draft as GuestCompanyProfileDraft | null,
   );
+
+  // Everything the guest session held now belongs to the account, so the
+  // session itself goes (data minimization; the Privacy Policy says so).
+  // A failure here loses nothing: the row expires and is deleted nightly
+  // (app/api/cron/purge-expired).
+  const { error: deleteError } = await admin.from("guest_sessions").delete().eq("id", guestSession.id);
+  if (deleteError) {
+    logger.error("session/merge: deleting the merged guest session failed", { error: deleteError });
+  }
 
   // Links the guest's analytics events to the account: guest → sign-up
   // conversion is the funnel's key step (lib/analytics.ts).

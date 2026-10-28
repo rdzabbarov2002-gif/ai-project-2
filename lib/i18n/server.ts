@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
-import { DEFAULT_LOCALE, INTL_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from "./config";
+import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from "./config";
 import { MESSAGES, type Messages } from "./messages";
 
 /**
@@ -24,9 +24,4 @@ export const getLocale = cache(async (): Promise<Locale> => {
 /** This request's dictionary, for Server Components and Server Actions. */
 export async function getMessages(): Promise<Messages> {
   return MESSAGES[await getLocale()];
-}
-
-/** A date in this request's language ("27 сентября 2026 г."). */
-export async function formatDate(value: string | Date, options: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat(INTL_LOCALE[await getLocale()], options).format(new Date(value));
 }

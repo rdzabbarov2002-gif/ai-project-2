@@ -326,6 +326,7 @@ export const en = {
     filledBasic: "We could only read the basics from your website — please fill in the rest.",
     enterWebsite: "Enter your website address.",
     readFailed: "We couldn't read that website. Please try again.",
+    autofillTooMany: "You've used autofill a lot in the last hour. Please try again later, or fill in the fields yourself.",
     /** lib/profile-autofill's messages, where a translation exists. */
     websiteErrors: {} as Record<string, string>,
   },

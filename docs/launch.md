@@ -42,8 +42,8 @@ Everything in `docs/production.md` ("Before public traffic") first. Then:
 
 - [ ] **Vercel, Production:** `NEXT_PUBLIC_SITE_URL=https://<domain>`,
   `NEXT_PUBLIC_SUPPORT_EMAIL`, `LEGAL_OPERATOR` (entity and address),
-  `LEGAL_COUNTRY`, `EMAIL_PROVIDER`; redeploy. The server refuses to
-  start in production without the last four.
+  `LEGAL_COUNTRY`, `EMAIL_PROVIDER`, `CRON_SECRET`; redeploy. The server
+  refuses to start in production without any of them.
 - [ ] **Privacy Policy and Terms** read by a lawyer for your country; if
   the text changes, update `site.legalUpdated` (`config/site.ts`). Check
   both pages show no "Draft".

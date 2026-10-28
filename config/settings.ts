@@ -41,6 +41,12 @@ export const appSettings = {
    *  architecture doc §17) — generations started in any 60-second window.
    *  Generous for a person, low for a script. */
   maxGenerationsPerMinute: positiveIntFromEnv(process.env.MAX_GENERATIONS_PER_MINUTE, 6),
+  /** Generations without an account from one IP address in any 24 hours
+   *  (lib/generation/pipeline.ts). A guest is whoever sends a new session
+   *  token, so without this one visitor could start guests — and get
+   *  their free generations — without end. A few people sharing a
+   *  network fit in it; past it, a guest is asked to sign up. */
+  guestGenerationsPerIpPerDay: positiveIntFromEnv(process.env.GUEST_GENERATIONS_PER_IP_PER_DAY, 20),
   /** Cap on AI response length (billed per token actually produced, so
    *  this is a ceiling, not a cost). Raised from 2048 in Phase 1: current
    *  GPT and Claude models reason before answering and those tokens count

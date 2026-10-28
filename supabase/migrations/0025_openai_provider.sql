@@ -3,7 +3,7 @@
 -- Free users and guests with no provider at all; it gets OpenAI too.
 -- Claude stays allowed, so switching back is DEFAULT_AI_PROVIDER=claude
 -- with no migration. Pro (claude, openai, gemini) and Enterprise ("all")
--- already include OpenAI. Mirrors config/plans.json. Idempotent.
+-- already include OpenAI. Idempotent.
 
 update public.plan_limits pl
 set allowed_ai_models = '["claude", "openai"]'::jsonb

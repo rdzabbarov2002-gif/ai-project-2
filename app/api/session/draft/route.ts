@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { appSettings } from "@/config/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ipSubject, isOverRateLimit } from "@/lib/limits/rateLimit";
+import { clientIp } from "@/lib/visitor";
 import type { GuestCompanyProfileDraft } from "@/lib/guest-session/types";
 import { logger } from "@/lib/logger";
 
@@ -37,6 +39,9 @@ const optionalText = (max: number) =>
     .optional()
     .transform((value) => (value ? value : undefined));
 
+/** Per IP address: a guest saves a draft a few times, a script far more. */
+const DRAFT_LIMIT = { max: 30, windowSeconds: 60 * 60 };
+
 const DraftRequestSchema = z.object({
   guestSessionToken: z.string().trim().min(10).max(200),
   draft: z.object({
@@ -62,6 +67,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
+  // No account needed, and a new token is a new row: limited per IP
+  // address (lib/limits/rateLimit.ts), so a script can't fill the table.
+  const admin = createAdminClient();
+  if (await isOverRateLimit(admin, ipSubject("draft", clientIp(request.headers)), DRAFT_LIMIT)) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
+
   // Drop the empty fields zod turned into `undefined`, so the stored JSON
   // only ever holds what the guest actually filled in.
   const draft: GuestCompanyProfileDraft = Object.fromEntries(
@@ -76,7 +88,7 @@ export async function POST(request: Request) {
   // hasn't generated anything yet (identity.ts creates it lazily too), and
   // otherwise updates the draft and slides the TTL, same as a generation
   // does.
-  const { error } = await createAdminClient()
+  const { error } = await admin
     .from("guest_sessions")
     .upsert(
       {

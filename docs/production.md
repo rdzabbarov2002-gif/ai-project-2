@@ -61,8 +61,10 @@ run up an unbounded bill:
 | Stripe | — | Fees are a share of payments; nothing to cap |
 
 The app's own limits also bound AI cost: plan limits per month, 3 free
-generations per guest, 6 generations a minute per person
-(`MAX_GENERATIONS_PER_MINUTE`), output capped at 8,192 tokens.
+generations per guest, 20 guest generations a day per IP address
+(`GUEST_GENERATIONS_PER_IP_PER_DAY`), 6 generations a minute per person
+(`MAX_GENERATIONS_PER_MINUTE`), 10 website autofills an hour per person,
+output capped at 8,192 tokens.
 
 ## Load smoke test
 
@@ -195,12 +197,12 @@ production data or money:
 | `NEXT_PUBLIC_SUPABASE_URL`, `…_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | the **prod** Supabase project | the **staging** project |
 | `OPENAI_API_KEY` | its own key (platform.openai.com → API keys, in a project named `prod`) | another key, in a `staging` project with a low budget |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | **live** mode (`sk_live_…`) | **test** mode (`sk_test_…`) |
-| `CRON_SECRET` | `openssl rand -hex 32` | a different one |
+| `CRON_SECRET` | required: `openssl rand -hex 32` | a different one |
 | `NEXT_PUBLIC_SENTRY_DSN` | the same project; events are tagged `production`/`preview` | same |
 | `CSP_REPORT_ONLY` | `true` for the first 3 days, then removed | unset |
 | `AI_DAILY_BUDGET_USD` | your threshold | unset (the $10 default) |
 | `NEXT_PUBLIC_SUPPORT_EMAIL`, `LEGAL_OPERATOR`, `LEGAL_COUNTRY`, `EMAIL_PROVIDER` | required (`docs/launch.md`) | optional |
-| `NEXT_PUBLIC_SITE_URL` | `https://<domain>` — sitemap, link previews, email links | unset (the preview's own URL) |
+| `NEXT_PUBLIC_SITE_URL` | required: `https://<domain>` — sitemap, link previews, email links | unset (the preview's own URL) |
 
 **Secrets only in Vercel's environment variables** (Project Settings →
 Environment Variables, marked *Sensitive*): never in the repository

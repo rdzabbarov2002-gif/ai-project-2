@@ -6,7 +6,7 @@
 -- `anon`, and `authenticated` with A's JWT claims.
 
 begin;
-select plan(49);
+select plan(54);
 
 -- ---------------------------------------------------------------- setup
 insert into auth.users (id, email) values
@@ -43,8 +43,8 @@ select is(
   'every table in public has row level security enabled'
 );
 
--- Exactly the privileges the app's user-session queries need (migration
--- 0019). A new table fails this until its client grants are decided.
+-- Exactly the privileges the app's user-session queries need (migrations
+-- 0019, 0026). A new table fails this until its client grants are decided.
 select is(
   array(
     select format('%s %s %s', grantee, table_name, privilege_type)
@@ -61,7 +61,6 @@ select is(
     'authenticated company_profiles INSERT',
     'authenticated company_profiles SELECT',
     'authenticated company_profiles UPDATE',
-    'authenticated generations INSERT',
     'authenticated generations SELECT',
     'authenticated plan_limits SELECT',
     'authenticated plans SELECT',
@@ -87,9 +86,13 @@ select is(
 select ok(
   not has_function_privilege('anon', 'public.increment_usage_counter(uuid, date, date)', 'execute')
   and not has_function_privilege('authenticated', 'public.increment_usage_counter(uuid, date, date)', 'execute')
+  and not has_function_privilege('anon', 'public.take_rate_limit(text, integer, integer)', 'execute')
+  and not has_function_privilege('authenticated', 'public.take_rate_limit(text, integer, integer)', 'execute')
   and not has_function_privilege('anon', 'public.handle_new_user()', 'execute')
-  and not has_function_privilege('authenticated', 'public.handle_new_user()', 'execute'),
-  'clients cannot execute the usage counter or the signup trigger function'
+  and not has_function_privilege('authenticated', 'public.handle_new_user()', 'execute')
+  and not has_function_privilege('anon', 'public.limit_company_profiles_per_user()', 'execute')
+  and not has_function_privilege('authenticated', 'public.limit_company_profiles_per_user()', 'execute'),
+  'clients cannot execute the usage counter, the rate limit or the trigger functions'
 );
 
 -- ----------------------------------------------------------------- anon
@@ -108,6 +111,7 @@ select throws_ok('select 1 from public.usage_counters', '42501', null, 'anon can
 select throws_ok('select 1 from public.subscriptions', '42501', null, 'anon cannot read subscriptions');
 select throws_ok('select 1 from public.feedback', '42501', null, 'anon cannot read feedback');
 select throws_ok('select 1 from public.billing_customers', '42501', null, 'anon cannot read billing customers');
+select throws_ok('select 1 from public.rate_limit_events', '42501', null, 'anon cannot read rate_limit_events');
 select throws_ok('update public.plans set name = name', '42501', null, 'anon cannot change plans');
 
 reset role;
@@ -133,27 +137,34 @@ select throws_ok(
   $$ insert into public.company_profiles (user_id, name)
      values ('bbbbbbbb-0000-4000-8000-000000000002', 'fake') $$,
   '42501', null, 'A cannot create a company profile for B');
+-- The form's limits hold for writes through the API too (migration 0026).
+select throws_ok(
+  $$ insert into public.company_profiles (user_id, name)
+     values ('aaaaaaaa-0000-4000-8000-000000000001', '') $$,
+  '23514', null, 'A cannot save a company profile without a name');
+select throws_ok(
+  $$ insert into public.company_profiles (user_id, name, usp)
+     values ('aaaaaaaa-0000-4000-8000-000000000001', 'Long Co', repeat('x', 501)) $$,
+  '23514', null, 'A cannot save a field longer than the form allows');
+select lives_ok(
+  $$ insert into public.company_profiles (user_id, name)
+     select 'aaaaaaaa-0000-4000-8000-000000000001', 'A Co ' || n from generate_series(2, 20) n $$,
+  'A can hold 20 company profiles');
+select throws_ok(
+  $$ insert into public.company_profiles (user_id, name)
+     values ('aaaaaaaa-0000-4000-8000-000000000001', 'A Co 21') $$,
+  '23514', 'A user can have at most 20 company profiles.', 'A cannot create a 21st company profile');
 
 -- generations
 select results_eq('select id from public.generations',
   $$ values ('aaaaaaaa-0000-4000-8000-0000000000a1'::uuid) $$,
   'A sees only their own generations (not B''s, not the guest''s)');
-select lives_ok(
+-- Only the server saves generations, after the limits (migration 0026).
+select throws_ok(
   $$ insert into public.generations (user_id, tool_id, ai_provider, ai_model)
      select 'aaaaaaaa-0000-4000-8000-000000000001', id, 'claude', 'test'
      from public.tools order by slug limit 1 $$,
-  'A can save a generation of their own');
-select throws_ok(
-  $$ insert into public.generations (user_id, tool_id, ai_provider, ai_model)
-     select 'bbbbbbbb-0000-4000-8000-000000000002', id, 'claude', 'test'
-     from public.tools order by slug limit 1 $$,
-  '42501', null, 'A cannot save a generation as B');
-select throws_ok(
-  $$ insert into public.generations (user_id, guest_session_id, tool_id, ai_provider, ai_model)
-     select 'aaaaaaaa-0000-4000-8000-000000000001', 'eeeeeeee-0000-4000-8000-0000000000e1',
-            id, 'claude', 'test'
-     from public.tools order by slug limit 1 $$,
-  '42501', null, 'A cannot attach a generation to a guest session');
+  '42501', null, 'A cannot save a generation directly, not even their own');
 -- Checked after `reset role`: only A's own row changes.
 update public.generations set is_favorite = true
 where id in ('aaaaaaaa-0000-4000-8000-0000000000a1', 'bbbbbbbb-0000-4000-8000-0000000000b1');
@@ -189,6 +200,11 @@ select throws_ok('select 1 from public.stripe_events', '42501', null, 'A cannot 
 
 -- guest_sessions
 select throws_ok('select 1 from public.guest_sessions', '42501', null, 'A cannot read guest_sessions');
+
+-- rate limits: server only (migration 0027)
+select throws_ok('select 1 from public.rate_limit_events', '42501', null, 'A cannot read rate_limit_events');
+select throws_ok($$ select public.take_rate_limit('generate:user:x', 1000, 60) $$, '42501', null,
+  'A cannot call the rate limit RPC');
 
 -- feedback: server only (migration 0022) — not even one's own
 select throws_ok('select 1 from public.feedback', '42501', null, 'A cannot read feedback');

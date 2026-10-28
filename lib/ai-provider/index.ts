@@ -10,9 +10,9 @@ import { appSettings } from "@/config/settings";
 
 /**
  * Provider factory — the single place that maps a config-driven name to an
- * implementation. `/api/generate` (Stage 5) and future tool configs
- * (config/tools.json, plan_limits.allowed_ai_models) reference providers by
- * this name string, never by importing a vendor SDK directly. `server-only`
+ * implementation. `/api/generate` (Stage 5) and the plans
+ * (plan_limits.allowed_ai_models) reference providers by this name
+ * string, never by importing a vendor SDK directly. `server-only`
  * above makes an accidental client-side import of this file (or any
  * provider it wires up) a build error instead of a runtime key leak — see
  * the Stage 4 audit report for the full reasoning.
@@ -32,9 +32,8 @@ export function getProvider(name: AIProviderName): AIProvider {
   if (!factory) {
     // Not `AIProviderErrorKind: "not_implemented"` — a name outside
     // AIProviderName isn't a provider we haven't built yet, it's a config
-    // value that doesn't match the type at all (e.g. a typo in a future
-    // DB-driven `plan_limits.allowed_ai_models` entry once Stage 5+ reads
-    // that column instead of the config/plans.json stand-in).
+    // value that doesn't match the type at all (e.g. a typo in a
+    // `plan_limits.allowed_ai_models` entry).
     throw new AIProviderError(
       name as AIProviderName,
       "configuration",

@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { checkUsage } from "@/lib/limits/checkUsage";
-import { isOverRateLimit } from "@/lib/limits/rateLimit";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database.types";
+import { ipSubject, isOverRateLimit } from "@/lib/limits/rateLimit";
 import type { PlanLimits } from "@/lib/generation/plan";
 import { fakeSupabase } from "./helpers/fakeSupabase";
 
@@ -52,23 +54,56 @@ describe("checkUsage", () => {
 });
 
 describe("isOverRateLimit", () => {
-  it("counts the caller's generations in the last minute", async () => {
-    const { client, queries } = fakeSupabase({ generations: () => ({ count: 6 }) });
-    const now = new Date("2026-09-26T12:00:00Z");
-    expect(await isOverRateLimit({ admin: client, identity: { type: "user", userId: "u1" }, maxPerMinute: 6, now })).toBe(true);
-    expect(queries[0]!.calls).toContainEqual(["gte", "created_at", "2026-09-26T11:59:00.000Z"]);
-    expect(queries[0]!.calls).toContainEqual(["eq", "user_id", "u1"]);
+  function adminRpc(result: { data?: boolean | null; error?: { message: string } | null }) {
+    const rpc = vi.fn().mockResolvedValue({ data: result.data ?? null, error: result.error ?? null });
+    return { admin: { rpc } as unknown as SupabaseClient<Database>, rpc };
+  }
+
+  it("takes one request from the subject's limit, in the database", async () => {
+    const { admin, rpc } = adminRpc({ data: true });
+    expect(await isOverRateLimit(admin, "generate:user:u1", { max: 6, windowSeconds: 60 })).toBe(false);
+    expect(rpc).toHaveBeenCalledWith("take_rate_limit", {
+      p_subject: "generate:user:u1",
+      p_max: 6,
+      p_window_seconds: 60,
+    });
   });
 
-  it("scopes a guest to their session and allows under the limit", async () => {
-    const { client, queries } = fakeSupabase({ generations: () => ({ count: 2 }) });
-    expect(await isOverRateLimit({ admin: client, identity: { type: "guest", guestSessionId: "g1", companyProfileDraft: null }, maxPerMinute: 6 })).toBe(false);
-    expect(queries[0]!.calls).toContainEqual(["eq", "guest_session_id", "g1"]);
+  it("refuses when the limit has no room left", async () => {
+    const { admin } = adminRpc({ data: false });
+    expect(await isOverRateLimit(admin, "generate:guest:g1", { max: 6, windowSeconds: 60 })).toBe(true);
   });
 
-  it("fails open when the count can't be read", async () => {
+  it("fails open when the database can't be asked", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    const { client } = fakeSupabase({ generations: () => ({ error: { message: "boom" } }) });
-    expect(await isOverRateLimit({ admin: client, identity: { type: "user", userId: "u1" }, maxPerMinute: 1 })).toBe(false);
+    const { admin } = adminRpc({ error: { message: "boom" } });
+    expect(await isOverRateLimit(admin, "generate:user:u1", { max: 1, windowSeconds: 60 })).toBe(false);
+  });
+});
+
+describe("ipSubject", () => {
+  const day = new Date("2026-10-28T12:00:00Z");
+
+  it("never contains the address, and is the same all day", () => {
+    const subject = ipSubject("generate", "203.0.113.7", day);
+    expect(subject).toMatch(/^generate:ip:[0-9a-f]{32}$/);
+    expect(subject).not.toContain("203.0.113.7");
+    expect(ipSubject("generate", "203.0.113.7", new Date("2026-10-28T23:59:59Z"))).toBe(subject);
+  });
+
+  it("counts an IPv6 /64 as one subscriber, written any way", () => {
+    const subject = ipSubject("generate", "2001:db8:abcd:12::1", day);
+    for (const same of ["2001:db8:abcd:12:ffff:ffff:ffff:ffff", "2001:0db8:abcd:0012:0:0:0:2", "2001:DB8:ABCD:12::a:b"]) {
+      expect(ipSubject("generate", same, day), same).toBe(subject);
+    }
+    expect(ipSubject("generate", "2001:db8:abcd:13::1", day)).not.toBe(subject);
+    expect(ipSubject("generate", "::ffff:203.0.113.7", day)).toBe(ipSubject("generate", "203.0.113.7", day));
+  });
+
+  it("differs by address, by day and by what is limited", () => {
+    const subject = ipSubject("generate", "203.0.113.7", day);
+    expect(ipSubject("generate", "203.0.113.8", day)).not.toBe(subject);
+    expect(ipSubject("generate", "203.0.113.7", new Date("2026-10-29T00:00:00Z"))).not.toBe(subject);
+    expect(ipSubject("draft", "203.0.113.7", day)).toMatch(/^draft:ip:/);
   });
 });

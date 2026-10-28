@@ -58,6 +58,22 @@ describe("summarizeHtml", () => {
     expect(summary.text).not.toContain("hidden");
   });
 
+  it("reads the largest page we accept in proportion to its length, even a hostile one", () => {
+    const size = 1_500_000; // MAX_BYTES
+    const hostile = ["<", "<meta ", "<title>", "<script>", "<!--", "&#x1"].map((piece) =>
+      piece.repeat(Math.ceil(size / piece.length)),
+    );
+    const started = performance.now();
+    for (const html of hostile) summarizeHtml("https://hostile.example/", html);
+    // Linear work is a few milliseconds per page; backtracking took minutes.
+    expect(performance.now() - started).toBeLessThan(2_000);
+  });
+
+  it("skips a block left open to the end of the page", () => {
+    const summary = summarizeHtml("https://acme.example/", "<p>Before</p><script>never closed <p>hidden");
+    expect(summary.text).toBe("Before");
+  });
+
   it("guesses a name from the site name, else the title's first segment", () => {
     expect(guessNameFromMetadata({ siteName: "Acme", title: "Other" })).toBe("Acme");
     expect(guessNameFromMetadata({ siteName: null, title: "Acme Bakery | Fresh bread" })).toBe("Acme Bakery");

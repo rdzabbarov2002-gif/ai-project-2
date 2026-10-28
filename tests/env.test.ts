@@ -23,6 +23,7 @@ describe("checkEnv", () => {
         DEFAULT_AI_MODEL: "claude-sonnet-5",
         GUEST_GENERATION_LIMIT: "3",
         MAX_GENERATIONS_PER_MINUTE: "6",
+        GUEST_GENERATIONS_PER_IP_PER_DAY: "20",
       }),
     ).toEqual([]);
   });
@@ -34,12 +35,14 @@ describe("checkEnv", () => {
     expect(checkEnv({ ...valid, STRIPE_SECRET_KEY: "sk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x" })).toEqual([]);
   });
 
-  it("wants a support address and who runs the service in production only", () => {
+  it("wants a support address, who runs the service, its address and the cron secret in production only", () => {
     expect(checkEnv({ ...valid, VERCEL_ENV: "production" })).toEqual([
       "NEXT_PUBLIC_SUPPORT_EMAIL: is required in production",
       "LEGAL_OPERATOR: is required in production",
       "LEGAL_COUNTRY: is required in production",
       "EMAIL_PROVIDER: is required in production",
+      "NEXT_PUBLIC_SITE_URL: is required in production",
+      "CRON_SECRET: is required in production",
       "OPENAI_API_KEY: is required in production",
     ]);
     const launched = {
@@ -50,6 +53,8 @@ describe("checkEnv", () => {
       LEGAL_OPERATOR: "Example Ltd, 1 Main St, Dublin",
       LEGAL_COUNTRY: "Ireland",
       EMAIL_PROVIDER: "Resend",
+      NEXT_PUBLIC_SITE_URL: "https://app.example",
+      CRON_SECRET: "cron-secret",
     };
     expect(checkEnv(launched)).toEqual([]);
     expect(checkEnv({ ...valid, VERCEL_ENV: "preview" })).toEqual([]);
@@ -66,6 +71,8 @@ describe("checkEnv", () => {
       LEGAL_OPERATOR: "Example Ltd, 1 Main St, Dublin",
       LEGAL_COUNTRY: "Ireland",
       EMAIL_PROVIDER: "Resend",
+      NEXT_PUBLIC_SITE_URL: "https://app.example",
+      CRON_SECRET: "cron-secret",
     };
     // OpenAI unless DEFAULT_AI_PROVIDER says otherwise.
     expect(checkEnv(launched)).toEqual(["OPENAI_API_KEY: is required in production"]);

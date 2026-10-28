@@ -331,6 +331,7 @@ export const ru: Messages = {
     filledBasic: "С сайта удалось прочитать только основное — заполните остальное сами.",
     enterWebsite: "Введите адрес сайта.",
     readFailed: "Не удалось прочитать этот сайт. Попробуйте ещё раз.",
+    autofillTooMany: "За последний час автозаполнение использовалось много раз. Попробуйте позже или заполните поля сами.",
     websiteErrors: {
       "Enter your website address.": "Введите адрес сайта.",
       "That doesn't look like a website address.": "Это не похоже на адрес сайта.",

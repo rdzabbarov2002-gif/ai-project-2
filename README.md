@@ -71,15 +71,16 @@ naming the variable. `.env.example` describes each.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase anon (public) key |
 | `SUPABASE_SERVICE_ROLE_KEY` | yes | Server-only key for guest sessions, merge, usage counters |
 | `OPENAI_API_KEY` | in production | GPT — generation and profile autofill; without it elsewhere, generating fails with a configuration error |
-| `NEXT_PUBLIC_SITE_URL` | no | Origin for email-confirmation links (auto-detected otherwise) |
+| `NEXT_PUBLIC_SITE_URL` | in production | Origin for email-confirmation links (auto-detected otherwise) |
 | `DEFAULT_AI_PROVIDER` / `DEFAULT_AI_MODEL` | no | Defaults `openai` / `gpt-6.1-terra`; `claude` / `claude-sonnet-5` with `ANTHROPIC_API_KEY` switches to Claude |
 | `GUEST_GENERATION_LIMIT` | no | Guest allowance, default 3 |
 | `MAX_GENERATIONS_PER_MINUTE` | no | Burst limit per user/guest, default 6 |
+| `GUEST_GENERATIONS_PER_IP_PER_DAY` | no | Guest generations per IP address per day, default 20 |
 | `NEXT_PUBLIC_SENTRY_DSN` | no | Error tracking; off when unset |
 | `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | no, build only | Source map upload to Sentry |
 | `POSTHOG_KEY` / `POSTHOG_HOST` | no | Product analytics (PostHog project key; host defaults to the US cloud) |
 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | no (both or neither) | Payments; off when unset (`docs/billing.md`) |
-| `CRON_SECRET` | with payments | Protects the nightly subscription check |
+| `CRON_SECRET` | in production | Protects the nightly jobs (subscription check, AI spend, clean-up) |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | in production | Support address: footer, FAQ, Privacy, Terms |
 | `LEGAL_OPERATOR`, `LEGAL_COUNTRY`, `EMAIL_PROVIDER` | in production | Who runs the service, as the Privacy Policy and Terms name it; placeholders ("Draft") elsewhere |
 

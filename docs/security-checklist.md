@@ -13,7 +13,7 @@ re-run on the production project and domain before launch.
 | A01 | Broken access control | Row-level security on every table; clients have no write access to what they must not change (plans, usage, subscriptions, generations' owner). Signed-in pages are guarded twice (middleware and the `(auth)` layout). The service-role client is server-only and used only where RLS can't be (guests, billing). | `supabase/tests/rls.test.sql` (49 assertions), `account-deletion.test.sql`; E2E "a protected page sends you to sign in" |
 | A02 | Cryptographic failures | HTTPS only (HSTS, 2 years); passwords are Supabase Auth's (bcrypt); no secret in the browser bundle — only `NEXT_PUBLIC_*` values, public by design. Logs and Sentry events carry no request bodies, cookies, headers or IPs. | `next.config.js`; `lib/sentry.ts`; the built `.next/static` contains no server key (checked) |
 | A03 | Injection (SQL, XSS) | Database access only through the query builder (parameterized); no SQL built from input. React escapes all output; AI output is shown as plain text (no Markdown or HTML rendering); the only `dangerouslySetInnerHTML` are two static scripts in the root layout; no link takes its `href` from user input. The Content Security Policy blocks injected script even if escaping failed. | `e2e/csp.spec.ts` ("injected markup can't run script"); `tests/csp.test.ts` |
-| A04 | Insecure design | Limits on everything that costs money: 3 generations per guest, monthly plan limits, 6 a minute per person, output capped; a payment only counts once Stripe's signed webhook says so. | `tests/limits.test.ts`, E2E limit and rate-limit tests, `e2e/billing.spec.ts` |
+| A04 | Insecure design | Limits on everything that costs money or writes rows without an account: 3 generations per guest and 20 a day per IP address without an account, monthly plan limits, 6 a minute per person (counted when a request starts), 10 website autofills an hour, guest drafts and CSP reports per IP; output capped; a payment only counts once Stripe's signed webhook says so. Clients can't insert generations, and company profiles have the form's limits in the database. | `tests/limits.test.ts`, E2E limit and rate-limit tests, `e2e/billing.spec.ts` |
 | A05 | Security misconfiguration | Security headers and CSP on every response; `X-Powered-By` off; errors never show stacks or internals to users; the server refuses to start with a missing or malformed variable; Supabase grants nothing to clients by default. | `e2e/csp.spec.ts`; `tests/env.test.ts`; `tests/generate-route.test.ts`; **prod:** `curl -sI https://<domain>/` shows HSTS, nosniff, Referrer-Policy, CSP, X-Frame-Options |
 | A06 | Vulnerable and outdated components | `npm audit --omit=dev`: **0 vulnerabilities** (Next's bundled postcss overridden). Dependabot opens weekly updates; CI checks each. | `npm audit --omit=dev`; `.github/dependabot.yml` |
 | A07 | Identification and authentication failures | Supabase Auth: email confirmation required, 8+ character passwords, sign-in and email rate limits, single-use reset links; the session is checked against Auth on every request (`getUser`, not the cookie alone). | E2E sign-up, reset, deletion; README "Authentication settings" |
@@ -41,8 +41,8 @@ re-run on the production project and domain before launch.
   client.
 - `style-src 'unsafe-inline'` in the CSP (`docs/decisions.md`, Phase 7).
 - `/api/csp-report` takes posts from anyone; they only become log lines
-  and Sentry warnings (grouped, and Sentry rate-limits a project). If it's
-  abused, filter it at Vercel's firewall.
-- `npm audit` (with dev dependencies) reports 2 moderate issues in Vitest's
-  mocker — test tooling, not shipped; the fix is Vitest 5, a major
-  upgrade for later.
+  and Sentry warnings (grouped, 20 posts an hour per IP address, and
+  Sentry rate-limits a project). Abuse from many addresses: filter it at
+  Vercel's firewall, and set a rate limit on the Sentry key.
+- Limits per IP address stop one visitor, not someone with many
+  addresses; a CAPTCHA on guest generation would be the next step.

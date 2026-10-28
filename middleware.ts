@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   request.headers.set("x-nonce", nonce);
   request.headers.set(cspHeader, csp);
 
-  const { response, user } = await updateSession(request);
+  const { response, signedIn } = await updateSession(request);
   response.headers.set(cspHeader, csp);
   response.headers.set("Reporting-Endpoints", `csp="${CSP_REPORT_PATH}"`);
 
@@ -48,14 +48,14 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     request.nextUrl.pathname.startsWith(path),
   );
 
-  if (isProtected && !user) {
+  if (isProtected && !signedIn) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // The funnel's first step: a page opened by someone not signed in.
-  if (!user) trackVisit(request, (promise) => event.waitUntil(promise));
+  if (!signedIn) trackVisit(request, (promise) => event.waitUntil(promise));
 
   return response;
 }

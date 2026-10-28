@@ -7,7 +7,7 @@ import { AIProviderError } from "./types";
 // seconds of it. Without a budget, a slow call plus its retry could run far
 // past that limit and the user would get a dropped connection instead of a
 // clear error.
-export const DEFAULT_TIMEOUT_MS = 50_000;
+const DEFAULT_TIMEOUT_MS = 50_000;
 const MAX_ATTEMPTS = 2; // 1 initial call + 1 retry, transient failures only.
 const RETRY_DELAY_MS = 500;
 

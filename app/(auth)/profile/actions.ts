@@ -5,6 +5,8 @@ import { getMessages } from "@/lib/i18n/server";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isOverRateLimit } from "@/lib/limits/rateLimit";
 import { fetchWebsiteSummary, WebsiteFetchError } from "@/lib/profile-autofill/fetchWebsite";
 import { extractProfile, type SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
 import { logger } from "@/lib/logger";
@@ -118,6 +120,9 @@ export async function saveCompanyProfile(
   return { error: null, success: true };
 }
 
+/** Per person: plenty to try a few addresses, not a way to run up AI costs. */
+const AUTOFILL_LIMIT = { max: 10, windowSeconds: 60 * 60 };
+
 export interface AutofillResult {
   error: string | null;
   profile: SuggestedProfile | null;
@@ -133,15 +138,20 @@ export interface AutofillResult {
  * above, so that action stays the one validated write path.
  *
  * Signed-in only (requireUser): it makes an outbound request and an AI
- * call on the server's behalf. The URL is untrusted input — see
- * lib/profile-autofill/fetchWebsite.ts for the SSRF handling.
+ * call on the server's behalf — which no plan's monthly allowance counts,
+ * so it has a limit of its own per person. The URL is untrusted input —
+ * see lib/profile-autofill/fetchWebsite.ts for the SSRF handling.
  */
 export async function autofillCompanyProfile(url: string): Promise<AutofillResult> {
-  await requireUser();
+  const user = await requireUser();
   const t = await getMessages();
 
   if (typeof url !== "string" || url.trim().length === 0 || url.length > 300) {
     return { error: t.profile.enterWebsite, profile: null };
+  }
+
+  if (await isOverRateLimit(createAdminClient(), `autofill:user:${user.id}`, AUTOFILL_LIMIT)) {
+    return { error: t.profile.autofillTooMany, profile: null };
   }
 
   try {

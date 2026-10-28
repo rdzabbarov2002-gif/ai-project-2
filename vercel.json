@@ -1,6 +1,7 @@
 {
   "crons": [
     { "path": "/api/cron/reconcile-subscriptions", "schedule": "30 3 * * *" },
+    { "path": "/api/cron/purge-expired", "schedule": "45 4 * * *" },
     { "path": "/api/cron/ai-spend", "schedule": "15 6 * * *" }
   ]
 }

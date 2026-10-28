@@ -215,27 +215,28 @@ function request(
   });
 }
 
-/** Exported for tests. */
+/**
+ * Exported for tests. The page is whatever the site sends (up to
+ * MAX_BYTES), so every search here takes time in proportion to its
+ * length: a pattern that backtracks — `<[^>]+>` on a page of "<<<…" — would
+ * hold the CPU for minutes on a hostile page. Tags are matched without
+ * crossing another `<`, and a block or comment is skipped by searching
+ * forward for its end, once.
+ */
 export function summarizeHtml(url: string, html: string): WebsiteSummary {
+  const metaTags = html.match(/<meta\b[^<>]*>/gi) ?? [];
   const meta = (key: string) => {
-    const re = new RegExp(
-      `<meta[^>]+(?:name|property)=["']${key}["'][^>]*>`,
-      "i",
-    );
-    const tag = html.match(re)?.[0];
+    const attribute = new RegExp(`(?:name|property)=["']${key}["']`, "i");
+    const tag = metaTags.find((candidate) => attribute.test(candidate));
     const content = tag?.match(/content=["']([^"']*)["']/i)?.[1];
     return content ? clean(decodeEntities(content)) : null;
   };
-  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1];
 
-  const text = clean(
-    decodeEntities(
-      html
-        .replace(/<(script|style|noscript|svg|template)[\s\S]*?<\/\1>/gi, " ")
-        .replace(/<!--[\s\S]*?-->/g, " ")
-        .replace(/<[^>]+>/g, " "),
-    ),
-  ).slice(0, MAX_TEXT_CHARS);
+  const title = between(html, /<title\b[^<>]*>/gi, /<\/title>/gi);
+  const text = clean(decodeEntities(withoutHiddenParts(html).replace(/<[^<>]*>/g, " "))).slice(
+    0,
+    MAX_TEXT_CHARS,
+  );
 
   return {
     url,
@@ -244,6 +245,32 @@ export function summarizeHtml(url: string, html: string): WebsiteSummary {
     siteName: meta("og:site_name"),
     text,
   };
+}
+
+/** What lies between the first `open` and the `close` after it, if both are there. */
+function between(html: string, open: RegExp, close: RegExp): string | null {
+  const start = open.exec(html);
+  if (!start) return null;
+  close.lastIndex = open.lastIndex;
+  const end = close.exec(html);
+  return end ? html.slice(open.lastIndex, end.index) : null;
+}
+
+/** The page without comments and the elements that hold no visible text. */
+function withoutHiddenParts(html: string): string {
+  const opener = /<!--|<(script|style|noscript|svg|template)\b/gi;
+  let visible = "";
+  let from = 0;
+  for (let match = opener.exec(html); match; match = opener.exec(html)) {
+    visible += html.slice(from, match.index) + " ";
+    const closer = match[1] ? new RegExp(`</${match[1]}>`, "gi") : /-->/g;
+    closer.lastIndex = opener.lastIndex;
+    // Never closed: the rest of the page is inside it.
+    if (!closer.exec(html)) return visible;
+    from = closer.lastIndex;
+    opener.lastIndex = from;
+  }
+  return visible + html.slice(from);
 }
 
 function clean(value: string): string {

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 
 type ToastTone = "success" | "error";
 
@@ -27,9 +27,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setCurrent({ message, tone });
     timer.current = setTimeout(() => setCurrent(null), DISMISS_AFTER_MS);
   }, []);
+  // The same object every render: showing or hiding a toast re-renders
+  // this provider, and a new value would re-render every useToast() caller.
+  const value = useMemo(() => ({ toast }), [toast]);
 
   return (
-    <ToastContext.Provider value={{ toast }}>
+    <ToastContext.Provider value={value}>
       {children}
       <div
         aria-live="polite"

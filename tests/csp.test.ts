@@ -11,6 +11,10 @@ const sentry = vi.hoisted(() => {
 });
 vi.mock("@sentry/nextjs", () => sentry);
 
+// The per-IP limit on reports (migration 0027): room left unless a test says otherwise.
+const rateLimit = vi.hoisted(() => ({ rpc: vi.fn() }));
+vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => rateLimit }));
+
 import { buildCsp, createNonce, cspHeaderName, cspMode } from "@/lib/csp";
 import { parseViolations } from "@/lib/csp-report";
 import { POST } from "@/app/api/csp-report/route";
@@ -138,6 +142,7 @@ describe("parseViolations", () => {
 describe("POST /api/csp-report", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    rateLimit.rpc.mockResolvedValue({ data: true, error: null });
     vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
@@ -156,6 +161,18 @@ describe("POST /api/csp-report", () => {
   it("answers 204 to anything else without reporting it", async () => {
     expect((await post("not json")).status).toBe(204);
     expect((await post("x".repeat(70_000))).status).toBe(204);
+    expect(sentry.captureMessage).not.toHaveBeenCalled();
+    // Junk never reaches the database either.
+    expect(rateLimit.rpc).not.toHaveBeenCalled();
+  });
+
+  it("stops sending a caller's reports to Sentry past the per-IP limit", async () => {
+    rateLimit.rpc.mockResolvedValue({ data: false, error: null });
+    const res = await post(
+      JSON.stringify({ "csp-report": { "document-uri": "https://app.example/", "effective-directive": "connect-src", "blocked-uri": "https://x.example/" } }),
+    );
+    expect(res.status).toBe(204);
+    expect(rateLimit.rpc).toHaveBeenCalledWith("take_rate_limit", expect.objectContaining({ p_max: 20, p_window_seconds: 3600 }));
     expect(sentry.captureMessage).not.toHaveBeenCalled();
   });
 });

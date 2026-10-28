@@ -3,11 +3,11 @@ import { createClient as createUserClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider, AIProviderError, type AIProviderName } from "@/lib/ai-provider";
 import { AI_MODEL_BY_PROVIDER, appSettings } from "@/config/settings";
-import { resolveIdentity, type Identity } from "./identity";
+import { resolveGuestIdentity, signedInUserId, type Identity } from "./identity";
 import { resolveTool, resolveTemplate } from "./catalog";
 import { resolvePlanLimits } from "./plan";
 import { checkUsage, type UsageCheckResult } from "@/lib/limits/checkUsage";
-import { isOverRateLimit } from "@/lib/limits/rateLimit";
+import { ipSubject, isOverRateLimit } from "@/lib/limits/rateLimit";
 import { resolveCompanyContext } from "./company-context";
 import { buildSystemPrompt, buildUserPrompt } from "./prompt";
 import { saveGeneration, incrementUsage } from "./save";
@@ -41,18 +41,40 @@ export interface GenerateResult {
  * branch in this function. Steps are numbered in comments to match the
  * Stage 5 requirements list one-to-one, so it's checkable at a glance.
  */
-export async function runGeneration(body: GenerateRequestBody): Promise<GenerateResult> {
+export async function runGeneration(
+  body: GenerateRequestBody,
+  /** The caller's IP address (lib/visitor.ts clientIp) — limits guests. */
+  ip: string,
+): Promise<GenerateResult> {
   const userClient = await createUserClient();
   const adminClient = createAdminClient();
 
   // 1. Identify the caller — signed-in user, or guest session (created/
   // refreshed here if needed; see identity.ts).
-  const identity = await resolveIdentity({
-    userClient,
-    adminClient,
-    guestSessionToken: body.guestSessionToken,
-  });
-  if (!identity) {
+  const userId = await signedInUserId(userClient);
+  let identity: Identity;
+  if (userId) {
+    identity = { type: "user", userId };
+  } else if (body.guestSessionToken) {
+    // 1a. A guest is whoever sends a new session token, so guests are
+    // also limited per IP address — checked before the session is looked
+    // up or created, so requests past the limit don't create sessions
+    // either. Past it, the guest is asked to sign up, as when their own
+    // free generations run out.
+    if (
+      await isOverRateLimit(adminClient, ipSubject("generate", ip), {
+        max: appSettings.guestGenerationsPerIpPerDay,
+        windowSeconds: 24 * 60 * 60,
+      })
+    ) {
+      throw new GenerationError(
+        GUEST_LIMIT_REJECTION.code,
+        GUEST_LIMIT_REJECTION.status,
+        GUEST_LIMIT_REJECTION.message,
+      );
+    }
+    identity = await resolveGuestIdentity(adminClient, body.guestSessionToken);
+  } else {
     throw new GenerationError(
       "unauthorized",
       401,
@@ -63,10 +85,9 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
   // 1b. Burst protection (Stage 15, architecture doc §17) — before any
   // lookup or AI call is spent on a caller who's going too fast.
   if (
-    await isOverRateLimit({
-      admin: adminClient,
-      identity,
-      maxPerMinute: appSettings.maxGenerationsPerMinute,
+    await isOverRateLimit(adminClient, `generate:${identity.type}:${distinctId(identity)}`, {
+      max: appSettings.maxGenerationsPerMinute,
+      windowSeconds: 60,
     })
   ) {
     throw new GenerationError(
@@ -163,7 +184,6 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
   // 10. Persist. Never throws — a storage hiccup doesn't discard an
   // already-generated (already-paid-for) result; see save.ts.
   const outcome = await saveGeneration({
-    userClient,
     adminClient,
     identity,
     tool,

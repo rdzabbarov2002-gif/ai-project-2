@@ -5,6 +5,7 @@ import { GenerationError } from "@/lib/generation/errors";
 import { AIProviderError, type AIProviderErrorKind } from "@/lib/ai-provider";
 import { logger } from "@/lib/logger";
 import { localeFromCookieHeader } from "@/lib/i18n/config";
+import { clientIp } from "@/lib/visitor";
 import { MESSAGES } from "@/lib/i18n/messages";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -28,7 +29,7 @@ export const maxDuration = 60;
 export async function POST(request: Request) {
   try {
     const body = await parseGenerateRequest(request);
-    const result = await runGeneration(body);
+    const result = await runGeneration(body, clientIp(request.headers));
     return NextResponse.json(result);
   } catch (error) {
     return toErrorResponse(error, localeFromCookieHeader(request.headers.get("cookie")));

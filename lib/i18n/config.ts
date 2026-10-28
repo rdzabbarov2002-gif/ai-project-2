@@ -22,8 +22,5 @@ export function localeFromCookieHeader(header: string | null): Locale {
   return isLocale(match?.[1]) ? match[1] : DEFAULT_LOCALE;
 }
 
-/** Each language in its own name, for the switcher. */
-export const LOCALE_NAMES: Record<Locale, string> = { en: "English", ru: "Русский" };
-
 /** BCP 47 tags for Intl formatting (dates). */
 export const INTL_LOCALE: Record<Locale, string> = { en: "en-US", ru: "ru-RU" };
