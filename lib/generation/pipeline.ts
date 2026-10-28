@@ -2,16 +2,18 @@ import "server-only";
 import { createClient as createUserClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider, AIProviderError, type AIProviderName } from "@/lib/ai-provider";
-import { appSettings } from "@/config/settings";
-import { resolveIdentity } from "./identity";
+import { AI_MODEL_BY_PROVIDER, appSettings } from "@/config/settings";
+import { resolveGuestIdentity, signedInUserId, type Identity } from "./identity";
 import { resolveTool, resolveTemplate } from "./catalog";
 import { resolvePlanLimits } from "./plan";
-import { checkUsage } from "@/lib/limits/checkUsage";
+import { checkUsage, type UsageCheckResult } from "@/lib/limits/checkUsage";
+import { ipSubject, isOverRateLimit } from "@/lib/limits/rateLimit";
 import { resolveCompanyContext } from "./company-context";
 import { buildSystemPrompt, buildUserPrompt } from "./prompt";
 import { saveGeneration, incrementUsage } from "./save";
 import { currentMonthPeriod } from "./period";
 import { GenerationError } from "./errors";
+import { track } from "@/lib/analytics";
 import type { GenerateRequestBody } from "./validate";
 
 export interface GenerateResult {
@@ -39,22 +41,63 @@ export interface GenerateResult {
  * branch in this function. Steps are numbered in comments to match the
  * Stage 5 requirements list one-to-one, so it's checkable at a glance.
  */
-export async function runGeneration(body: GenerateRequestBody): Promise<GenerateResult> {
-  const userClient = createUserClient();
+export async function runGeneration(
+  body: GenerateRequestBody,
+  /** The caller's IP address (lib/visitor.ts clientIp) — limits guests. */
+  ip: string,
+): Promise<GenerateResult> {
+  const userClient = await createUserClient();
   const adminClient = createAdminClient();
 
   // 1. Identify the caller — signed-in user, or guest session (created/
   // refreshed here if needed; see identity.ts).
-  const identity = await resolveIdentity({
-    userClient,
-    adminClient,
-    guestSessionToken: body.guestSessionToken,
-  });
-  if (!identity) {
+  const userId = await signedInUserId(userClient);
+  let identity: Identity;
+  if (userId) {
+    identity = { type: "user", userId };
+  } else if (body.guestSessionToken) {
+    // 1a. A guest is whoever sends a new session token, so guests are
+    // also limited per IP address — checked before the session is looked
+    // up or created, so requests past the limit don't create sessions
+    // either. Past it, the guest is asked to sign up, as when their own
+    // free generations run out.
+    if (
+      await isOverRateLimit(adminClient, ipSubject("generate", ip), {
+        max: appSettings.guestGenerationsPerIpPerDay,
+        windowSeconds: 24 * 60 * 60,
+      })
+    ) {
+      throw new GenerationError(
+        GUEST_LIMIT_REJECTION.code,
+        GUEST_LIMIT_REJECTION.status,
+        GUEST_LIMIT_REJECTION.message,
+      );
+    }
+    identity = await resolveGuestIdentity(adminClient, body.guestSessionToken);
+  } else {
     throw new GenerationError(
       "unauthorized",
       401,
       "Sign in or include a guest session token.",
+    );
+  }
+
+  // 1b. Burst protection (Stage 15, architecture doc §17) — before any
+  // lookup or AI call is spent on a caller who's going too fast.
+  if (
+    await isOverRateLimit(
+      adminClient,
+      `generate:${identity.type}:${distinctId(identity)}`,
+      {
+        max: appSettings.maxGenerationsPerMinute,
+        windowSeconds: 60,
+      },
+    )
+  ) {
+    throw new GenerationError(
+      "rate_limited",
+      429,
+      "You're generating very quickly — please wait a moment and try again.",
     );
   }
 
@@ -70,33 +113,43 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
     ? await resolveTemplate(userClient, body.templateSlug, tool.id)
     : null;
   if (body.templateSlug && !template) {
-    throw new GenerationError("template_unavailable", 404, "This template is not available.");
+    throw new GenerationError(
+      "template_unavailable",
+      404,
+      "This template is not available.",
+    );
   }
 
   // 4. Resolve the caller's plan limits (free plan for every guest).
   const planLimits = await resolvePlanLimits(userClient, identity);
 
-  // 5. Usage limits — tool-in-plan and monthly-count in one check
-  // (lib/limits/checkUsage.ts owns both, per its Stage 1 contract).
+  // 5. Usage limits — tool-in-plan, premium-template-in-plan and
+  // monthly-count in one check (lib/limits/checkUsage.ts owns all three,
+  // per its Stage 1 contract, extended in Stage 10).
   const period = currentMonthPeriod();
   const usage = await checkUsage({
     userId: identity.type === "user" ? identity.userId : undefined,
     guestSessionId: identity.type === "guest" ? identity.guestSessionId : undefined,
     toolSlug: tool.slug,
+    templateIsPremium: template?.isPremium ?? false,
     planLimits,
     period,
     admin: adminClient,
   });
   if (!usage.allowed) {
-    const message =
-      usage.reason === "tool_not_in_plan"
-        ? "This tool isn't included in your current plan."
-        : "You've reached your generation limit for this period.";
-    throw new GenerationError(
-      usage.reason === "tool_not_in_plan" ? "tool_not_in_plan" : "usage_limit_reached",
-      usage.reason === "tool_not_in_plan" ? 403 : 429,
-      message,
-    );
+    const reason = usage.reason ?? "monthly_limit_reached";
+    // A guest out of generations is asked to register, not to upgrade —
+    // its own code, so the client can show the sign-up prompt without
+    // having to know whether the caller is signed in.
+    const rejection =
+      identity.type === "guest" && reason === "monthly_limit_reached"
+        ? GUEST_LIMIT_REJECTION
+        : USAGE_REJECTIONS[reason];
+    await track("generation_blocked", distinctId(identity), {
+      reason: rejection.code,
+      tool: tool.slug,
+    });
+    throw new GenerationError(rejection.code, rejection.status, rejection.message);
   }
 
   // 6. Company context — real profile for a user, draft for a guest.
@@ -117,13 +170,13 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
   // one, right here.
   const { providerName, model } = selectProviderAndModel(planLimits);
   let aiResult;
+  const startedAt = Date.now();
   try {
     aiResult = await getProvider(providerName).generate({
       systemPrompt,
       userPrompt,
       model,
       maxTokens: appSettings.maxOutputTokens,
-      temperature: 0.7,
     });
   } catch (error) {
     // 9. AIProviderError carries a `kind`/`retryable` the route maps to a
@@ -142,7 +195,6 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
   // 10. Persist. Never throws — a storage hiccup doesn't discard an
   // already-generated (already-paid-for) result; see save.ts.
   const outcome = await saveGeneration({
-    userClient,
     adminClient,
     identity,
     tool,
@@ -150,10 +202,17 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
     companyProfileId,
     inputParams: body.inputParams,
     result: aiResult,
+    durationMs: Date.now() - startedAt,
   });
 
   // 11. Usage counters — user-only; guest usage is derived on read.
   await incrementUsage(adminClient, identity, period);
+
+  await track("generation_completed", distinctId(identity), {
+    tool: tool.slug,
+    template: template?.slug ?? null,
+    guest: identity.type === "guest",
+  });
 
   // 12. Unified response shape regardless of guest vs. authenticated.
   return {
@@ -170,27 +229,71 @@ export async function runGeneration(body: GenerateRequestBody): Promise<Generate
   };
 }
 
+/** Who an analytics event belongs to: the user, or the guest session. */
+function distinctId(identity: Identity): string {
+  return identity.type === "user" ? identity.userId : identity.guestSessionId;
+}
+
+/** checkUsage's rejection reasons → the error the route returns. */
+const USAGE_REJECTIONS: Record<
+  NonNullable<UsageCheckResult["reason"]>,
+  { code: string; status: number; message: string }
+> = {
+  tool_not_in_plan: {
+    code: "tool_not_in_plan",
+    status: 403,
+    message: "This tool isn't included in your current plan.",
+  },
+  template_not_in_plan: {
+    code: "template_not_in_plan",
+    status: 403,
+    message: "This template is part of the Pro plan.",
+  },
+  monthly_limit_reached: {
+    code: "usage_limit_reached",
+    status: 429,
+    message: "You've reached your generation limit for this period.",
+  },
+};
+
+const GUEST_LIMIT_REJECTION = {
+  code: "guest_limit_reached",
+  status: 429,
+  message:
+    "You've used all your free guest generations. Create a free account to keep going.",
+};
+
 /**
- * Exactly one provider is actually implemented today (Stage 4 — Claude;
- * the other four are typed stubs). This still resolves the choice through
- * the plan's `allowedAiModels` rather than hardcoding "claude" outright,
- * so turning on a second provider later (post-MVP, per the architecture
- * doc's own roadmap) is extending this list and the map below — not
+ * Two providers are actually implemented: OpenAI (GPT, the default) and
+ * Claude; the other three are typed stubs. The choice still goes through
+ * the plan's `allowedAiModels` rather than being hardcoded, so turning on
+ * another provider is extending this list and the map below — not
  * touching the pipeline that calls it.
+ *
+ * `DEFAULT_AI_PROVIDER` (config/settings.ts) decides which implemented
+ * provider is tried first when a plan allows several, and
+ * `DEFAULT_AI_MODEL` replaces that provider's model.
  */
-const IMPLEMENTED_PROVIDERS: AIProviderName[] = ["claude"];
+const IMPLEMENTED_PROVIDERS: AIProviderName[] = ["openai", "claude"];
 
 const MODEL_BY_PROVIDER: Partial<Record<AIProviderName, string>> = {
-  claude: appSettings.defaultAIModel,
+  ...AI_MODEL_BY_PROVIDER,
+  [appSettings.defaultAIProvider]: appSettings.defaultAIModel,
 };
 
 function selectProviderAndModel(planLimits: {
   allowedAiModels: "all" | AIProviderName[];
 }): { providerName: AIProviderName; model: string } {
   const allowed =
-    planLimits.allowedAiModels === "all" ? IMPLEMENTED_PROVIDERS : planLimits.allowedAiModels;
+    planLimits.allowedAiModels === "all"
+      ? IMPLEMENTED_PROVIDERS
+      : planLimits.allowedAiModels;
 
-  const providerName = IMPLEMENTED_PROVIDERS.find((p) => allowed.includes(p));
+  const preferred = appSettings.defaultAIProvider as AIProviderName;
+  const candidates = IMPLEMENTED_PROVIDERS.includes(preferred)
+    ? [preferred, ...IMPLEMENTED_PROVIDERS.filter((p) => p !== preferred)]
+    : IMPLEMENTED_PROVIDERS;
+  const providerName = candidates.find((p) => allowed.includes(p));
   const model = providerName ? MODEL_BY_PROVIDER[providerName] : undefined;
 
   if (!providerName || !model) {

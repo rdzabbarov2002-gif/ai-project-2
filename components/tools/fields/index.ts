@@ -23,7 +23,10 @@ import type { FieldComponentProps } from "./types";
  * does. FieldRenderer.tsx's cast at the call site is the one place that
  * assumption lives.
  */
-export const FIELD_COMPONENTS: Record<FieldConfig["type"], ComponentType<FieldComponentProps<any>>> = {
+export const FIELD_COMPONENTS: Record<
+  FieldConfig["type"],
+  ComponentType<FieldComponentProps<any>>
+> = {
   text: TextField,
   textarea: TextareaField,
   number: NumberField,

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { GuestCompanyProfileDraft } from "@/lib/guest-session/types";
+import { logger } from "@/lib/logger";
+import { track } from "@/lib/analytics";
 
 /**
  * Guest → User merge endpoint. Stage 2 built the auth check, request
@@ -22,7 +24,7 @@ interface MergeRequestBody {
 }
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -38,11 +40,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  if (!body.guestSessionToken || typeof body.guestSessionToken !== "string") {
-    return NextResponse.json(
-      { error: "missing_guest_session_token" },
-      { status: 400 },
-    );
+  // The same bounds as everywhere a guest token is accepted
+  // (lib/generation/validate.ts, app/api/session/draft).
+  const token = body.guestSessionToken;
+  if (typeof token !== "string" || token.length < 10 || token.length > 200) {
+    return NextResponse.json({ error: "missing_guest_session_token" }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
   const { data: guestSession } = await admin
     .from("guest_sessions")
     .select("id, company_profile_draft")
-    .eq("session_token", body.guestSessionToken)
+    .eq("session_token", token)
     .maybeSingle();
 
   // No row for this token (never used to generate anything, or already
@@ -67,7 +69,11 @@ export async function POST(request: Request) {
   // the client a new state for no behavioral difference — the opposite
   // of the minimal, reuse-first change this stage calls for.
   if (!guestSession) {
-    return NextResponse.json({ status: "merged", generationsMerged: 0, companyProfileCreated: false });
+    return NextResponse.json({
+      status: "merged",
+      generationsMerged: 0,
+      companyProfileCreated: false,
+    });
   }
 
   // The reassignment itself: one UPDATE, admin client. The authenticated
@@ -88,7 +94,9 @@ export async function POST(request: Request) {
     // the guest token in place (AuthSyncListener's existing behavior for
     // any non-"merged" response) so a retry on the next sign-in can pick
     // this back up rather than silently losing the data.
-    console.error("[session/merge] failed to reassign generations:", reassignError.message);
+    logger.error("session/merge: reassigning generations failed", {
+      error: reassignError,
+    });
     return NextResponse.json({ error: "merge_failed" }, { status: 500 });
   }
 
@@ -97,6 +105,24 @@ export async function POST(request: Request) {
     user.id,
     guestSession.company_profile_draft as GuestCompanyProfileDraft | null,
   );
+
+  // Everything the guest session held now belongs to the account, so the
+  // session itself goes (data minimization; the Privacy Policy says so).
+  // A failure here loses nothing: the row expires and is deleted nightly
+  // (app/api/cron/purge-expired).
+  const { error: deleteError } = await admin
+    .from("guest_sessions")
+    .delete()
+    .eq("id", guestSession.id);
+  if (deleteError) {
+    logger.error("session/merge: deleting the merged guest session failed", {
+      error: deleteError,
+    });
+  }
+
+  // Links the guest's analytics events to the account: guest → sign-up
+  // conversion is the funnel's key step (lib/analytics.ts).
+  await track("$create_alias", user.id, { alias: guestSession.id });
 
   return NextResponse.json({
     status: "merged",
@@ -123,7 +149,7 @@ export async function POST(request: Request) {
  * between the two clients for authenticated writes.
  */
 async function maybeCreateCompanyProfileFromDraft(
-  supabase: ReturnType<typeof createClient>,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
   draft: GuestCompanyProfileDraft | null,
 ): Promise<boolean> {
@@ -151,7 +177,7 @@ async function maybeCreateCompanyProfileFromDraft(
     // already moved successfully by this point. Same "don't discard a
     // real result over a secondary write failing" reasoning as Stage 5's
     // saveGeneration().
-    console.error("[session/merge] failed to create company profile from draft:", error.message);
+    logger.error("session/merge: creating company profile from draft failed", { error });
     return false;
   }
 

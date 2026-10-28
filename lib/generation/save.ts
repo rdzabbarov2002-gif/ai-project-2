@@ -5,11 +5,11 @@ import type { Identity } from "./identity";
 import type { UsagePeriod } from "./period";
 import type { AIGenerateResult } from "@/lib/ai-provider";
 import type { ResolvedTool, ResolvedTemplate } from "./catalog";
+import type { TablesInsert } from "@/lib/supabase/database.types";
+import { logger } from "@/lib/logger";
 
 export interface SaveGenerationParams {
-  /** Request-scoped, RLS-enforced client — used for signed-in writes. */
-  userClient: SupabaseClient<Database>;
-  /** Service-role client — used only for guest writes (see lib/supabase/admin.ts). */
+  /** Service-role client (see lib/supabase/admin.ts). */
   adminClient: SupabaseClient<Database>;
   identity: Identity;
   tool: ResolvedTool;
@@ -17,6 +17,8 @@ export interface SaveGenerationParams {
   companyProfileId: string | null;
   inputParams: Record<string, unknown>;
   result: AIGenerateResult;
+  /** How long the AI call took — with the token counts, what pricing is set from. */
+  durationMs: number;
 }
 
 export interface SaveGenerationOutcome {
@@ -25,13 +27,11 @@ export interface SaveGenerationOutcome {
 }
 
 /**
- * Signed-in writes go through `userClient` (the caller's own session,
- * RLS-scoped to `auth.uid() = user_id` per migration 0008) rather than the
- * admin client — see the Stage 3 audit's rationale for why `generations`
- * carries an authenticated INSERT policy at all: it's what lets this stay
- * defense-in-depth even from trusted server code. Guest writes have no
- * `auth.uid()` to scope to, so they're the one case that has to use the
- * admin client.
+ * Admin client for every row, a signed-in user's included: only the
+ * server saves generations — clients hold no INSERT privilege on the
+ * table (migration 0026), since one through the public API would skip
+ * the limits. The owner comes from the identity the pipeline resolved
+ * from the session, never from the request body.
  *
  * Never throws: a failed save doesn't mean the AI call failed too — the
  * text the person is looking at already exists. Swallowing the DB error
@@ -43,24 +43,30 @@ export interface SaveGenerationOutcome {
 export async function saveGeneration(
   params: SaveGenerationParams,
 ): Promise<SaveGenerationOutcome> {
-  const client = params.identity.type === "user" ? params.userClient : params.adminClient;
-
   const row = {
     user_id: params.identity.type === "user" ? params.identity.userId : null,
-    guest_session_id: params.identity.type === "guest" ? params.identity.guestSessionId : null,
+    guest_session_id:
+      params.identity.type === "guest" ? params.identity.guestSessionId : null,
     company_profile_id: params.companyProfileId,
     tool_id: params.tool.id,
     template_id: params.template?.id ?? null,
     ai_provider: params.result.provider,
     ai_model: params.result.model,
-    input_params: params.inputParams,
+    input_params: params.inputParams as TablesInsert<"generations">["input_params"],
     output: params.result.text,
+    input_tokens: params.result.usage.inputTokens,
+    output_tokens: params.result.usage.outputTokens,
+    duration_ms: params.durationMs,
   };
 
-  const { data, error } = await client.from("generations").insert(row).select("id").single();
+  const { data, error } = await params.adminClient
+    .from("generations")
+    .insert(row)
+    .select("id")
+    .single();
 
   if (error || !data) {
-    console.error("[generations] save failed:", error?.message);
+    logger.error("generations: save failed", { error: error ?? "no row returned" });
     return { id: null, saved: false };
   }
 
@@ -102,6 +108,6 @@ export async function incrementUsage(
     // succeeded) is already saved. Losing an increment means this one
     // period undercounts by one — worth logging, not worth failing an
     // otherwise-successful request over.
-    console.error("[usage_counters] increment failed:", error.message);
+    logger.error("usage_counters: increment failed", { error });
   }
 }

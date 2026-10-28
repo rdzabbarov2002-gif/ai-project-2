@@ -12,17 +12,21 @@ export function FieldWrapper({
   required,
   helpText,
   error,
+  htmlFor,
   children,
 }: {
   label: string;
   required?: boolean;
   helpText?: string;
   error?: string;
+  /** The id of the input inside — ties the visible label to it for
+   *  screen readers and click-to-focus (Stage 14 accessibility pass). */
+  htmlFor?: string;
   children: ReactNode;
 }) {
   return (
     <div className="space-y-1">
-      <label className="block text-sm font-medium text-ink-800">
+      <label htmlFor={htmlFor} className="block text-sm font-medium text-ink-800">
         {label}
         {required && <span className="text-danger"> *</span>}
       </label>

@@ -15,20 +15,15 @@ import type { Database } from "./database.types";
  * first written, since this project's own environment has never had
  * network access to check.
  *
- * `cookies()` itself stays un-awaited: Next.js 14.2.5 (this project's
- * pinned version) still returns the cookie store synchronously — the
- * `await cookies()` pattern shown in Supabase's current docs is for
- * Next.js 15+, where `cookies()` became async. This function's own
- * signature is unchanged (still synchronous, still returns
- * `SupabaseClient<Database>` directly, not a Promise) specifically so
- * none of its ~13 call sites across the project need to change.
+ * Async since Next.js 15, where `cookies()` returns a Promise: callers
+ * write `await createClient()`.
  *
  * No RLS-bypassing service-role client is exposed from here on purpose —
  * that belongs in a separate, explicitly-named `admin.ts` once it's actually
  * needed (Stage 3+), so it's never reached for by accident.
  */
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

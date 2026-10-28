@@ -1,0 +1,14 @@
+{
+  "appId": "com.aimarketingworkspace.app",
+  "appName": "AI Marketing",
+  "webDir": "www",
+  "backgroundColor": "#F2F3F7",
+  "server": {
+    "url": "https://ai-project-2-git-claude-stoic-franklin-0o9nt2-ai-project-4892.vercel.app",
+    "errorPath": "offline.html",
+    "allowNavigation": ["vercel.com", "*.vercel.com", "github.com", "*.github.com"]
+  },
+  "android": {
+    "appendUserAgent": "AIMarketingApp"
+  }
+}

@@ -30,7 +30,11 @@ export function ToolGallery({ tools }: { tools: ToolListItem[] }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <SearchBar value={search} onChange={setSearch} />
         {categories.length > 0 && (
-          <CategoryFilter categories={categories} value={category} onChange={setCategory} />
+          <CategoryFilter
+            categories={categories}
+            value={category}
+            onChange={setCategory}
+          />
         )}
       </div>
 

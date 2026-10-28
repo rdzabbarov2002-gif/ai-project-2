@@ -1,0 +1,8 @@
+# Generated: `npm run db:types` writes it, and CI checks it byte for byte.
+lib/supabase/database.types.ts
+# Written by npm.
+package-lock.json
+# Its own project (Capacitor), with generated native code.
+mobile/
+# Prose and hand-aligned tables, written by hand: left as written.
+*.md

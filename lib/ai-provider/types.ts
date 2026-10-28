@@ -1,11 +1,11 @@
 /**
  * AI Provider Gateway — shared contract.
  *
- * Every provider (Claude, OpenAI, Gemini, Mistral, Grok, or any other
- * OpenAI-compatible API) implements this single interface. Business logic
- * (app/api/generate) only ever talks to `AIProvider`, never to a specific
- * vendor SDK — swapping or adding a provider is a config change, not a
- * rewrite of the generation pipeline.
+ * Every provider (OpenAI — the default — Claude, Gemini, Mistral, Grok,
+ * or any other OpenAI-compatible API) implements this single interface.
+ * Business logic (app/api/generate) only ever talks to `AIProvider`, never
+ * to a specific vendor SDK — swapping or adding a provider is a config
+ * change, not a rewrite of the generation pipeline.
  */
 
 export interface AIGenerateParams {
@@ -13,8 +13,13 @@ export interface AIGenerateParams {
   userPrompt: string;
   model: string;
   maxTokens: number;
+  /** Honored only by providers whose models still accept sampling
+   *  parameters — ClaudeProvider and OpenaiProvider ignore it (current
+   *  Claude and GPT models reject `temperature`; see claude.ts, openai.ts). */
   temperature?: number;
-  /** Defaults to a per-provider sane value if omitted (see each provider). */
+  /** Total time the call may take, retries included — the caller's
+   *  serverless time limit has to fit it. Defaults to a per-provider value
+   *  if omitted (see each provider). */
   timeoutMs?: number;
   /** Lets the caller (Stage 5's /api/generate) cancel an in-flight call, e.g. on client disconnect. */
   signal?: AbortSignal;
@@ -33,13 +38,18 @@ export interface AIGenerateResult {
   model: string;
 }
 
-export type AIProviderName =
-  | "claude"
-  | "openai"
-  | "gemini"
-  | "mistral"
-  | "grok"
-  | "openai-compatible";
+/** Runtime list of the names below — lib/env.ts validates
+ *  `DEFAULT_AI_PROVIDER` against it. */
+export const AI_PROVIDER_NAMES = [
+  "claude",
+  "openai",
+  "gemini",
+  "mistral",
+  "grok",
+  "openai-compatible",
+] as const;
+
+export type AIProviderName = (typeof AI_PROVIDER_NAMES)[number];
 
 export interface AIProvider {
   readonly name: AIProviderName;

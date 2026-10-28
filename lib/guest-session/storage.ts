@@ -66,9 +66,7 @@ export function ensureGuestSession(): GuestSession {
   return readGuestSession() ?? createGuestSession();
 }
 
-export function updateGuestProfileDraft(
-  draft: GuestCompanyProfileDraft,
-): GuestSession {
+export function updateGuestProfileDraft(draft: GuestCompanyProfileDraft): GuestSession {
   const current = ensureGuestSession();
   const updated: GuestSession = { ...current, companyProfileDraft: draft };
   if (isBrowser()) {

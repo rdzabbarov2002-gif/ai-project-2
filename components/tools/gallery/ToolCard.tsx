@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import type { ToolListItem } from "@/lib/tools/types";
 
 /**
@@ -20,11 +21,7 @@ export function ToolCard({ tool }: { tool: ToolListItem }) {
           )}
           <h3 className="font-medium text-ink-950">{tool.name}</h3>
         </div>
-        {tool.category && (
-          <span className="inline-block rounded-sm bg-accent-subtle px-2 py-0.5 text-xs text-accent">
-            {tool.category}
-          </span>
-        )}
+        {tool.category && <Badge>{tool.category}</Badge>}
         {tool.description && <p className="text-sm text-ink-600">{tool.description}</p>}
       </Card>
     </Link>

@@ -7,14 +7,7 @@ import type {
   AIProviderErrorKind,
 } from "./types";
 import { AIProviderError } from "./types";
-
-const DEFAULT_TIMEOUT_MS = 60_000;
-const MAX_ATTEMPTS = 2; // 1 initial call + 1 retry, transient failures only.
-const RETRY_DELAY_MS = 500;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { withRetry } from "./retry";
 
 /**
  * Maps the Anthropic SDK's own exception types to our provider-agnostic
@@ -57,71 +50,62 @@ export class ClaudeProvider implements AIProvider {
       );
     }
 
-    this.client = new Anthropic({ apiKey });
+    // The retry loop (retry.ts) is the only one: the SDK's own retries
+    // (2 by default, timeouts included) would multiply the time budget.
+    this.client = new Anthropic({ apiKey, maxRetries: 0 });
     return this.client;
   }
 
   async generate(params: AIGenerateParams): Promise<AIGenerateResult> {
     const client = this.getClient();
-    const timeoutMs = params.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
-    let lastError: unknown;
-
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      try {
-        const response = await client.messages.create(
+    // `params.temperature` is deliberately not forwarded: current Claude
+    // models (Sonnet 5 and Opus 5 onward) removed sampling parameters and
+    // reject a request carrying `temperature` with a 400. The field stays on
+    // the provider-agnostic AIGenerateParams contract for providers that
+    // still accept it.
+    const response = await withRetry(
+      this.name,
+      params.timeoutMs,
+      classifyError,
+      (timeLeftMs) =>
+        client.messages.create(
           {
             model: params.model,
             max_tokens: params.maxTokens,
-            temperature: params.temperature,
             system: params.systemPrompt,
             messages: [{ role: "user", content: params.userPrompt }],
           },
-          { timeout: timeoutMs, signal: params.signal },
-        );
+          { timeout: timeLeftMs, signal: params.signal },
+        ),
+    );
 
-        const text = response.content
-          .filter((block): block is Anthropic.TextBlock => block.type === "text")
-          .map((block) => block.text)
-          .join("");
+    // Thinking blocks (adaptive thinking is on by default for current
+    // models) are skipped — only the visible answer is the product.
+    const text = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === "text")
+      .map((block) => block.text)
+      .join("");
 
-        return {
-          text,
-          usage: {
-            inputTokens: response.usage.input_tokens,
-            outputTokens: response.usage.output_tokens,
-          },
-          provider: this.name,
-          model: response.model,
-        };
-      } catch (error) {
-        lastError = error;
-        const kind = classifyError(error);
-        const wrapped = new AIProviderError(
-          this.name,
-          kind,
-          error instanceof Error ? error.message : "Unknown error calling Claude",
-          error,
-        );
-
-        if (!wrapped.retryable || attempt === MAX_ATTEMPTS) {
-          throw wrapped;
-        }
-        // Transient (overloaded/network/timeout) and attempts remain — back
-        // off once and retry. Anything else (auth, rate limit, bad
-        // request) throws immediately above; retrying those would just
-        // fail the same way again.
-        await sleep(RETRY_DELAY_MS);
-      }
+    if (!text.trim()) {
+      // e.g. stop_reason "refusal", or the whole budget spent before any
+      // visible text. Thrown (not returned) so the pipeline neither saves
+      // an empty generation nor counts it against the caller's usage.
+      throw new AIProviderError(
+        this.name,
+        "unknown",
+        `Claude returned no text (stop_reason: ${response.stop_reason ?? "unknown"}).`,
+      );
     }
 
-    // Unreachable — the loop always either returns or throws — but keeps
-    // TypeScript's control-flow analysis happy without a non-null assertion.
-    throw new AIProviderError(
-      this.name,
-      "unknown",
-      "Exhausted retry attempts without a definitive error.",
-      lastError,
-    );
+    return {
+      text,
+      usage: {
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+      },
+      provider: this.name,
+      model: response.model,
+    };
   }
 }

@@ -12,12 +12,25 @@ import type { RadioFieldConfig } from "@/lib/tool-config/schema";
  * rather than added to the shared UI kit for something only this one
  * caller uses.
  */
-export function RadioField({ field, value, onChange, error }: FieldComponentProps<RadioFieldConfig>) {
+export function RadioField({
+  field,
+  value,
+  onChange,
+  error,
+}: FieldComponentProps<RadioFieldConfig>) {
   return (
-    <FieldWrapper label={field.label} required={field.required} helpText={field.helpText} error={error}>
-      <div className="space-y-1.5">
+    <FieldWrapper
+      label={field.label}
+      required={field.required}
+      helpText={field.helpText}
+      error={error}
+    >
+      <div role="radiogroup" aria-label={field.label} className="space-y-1.5">
         {field.options.map((option) => (
-          <label key={option.value} className="flex items-center gap-2 text-sm text-ink-950">
+          <label
+            key={option.value}
+            className="flex items-center gap-2 text-sm text-ink-950"
+          >
             <input
               type="radio"
               name={field.name}

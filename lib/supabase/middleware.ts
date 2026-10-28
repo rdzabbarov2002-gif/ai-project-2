@@ -4,8 +4,8 @@ import type { Database } from "./database.types";
 
 /**
  * Refreshes the Supabase auth cookie on every request that passes through
- * the root middleware, and returns both the (possibly redirected) response
- * and the resolved user — so middleware.ts can make a routing decision
+ * the root middleware, and returns both the response and whether the
+ * request is signed in — so middleware.ts can make a routing decision
  * without a second round-trip.
  *
  * Follows the official @supabase/ssr Next.js middleware pattern: cookies
@@ -39,12 +39,16 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Must call getUser() (not getSession()) here — it revalidates the token
-  // against Supabase rather than trusting the cookie as-is, which is what
-  // makes this safe to use for routing decisions.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims(), not getSession(): it checks the token's signature rather
+  // than trusting the cookie as-is, which is what makes this safe to use
+  // for routing decisions. With the project's asymmetric signing keys that
+  // check is local (the public keys are fetched once and cached), so this
+  // middleware — which runs on every request — no longer waits on Supabase
+  // Auth each time; with a legacy shared secret it asks Auth, as getUser()
+  // did. A session revoked elsewhere passes here until its token expires
+  // (an hour at most), which is fine for a redirect: every protected page,
+  // action and route asks Auth itself (lib/supabase/auth.ts, getUser).
+  const { data } = await supabase.auth.getClaims();
 
-  return { response, user };
+  return { response, signedIn: Boolean(data?.claims) };
 }

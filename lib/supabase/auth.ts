@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "./server";
 
@@ -8,13 +9,19 @@ import { createClient } from "./server";
  * import a build error rather than a runtime surprise).
  */
 
-export async function getUser() {
-  const supabase = createClient();
+/**
+ * Memoized per request (React `cache`): since Stage 14 the (guest)/(auth)
+ * layouts need the user for navigation and most pages ask again for their
+ * own logic — without this, each render made two identical round trips to
+ * Supabase Auth.
+ */
+export const getUser = cache(async () => {
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
-}
+});
 
 /**
  * Use at the top of a protected Server Component/layout. Middleware already
