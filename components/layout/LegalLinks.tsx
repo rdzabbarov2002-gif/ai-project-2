@@ -11,7 +11,13 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
  * pages. Signed in, it starts with "Send feedback" (the page needs an
  * account).
  */
-export function LegalLinks({ feedback = false, language = false }: { feedback?: boolean; language?: boolean }) {
+export function LegalLinks({
+  feedback = false,
+  language = false,
+}: {
+  feedback?: boolean;
+  language?: boolean;
+}) {
   const t = useMessages();
   const links = [
     ...(feedback ? [{ href: "/feedback", label: t.footer.feedback }] : []),

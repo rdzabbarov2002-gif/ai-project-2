@@ -83,13 +83,17 @@ export async function extractProfile(site: WebsiteSummary): Promise<{
     return {
       profile: {
         ...fromMetadata,
-        ...Object.fromEntries(Object.entries(parsed.data).filter(([, v]) => v !== undefined)),
+        ...Object.fromEntries(
+          Object.entries(parsed.data).filter(([, v]) => v !== undefined),
+        ),
         websiteUrl: site.url,
       },
       source: "ai",
     };
   } catch (error) {
-    logger.error("profile-autofill: AI extraction failed, using page metadata", { error });
+    logger.error("profile-autofill: AI extraction failed, using page metadata", {
+      error,
+    });
     return { profile: fromMetadata, source: "metadata" };
   }
 }
@@ -107,7 +111,9 @@ function parseJsonObject(text: string): unknown {
 }
 
 /** "Acme Bakery | Fresh bread daily" → "Acme Bakery". Exported for tests. */
-export function guessNameFromMetadata(site: Pick<WebsiteSummary, "siteName" | "title">): string | undefined {
+export function guessNameFromMetadata(
+  site: Pick<WebsiteSummary, "siteName" | "title">,
+): string | undefined {
   if (site.siteName) return site.siteName.slice(0, 200);
   const first = site.title?.split(/\s[|–—·:-]\s/)[0]?.trim();
   return first ? first.slice(0, 200) : undefined;

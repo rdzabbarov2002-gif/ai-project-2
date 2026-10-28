@@ -22,10 +22,14 @@ describe("FAQ", () => {
   });
 
   it("quotes the app's own numbers and the support address", () => {
-    const text = faq(facts).map((entry) => entry.answer).join("\n");
+    const text = faq(facts)
+      .map((entry) => entry.answer)
+      .join("\n");
     expect(text).toContain("3 free generations");
     expect(text).toContain("20 generations a month");
-    expect(text).toContain("Pro ($29 a month) gives you 500 generations a month and every template");
+    expect(text).toContain(
+      "Pro ($29 a month) gives you 500 generations a month and every template",
+    );
     expect(text).toContain("14 days free");
     expect(text).toContain("more than 6 in a minute");
     expect(text).toContain("help@app.example");
@@ -33,16 +37,27 @@ describe("FAQ", () => {
   });
 
   it("doesn't invent numbers when the plans can't be read", () => {
-    const text = faq({ ...facts, freeGenerations: undefined, proGenerations: undefined, proPrice: undefined })
+    const text = faq({
+      ...facts,
+      freeGenerations: undefined,
+      proGenerations: undefined,
+      proPrice: undefined,
+    })
       .map((entry) => entry.answer)
       .join("\n");
-    expect(text).toContain("The free plan gives you a monthly allowance of generations. Pro gives you more generations");
+    expect(text).toContain(
+      "The free plan gives you a monthly allowance of generations. Pro gives you more generations",
+    );
     expect(text).not.toContain("undefined");
   });
 
   it("says unlimited for a plan without a limit", () => {
-    const cost = faq({ ...facts, proGenerations: null }).find((entry) => entry.question === "How much does it cost?")!;
-    expect(cost.answer).toContain("Pro ($29 a month) gives you unlimited generations and every template");
+    const cost = faq({ ...facts, proGenerations: null }).find(
+      (entry) => entry.question === "How much does it cost?",
+    )!;
+    expect(cost.answer).toContain(
+      "Pro ($29 a month) gives you unlimited generations and every template",
+    );
   });
 });
 

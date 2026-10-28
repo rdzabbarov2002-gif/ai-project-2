@@ -34,15 +34,23 @@ if (!key) {
 }
 const base = process.env.STRIPE_API_BASE ? new URL(process.env.STRIPE_API_BASE) : null;
 const stripe = new Stripe(key, {
-  ...(base && { host: base.hostname, port: Number(base.port), protocol: base.protocol.replace(":", "") }),
+  ...(base && {
+    host: base.hostname,
+    port: Number(base.port),
+    protocol: base.protocol.replace(":", ""),
+  }),
 });
 const mode = key.startsWith("sk_live_") ? "LIVE" : "test";
 console.log(`Stripe ${mode} mode`);
 
 for (const { plan, name, lookupKey, amount } of PRICES) {
-  const [existing] = (await stripe.prices.list({ lookup_keys: [lookupKey], limit: 1 })).data;
+  const [existing] = (await stripe.prices.list({ lookup_keys: [lookupKey], limit: 1 }))
+    .data;
   if (existing) {
-    const note = existing.unit_amount === amount ? "" : ` — but it is ${existing.unit_amount} cents, not ${amount}`;
+    const note =
+      existing.unit_amount === amount
+        ? ""
+        : ` — but it is ${existing.unit_amount} cents, not ${amount}`;
     console.log(`✓ price ${lookupKey} exists (${existing.id})${note}`);
     continue;
   }
@@ -68,9 +76,14 @@ if (webhookIndex > 0) {
   }
   const endpoints = await stripe.webhookEndpoints.list({ limit: 100 });
   if (endpoints.data.some((endpoint) => endpoint.url === url)) {
-    console.log(`✓ webhook endpoint ${url} exists (its signing secret is in the Dashboard)`);
+    console.log(
+      `✓ webhook endpoint ${url} exists (its signing secret is in the Dashboard)`,
+    );
   } else {
-    const endpoint = await stripe.webhookEndpoints.create({ url, enabled_events: WEBHOOK_EVENTS });
+    const endpoint = await stripe.webhookEndpoints.create({
+      url,
+      enabled_events: WEBHOOK_EVENTS,
+    });
     console.log(`+ created webhook endpoint ${url}`);
     console.log(`  STRIPE_WEBHOOK_SECRET=${endpoint.secret}`);
   }

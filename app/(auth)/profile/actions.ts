@@ -7,8 +7,14 @@ import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isOverRateLimit } from "@/lib/limits/rateLimit";
-import { fetchWebsiteSummary, WebsiteFetchError } from "@/lib/profile-autofill/fetchWebsite";
-import { extractProfile, type SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
+import {
+  fetchWebsiteSummary,
+  WebsiteFetchError,
+} from "@/lib/profile-autofill/fetchWebsite";
+import {
+  extractProfile,
+  type SuggestedProfile,
+} from "@/lib/profile-autofill/extractProfile";
 import { logger } from "@/lib/logger";
 
 /**
@@ -84,7 +90,10 @@ export async function saveCompanyProfile(
     // The one rule a person can break here is the missing name; the rest
     // (lengths) the form's own limits already prevent.
     const nameMissing = parsed.error.issues.some((issue) => issue.path[0] === "name");
-    return { error: nameMissing ? t.profile.nameRequired : t.common.invalidInput, success: false };
+    return {
+      error: nameMissing ? t.profile.nameRequired : t.common.invalidInput,
+      success: false,
+    };
   }
 
   const supabase = await createClient();
@@ -150,7 +159,9 @@ export async function autofillCompanyProfile(url: string): Promise<AutofillResul
     return { error: t.profile.enterWebsite, profile: null };
   }
 
-  if (await isOverRateLimit(createAdminClient(), `autofill:user:${user.id}`, AUTOFILL_LIMIT)) {
+  if (
+    await isOverRateLimit(createAdminClient(), `autofill:user:${user.id}`, AUTOFILL_LIMIT)
+  ) {
     return { error: t.profile.autofillTooMany, profile: null };
   }
 
@@ -160,7 +171,10 @@ export async function autofillCompanyProfile(url: string): Promise<AutofillResul
     return { error: null, profile, source };
   } catch (error) {
     if (error instanceof WebsiteFetchError) {
-      return { error: t.profile.websiteErrors[error.message] ?? error.message, profile: null };
+      return {
+        error: t.profile.websiteErrors[error.message] ?? error.message,
+        profile: null,
+      };
     }
     logger.error("profile: autofill failed", { error });
     return { error: t.profile.readFailed, profile: null };

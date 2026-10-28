@@ -19,7 +19,10 @@ async function control(path: string, body: Record<string, unknown> = {}) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
-  return (await res.json()) as { status?: number; subscriptions?: { id: string; status: string }[] };
+  return (await res.json()) as {
+    status?: number;
+    subscriptions?: { id: string; status: string }[];
+  };
 }
 
 /** Moves the subscription in "Stripe"; the app hears it by webhook. */
@@ -58,15 +61,21 @@ test("subscribe with a free trial; the trial turns into a payment", async ({ pag
   const { subscription } = await subscribe(page, "trial-pay");
   await expect(page.getByText("Pro free trial until")).toBeVisible();
   // Someone who pays manages it in the portal — no second checkout.
-  await expect(page.getByRole("button", { name: /free trial|Upgrade to/ })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Manage billing" }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /free trial|Upgrade to/ })).toHaveCount(
+    0,
+  );
+  await expect(
+    page.getByRole("button", { name: "Manage billing" }).first(),
+  ).toBeVisible();
 
   await stripeChanges(subscription, { status: "active", invoice: "paid" });
   await expectPlan(page, "Pro");
   await expect(page.getByText("Pro, renews on")).toBeVisible();
 });
 
-test("a trial cancelled before it ends isn't charged and leaves Free", async ({ page }) => {
+test("a trial cancelled before it ends isn't charged and leaves Free", async ({
+  page,
+}) => {
   const { subscription } = await subscribe(page, "trial-cancel");
 
   await stripeChanges(subscription, { cancel_at_period_end: true });
@@ -92,7 +101,9 @@ test("changing plan up and down changes what the account gets", async ({ page })
   await expectPlan(page, "Pro");
 });
 
-test("a declined card: past due limits the account to Free until it's paid", async ({ page }) => {
+test("a declined card: past due limits the account to Free until it's paid", async ({
+  page,
+}) => {
   const { subscription } = await subscribe(page, "past-due");
   await stripeChanges(subscription, { status: "active", invoice: "paid" });
 
@@ -121,10 +132,16 @@ test("cancelled at the end of the period, then refunded", async ({ page }) => {
   await expectPlan(page, "Free");
 });
 
-test("the webhook refuses a bad signature and ignores replayed and late events", async ({ page }) => {
+test("the webhook refuses a bad signature and ignores replayed and late events", async ({
+  page,
+}) => {
   const forged = await page.request.post("/api/stripe/webhook", {
     headers: { "stripe-signature": "t=1,v1=forged" },
-    data: { id: "evt_forged", type: "customer.subscription.updated", data: { object: { id: "sub_x" } } },
+    data: {
+      id: "evt_forged",
+      type: "customer.subscription.updated",
+      data: { object: { id: "sub_x" } },
+    },
   });
   expect(forged.status()).toBe(400);
 
@@ -140,21 +157,29 @@ test("the webhook refuses a bad signature and ignores replayed and late events",
   // The same event again: acknowledged, nothing written.
   expect((await control("replay")).status).toBe(200);
   // An old copy of the subscription arriving late: Stripe's current state wins.
-  expect((await control(`stale/${subscription}`, { status: "trialing" })).status).toBe(200);
+  expect((await control(`stale/${subscription}`, { status: "trialing" })).status).toBe(
+    200,
+  );
 
   expect(await stored()).toEqual(before);
 });
 
-test("the nightly reconciliation finds no differences, and repairs one", async ({ page }) => {
+test("the nightly reconciliation finds no differences, and repairs one", async ({
+  page,
+}) => {
   const reconcile = (auth = "Bearer cron_e2e") =>
-    page.request.get("/api/cron/reconcile-subscriptions", { headers: { authorization: auth } });
+    page.request.get("/api/cron/reconcile-subscriptions", {
+      headers: { authorization: auth },
+    });
   expect((await reconcile("Bearer wrong")).status()).toBe(401);
 
   const { userId, subscription } = await subscribe(page, "reconcile");
   await stripeChanges(subscription, { status: "active", invoice: "paid" });
 
   // A row that drifted from Stripe (say, a lost webhook) is put back.
-  await adminUpdate("subscriptions", `provider_ref=eq.${subscription}`, { status: "canceled" });
+  await adminUpdate("subscriptions", `provider_ref=eq.${subscription}`, {
+    status: "canceled",
+  });
   const repaired = await (await reconcile()).json();
   expect(repaired.fixed).toBeGreaterThanOrEqual(1);
   const [row] = await adminSelect<{ status: string }>(

@@ -2,7 +2,12 @@ import { plural } from "../plural";
 import type { Messages } from "./en";
 
 const generations = (count: number) =>
-  plural("ru", count, { one: "генерация", few: "генерации", many: "генераций", other: "генерации" });
+  plural("ru", count, {
+    one: "генерация",
+    few: "генерации",
+    many: "генераций",
+    other: "генерации",
+  });
 
 /** The interface in Russian — same keys as en.ts (checked by the type). */
 export const ru: Messages = {
@@ -90,7 +95,9 @@ export const ru: Messages = {
     compare: "Сравнить",
     free: "Бесплатно",
     freeAllowance: (count: number | null | undefined) =>
-      typeof count === "number" ? `${generations(count)} в месяц` : "Бесплатные генерации каждый месяц",
+      typeof count === "number"
+        ? `${generations(count)} в месяц`
+        : "Бесплатные генерации каждый месяц",
     perMonth: "/мес",
     proLine: (count: number | null | undefined, trialDays: number) =>
       `${typeof count === "number" ? `${count} в месяц` : "Больше генераций"} · все шаблоны · ${plural("ru", trialDays, { one: "день", few: "дня", many: "дней", other: "дня" })} бесплатно`,
@@ -114,7 +121,8 @@ export const ru: Messages = {
     loading: "Загружаем инструменты…",
     unavailable: "Этот инструмент недоступен.",
     template: (name: string) => `Шаблон: ${name}`,
-    left: (remaining: number, limit: number | null) => `Осталось ${remaining} из ${limit} генераций в этом месяце.`,
+    left: (remaining: number, limit: number | null) =>
+      `Осталось ${remaining} из ${limit} генераций в этом месяце.`,
     seePlans: "Тарифы",
   },
 
@@ -146,14 +154,17 @@ export const ru: Messages = {
     periodLeft: (count: number) => `Осталось генераций в этом периоде: ${count}.`,
     keepBefore: "Хотите сохранить?",
     keepLink: "Зарегистрируйтесь бесплатно,",
-    keepAfter: "и результат попадёт в историю — всё созданное в гостевом режиме сохранится.",
-    unsupportedField: (type: string, label: string) => `Неподдерживаемый тип поля «${type}» у «${label}».`,
+    keepAfter:
+      "и результат попадёт в историю — всё созданное в гостевом режиме сохранится.",
+    unsupportedField: (type: string, label: string) =>
+      `Неподдерживаемый тип поля «${type}» у «${label}».`,
   },
 
   guestDraft: {
     yourBusiness: (name: string) => `Ваш бизнес: ${name}`,
     tellUs: "Расскажите о своём бизнесе (необязательно)",
-    explainer: "Результаты подстроятся под ваш бизнес. Данные хранятся на этом устройстве, а после регистрации станут профилем компании.",
+    explainer:
+      "Результаты подстроятся под ваш бизнес. Данные хранятся на этом устройстве, а после регистрации станут профилем компании.",
     name: "Название бизнеса",
     niche: "Ниша / отрасль",
     audience: "Целевая аудитория",
@@ -188,7 +199,8 @@ export const ru: Messages = {
     title: "Цены",
     lead: (trialDays: number) =>
       `Начните бесплатно. Когда понадобится больше — Pro начинается с бесплатного пробного периода на ${plural("ru", trialDays, { one: "день", few: "дня", many: "дней", other: "дня" })}, отменить можно в любой момент в разделе «Тариф и оплата».`,
-    footnote: "Цены указаны в долларах США без налога — он добавляется при оплате в зависимости от страны. Платежи обрабатывает Stripe.",
+    footnote:
+      "Цены указаны в долларах США без налога — он добавляется при оплате в зависимости от страны. Платежи обрабатывает Stripe.",
   },
 
   plans: {
@@ -200,7 +212,13 @@ export const ru: Messages = {
     unlimited: "Без ограничений",
     generationsPerMonth: (count: number) => `${generations(count)} в месяц`,
     everyTool: "Все инструменты",
-    tools: (count: number) => plural("ru", count, { one: "инструмент", few: "инструмента", many: "инструментов", other: "инструмента" }),
+    tools: (count: number) =>
+      plural("ru", count, {
+        one: "инструмент",
+        few: "инструмента",
+        many: "инструментов",
+        other: "инструмента",
+      }),
     fullLibrary: "Вся библиотека шаблонов, включая Pro",
     standardLibrary: "Стандартные шаблоны",
     manageBilling: "Управлять оплатой",
@@ -209,7 +227,8 @@ export const ru: Messages = {
     comingSoonTitle: "Онлайн-оплата пока недоступна",
     comingSoon: "Перейти — скоро",
     startFree: "Начать бесплатно",
-    startTrial: (days: number) => `Попробовать ${plural("ru", days, { one: "день", few: "дня", many: "дней", other: "дня" })} бесплатно`,
+    startTrial: (days: number) =>
+      `Попробовать ${plural("ru", days, { one: "день", few: "дня", many: "дней", other: "дня" })} бесплатно`,
     upgradeTo: (name: string) => `Перейти на ${name}`,
   },
 
@@ -224,7 +243,8 @@ export const ru: Messages = {
   faq: {
     title: "Частые вопросы",
     notAnswered: "Не нашли ответ? Напишите на",
-    answerWithin: (hours: number) => `— ответим в течение ${plural("ru", hours, { one: "часа", few: "часов", many: "часов", other: "часа" })}.`,
+    answerWithin: (hours: number) =>
+      `— ответим в течение ${plural("ru", hours, { one: "часа", few: "часов", many: "часов", other: "часа" })}.`,
   },
 
   changelog: {
@@ -235,7 +255,8 @@ export const ru: Messages = {
   },
 
   legal: {
-    englishOnly: "Этот документ доступен только на английском — юридически действует английский текст.",
+    englishOnly:
+      "Этот документ доступен только на английском — юридически действует английский текст.",
   },
 
   auth: {
@@ -246,18 +267,23 @@ export const ru: Messages = {
     forgot: "Забыли пароль?",
     noAccount: "Ещё нет аккаунта?",
     createOne: "Создать",
-    badConfirmation: "Ссылка подтверждения недействительна или устарела. Войдите или зарегистрируйтесь заново, чтобы получить новую.",
+    badConfirmation:
+      "Ссылка подтверждения недействительна или устарела. Войдите или зарегистрируйтесь заново, чтобы получить новую.",
     registerTitle: "Создайте аккаунт",
-    registerLead: "Всё, что вы уже создали, сохранится — при регистрации ничего не теряется.",
+    registerLead:
+      "Всё, что вы уже создали, сохранится — при регистрации ничего не теряется.",
     passwordMin: "Пароль (минимум 8 символов)",
     creating: "Создаём аккаунт…",
     create: "Создать аккаунт",
     haveAccount: "Уже есть аккаунт?",
     checkEmailTitle: "Проверьте почту",
-    checkEmailText: "Мы отправили ссылку для подтверждения. Откройте её, чтобы закончить регистрацию, — ваши генерации перейдут в аккаунт автоматически.",
+    checkEmailText:
+      "Мы отправили ссылку для подтверждения. Откройте её, чтобы закончить регистрацию, — ваши генерации перейдут в аккаунт автоматически.",
     resetTitle: "Сброс пароля",
-    resetSent: "Проверьте почту. Если аккаунт с этим адресом существует, мы отправили ссылку для нового пароля.",
-    badReset: "Ссылка для сброса недействительна или устарела. Введите email, чтобы получить новую.",
+    resetSent:
+      "Проверьте почту. Если аккаунт с этим адресом существует, мы отправили ссылку для нового пароля.",
+    badReset:
+      "Ссылка для сброса недействительна или устарела. Введите email, чтобы получить новую.",
     sendReset: "Отправить ссылку",
     backToSignIn: "Вернуться ко входу",
     newPasswordTitle: "Новый пароль",
@@ -270,10 +296,13 @@ export const ru: Messages = {
     supabase: {
       "Invalid login credentials": "Неверный email или пароль.",
       "Email not confirmed": "Email не подтверждён — откройте ссылку из письма.",
-      "User already registered": "Этот email уже зарегистрирован. Войдите или восстановите пароль.",
-      "Email rate limit exceeded": "Слишком много писем за короткое время. Попробуйте позже.",
+      "User already registered":
+        "Этот email уже зарегистрирован. Войдите или восстановите пароль.",
+      "Email rate limit exceeded":
+        "Слишком много писем за короткое время. Попробуйте позже.",
       "Unable to validate email address: invalid format": "Проверьте адрес email.",
-      "New password should be different from the old password.": "Новый пароль должен отличаться от старого.",
+      "New password should be different from the old password.":
+        "Новый пароль должен отличаться от старого.",
       "Auth session missing!": "Ссылка устарела — запросите сброс пароля ещё раз.",
       wait: "В целях безопасности повторить можно через {seconds} сек.",
     },
@@ -284,7 +313,8 @@ export const ru: Messages = {
     loadError: "Не удалось загрузить кабинет. Попробуйте чуть позже.",
     loading: "Загружаем кабинет…",
     addProfile: "Добавьте профиль компании",
-    addProfileText: "Каждый инструмент подстраивает результат под него — это займёт около минуты.",
+    addProfileText:
+      "Каждый инструмент подстраивает результат под него — это займёт около минуты.",
     setUp: "Заполнить",
     plansLink: "Тарифы и оплата →",
     start: "Начать работу",
@@ -324,21 +354,27 @@ export const ru: Messages = {
     nameRequired: "Укажите название компании.",
     saveFailed: "Не удалось сохранить профиль. Попробуйте ещё раз.",
     yourWebsite: "Ваш сайт",
-    websiteHelp: "Мы прочитаем главную страницу и предложим профиль — всё можно будет изменить.",
+    websiteHelp:
+      "Мы прочитаем главную страницу и предложим профиль — всё можно будет изменить.",
     reading: "Читаем ваш сайт…",
     autofill: "Заполнить по сайту",
     filledAi: "Заполнено по вашему сайту — проверьте всё перед сохранением.",
     filledBasic: "С сайта удалось прочитать только основное — заполните остальное сами.",
     enterWebsite: "Введите адрес сайта.",
     readFailed: "Не удалось прочитать этот сайт. Попробуйте ещё раз.",
-    autofillTooMany: "За последний час автозаполнение использовалось много раз. Попробуйте позже или заполните поля сами.",
+    autofillTooMany:
+      "За последний час автозаполнение использовалось много раз. Попробуйте позже или заполните поля сами.",
     websiteErrors: {
       "Enter your website address.": "Введите адрес сайта.",
       "That doesn't look like a website address.": "Это не похоже на адрес сайта.",
-      "Only http and https websites are supported.": "Поддерживаются только сайты с http и https.",
-      "Website addresses with a custom port aren't supported.": "Адреса сайтов с нестандартным портом не поддерживаются.",
-      "Website addresses with credentials aren't supported.": "Адреса сайтов с логином и паролем не поддерживаются.",
-      "That website redirects too many times.": "Этот сайт слишком много раз перенаправляет.",
+      "Only http and https websites are supported.":
+        "Поддерживаются только сайты с http и https.",
+      "Website addresses with a custom port aren't supported.":
+        "Адреса сайтов с нестандартным портом не поддерживаются.",
+      "Website addresses with credentials aren't supported.":
+        "Адреса сайтов с логином и паролем не поддерживаются.",
+      "That website redirects too many times.":
+        "Этот сайт слишком много раз перенаправляет.",
       "We couldn't find that website.": "Не удалось найти этот сайт.",
     },
   },
@@ -349,7 +385,8 @@ export const ru: Messages = {
     skipForNow: "Пропустить пока",
     progress: "Шаги настройки",
     steps: ["Сайт", "Ваш бизнес", "Аудитория и тон"],
-    intro: "Начните с сайта, и мы предложим остальное — или пропустите этот шаг и заполните сами.",
+    intro:
+      "Начните с сайта, и мы предложим остальное — или пропустите этот шаг и заполните сами.",
     nameRequired: "Укажите название компании.",
     skip: "Пропустить — заполню сам",
     finish: "Готово",
@@ -359,18 +396,24 @@ export const ru: Messages = {
     title: "Тариф и оплата",
     loadError: "Не удалось загрузить данные об оплате. Попробуйте чуть позже.",
     loading: "Загружаем данные об оплате…",
-    thanks: "Спасибо — подписка оформляется. Она может появиться здесь через несколько секунд; обновите страницу, если её нет.",
+    thanks:
+      "Спасибо — подписка оформляется. Она может появиться здесь через несколько секунд; обновите страницу, если её нет.",
     unavailable: "Оплата сейчас недоступна. Попробуйте через несколько минут.",
     plans: "Тарифы",
-    footnote: "Цены указаны без налога — он добавляется при оплате в зависимости от страны. Лимит обновляется в начале каждого календарного месяца (UTC).",
+    footnote:
+      "Цены указаны без налога — он добавляется при оплате в зависимости от страны. Лимит обновляется в начале каждого календарного месяца (UTC).",
     deleteTitle: "Удаление аккаунта",
-    deleteText: "Навсегда удаляет аккаунт, профиль компании и историю генераций. Это нельзя отменить.",
+    deleteText:
+      "Навсегда удаляет аккаунт, профиль компании и историю генераций. Это нельзя отменить.",
     endOfPeriod: "конца периода",
-    trialEnding: (plan: string, date: string) => `Пробный период ${plan} до ${date}. Потом он закончится — списания не будет.`,
-    trial: (plan: string, date: string) => `Пробный период ${plan} до ${date}, затем спишется оплата с карты.`,
+    trialEnding: (plan: string, date: string) =>
+      `Пробный период ${plan} до ${date}. Потом он закончится — списания не будет.`,
+    trial: (plan: string, date: string) =>
+      `Пробный период ${plan} до ${date}, затем спишется оплата с карты.`,
     ending: (plan: string, date: string) => `${plan} до ${date}. Подписка не продлится.`,
     renews: (plan: string, date: string) => `${plan}, продление ${date}.`,
-    failed: (plan: string) => `Последний платёж за ${plan} не прошёл. Обновите карту, чтобы вернуть ${plan}, — пока действует бесплатный тариф.`,
+    failed: (plan: string) =>
+      `Последний платёж за ${plan} не прошёл. Обновите карту, чтобы вернуть ${plan}, — пока действует бесплатный тариф.`,
     incomplete: (plan: string) => `Первый платёж за ${plan} не завершён.`,
     ended: (plan: string) => `Подписка ${plan} закончилась.`,
     updatePayment: "Обновить способ оплаты",
@@ -378,7 +421,8 @@ export const ru: Messages = {
     deleting: "Удаляем…",
     delete: "Удалить аккаунт",
     confirmDelete: "Удалить аккаунт и все данные? Это нельзя отменить.",
-    cancelFailed: "Не удалось отменить подписку, поэтому ничего не удалено. Попробуйте ещё раз.",
+    cancelFailed:
+      "Не удалось отменить подписку, поэтому ничего не удалено. Попробуйте ещё раз.",
     deleteFailed: "Не удалось удалить аккаунт. Попробуйте ещё раз.",
   },
 
@@ -403,7 +447,8 @@ export const ru: Messages = {
     tool_not_in_plan: "Этот инструмент не входит в ваш тариф.",
     template_not_in_plan: "Этот шаблон входит в тариф Pro.",
     usage_limit_reached: "Лимит генераций на этот период исчерпан.",
-    guest_limit_reached: "Бесплатные гостевые генерации закончились. Создайте бесплатный аккаунт, чтобы продолжить.",
+    guest_limit_reached:
+      "Бесплатные гостевые генерации закончились. Создайте бесплатный аккаунт, чтобы продолжить.",
     generation_failed: "Что-то пошло не так при создании текста. Попробуйте ещё раз.",
     no_provider_available: "Для вашего тарифа сейчас нет доступного ИИ.",
     invalid_json: "Что-то пошло не так. Обновите страницу и попробуйте снова.",

@@ -68,26 +68,30 @@ export class OpenaiProvider implements AIProvider {
   async generate(params: AIGenerateParams): Promise<AIGenerateResult> {
     const client = this.getClient();
 
-    const response = await withRetry(this.name, params.timeoutMs, classifyError, (timeLeftMs) =>
-      client.responses.create(
-        {
-          model: params.model,
-          instructions: params.systemPrompt,
-          input: params.userPrompt,
-          // Reasoning counts toward this cap too (see config/settings.ts).
-          max_output_tokens: params.maxTokens,
-          // Current GPT models (gpt-5.x, gpt-6.x) reason before answering.
-          // "low" is plenty for marketing copy and keeps an answer well
-          // inside the time budget; every current reasoning model accepts
-          // it. `params.temperature` is not forwarded: these models reject
-          // sampling parameters unless reasoning is turned off.
-          reasoning: { effort: "low" },
-          // The result is saved here (generations), so OpenAI needn't keep
-          // a copy for later retrieval.
-          store: false,
-        },
-        { timeout: timeLeftMs, signal: params.signal },
-      ),
+    const response = await withRetry(
+      this.name,
+      params.timeoutMs,
+      classifyError,
+      (timeLeftMs) =>
+        client.responses.create(
+          {
+            model: params.model,
+            instructions: params.systemPrompt,
+            input: params.userPrompt,
+            // Reasoning counts toward this cap too (see config/settings.ts).
+            max_output_tokens: params.maxTokens,
+            // Current GPT models (gpt-5.x, gpt-6.x) reason before answering.
+            // "low" is plenty for marketing copy and keeps an answer well
+            // inside the time budget; every current reasoning model accepts
+            // it. `params.temperature` is not forwarded: these models reject
+            // sampling parameters unless reasoning is turned off.
+            reasoning: { effort: "low" },
+            // The result is saved here (generations), so OpenAI needn't keep
+            // a copy for later retrieval.
+            store: false,
+          },
+          { timeout: timeLeftMs, signal: params.signal },
+        ),
     );
 
     // Joined text of the answer's messages; reasoning and refusals aren't in it.

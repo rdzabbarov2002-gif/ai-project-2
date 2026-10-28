@@ -17,7 +17,13 @@ import { getMessages } from "@/lib/i18n/server";
  * does no data fetching. The footer (LegalLinks) is on every page; signed
  * in, it also links to the feedback form.
  */
-export async function AppShell({ user, children }: { user: { email?: string } | null; children: ReactNode }) {
+export async function AppShell({
+  user,
+  children,
+}: {
+  user: { email?: string } | null;
+  children: ReactNode;
+}) {
   const t = await getMessages();
   const skipLink = (
     <a

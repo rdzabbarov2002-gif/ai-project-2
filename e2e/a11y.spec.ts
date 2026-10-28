@@ -21,7 +21,13 @@ const GUEST_PAGES = [
   "/forgot-password",
   "/privacy",
 ];
-const SIGNED_IN_PAGES = ["/dashboard", "/history", "/profile", "/settings/billing", "/feedback"];
+const SIGNED_IN_PAGES = [
+  "/dashboard",
+  "/history",
+  "/profile",
+  "/settings/billing",
+  "/feedback",
+];
 
 test.use({ viewport: { width: 360, height: 780 } });
 
@@ -34,11 +40,18 @@ async function audit(page: Page, path: string) {
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   const blocking = violations
-    .filter((violation) => violation.impact === "critical" || violation.impact === "serious")
-    .map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target).join(", ")}`);
+    .filter(
+      (violation) => violation.impact === "critical" || violation.impact === "serious",
+    )
+    .map(
+      (violation) =>
+        `${violation.id}: ${violation.nodes.map((node) => node.target).join(", ")}`,
+    );
   expect(blocking, `${path}: critical or serious accessibility violations`).toEqual([]);
 
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
   expect(overflow, `${path} scrolls sideways at 360px`).toBeLessThanOrEqual(0);
 }
 

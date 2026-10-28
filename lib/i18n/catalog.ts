@@ -18,11 +18,14 @@ const RU: Record<string, string> = {
   "AI Content Writer": "Автор статей",
   "AI Email Generator": "Генератор писем",
   "AI Social Media Generator": "Генератор постов",
-  "Generate ready-to-run ad copy for your campaigns.": "Готовые рекламные тексты для ваших кампаний.",
+  "Generate ready-to-run ad copy for your campaigns.":
+    "Готовые рекламные тексты для ваших кампаний.",
   "Draft blog posts, articles, landing pages, video scripts and product descriptions.":
     "Черновики постов для блога, статей, лендингов, сценариев видео и описаний товаров.",
-  "Draft marketing emails tailored to your audience.": "Маркетинговые письма под вашу аудиторию.",
-  "Create on-brand posts for your social channels.": "Посты для соцсетей в стиле вашего бренда.",
+  "Draft marketing emails tailored to your audience.":
+    "Маркетинговые письма под вашу аудиторию.",
+  "Create on-brand posts for your social channels.":
+    "Посты для соцсетей в стиле вашего бренда.",
   Ads: "Реклама",
   Content: "Контент",
   Email: "Письма",
@@ -65,7 +68,8 @@ const RU: Record<string, string> = {
   Platform: "Площадка",
   "Product or service being advertised": "Что рекламируем",
   "Offer or promotion details": "Предложение или акция",
-  "Optional — e.g. a discount, launch, or limited-time deal.": "Необязательно — например, скидка, запуск или ограниченное предложение.",
+  "Optional — e.g. a discount, launch, or limited-time deal.":
+    "Необязательно — например, скидка, запуск или ограниченное предложение.",
   "Call to action": "Призыв к действию",
   "Call-to-action button": "Кнопка призыва к действию",
   "Primary call to action": "Главный призыв к действию",
@@ -73,31 +77,38 @@ const RU: Record<string, string> = {
   "Topic or product": "Тема или продукт",
   "e.g. How to choose running shoes": "например, Как выбрать беговые кроссовки",
   "Key points to cover": "Главные мысли",
-  "Optional — leave empty to let the AI choose.": "Необязательно — оставьте пустым, и ИИ выберет сам.",
+  "Optional — leave empty to let the AI choose.":
+    "Необязательно — оставьте пустым, и ИИ выберет сам.",
   Length: "Объём",
   "Email type": "Тип письма",
   "What is this email about?": "О чём письмо?",
   "Offer or key message": "Предложение или главная мысль",
-  "Optional — e.g. a discount, launch, or update worth highlighting.": "Необязательно — например, скидка, запуск или важная новость.",
+  "Optional — e.g. a discount, launch, or update worth highlighting.":
+    "Необязательно — например, скидка, запуск или важная новость.",
   "What is this post about?": "О чём пост?",
   "Who you're writing to": "Кому пишем",
-  "e.g. Operations Director at a logistics company": "например, операционный директор логистической компании",
-  "e.g. Head of Marketing at a mid-size retailer": "например, директор по маркетингу в сети магазинов",
+  "e.g. Operations Director at a logistics company":
+    "например, операционный директор логистической компании",
+  "e.g. Head of Marketing at a mid-size retailer":
+    "например, директор по маркетингу в сети магазинов",
   "Your product or service": "Ваш продукт или услуга",
   "What you offer": "Что вы предлагаете",
   "Previous interaction": "Прошлый контакт",
-  "Optional — e.g. met at a trade show, had a demo last week.": "Необязательно — например, встретились на выставке, была демонстрация на прошлой неделе.",
+  "Optional — e.g. met at a trade show, had a demo last week.":
+    "Необязательно — например, встретились на выставке, была демонстрация на прошлой неделе.",
   "Problem you solve for them": "Какую проблему вы решаете",
   "Optional.": "Необязательно.",
   "Blog post topic": "Тема поста",
   "Points to cover": "Главные мысли",
   "Main keywords": "Ключевые слова",
-  "Optional — comma-separated search terms you're bidding on.": "Необязательно — поисковые запросы через запятую.",
+  "Optional — comma-separated search terms you're bidding on.":
+    "Необязательно — поисковые запросы через запятую.",
   "Product or service": "Продукт или услуга",
   "Key benefits or features": "Главные преимущества",
   Topic: "Тема",
   "Key insight or story": "Главная мысль или история",
-  "Optional — a lesson, result or anecdote to anchor the post.": "Необязательно — урок, результат или случай, на котором строится пост.",
+  "Optional — a lesson, result or anecdote to anchor the post.":
+    "Необязательно — урок, результат или случай, на котором строится пост.",
   "Main topic of this issue": "Главная тема выпуска",
   "Highlights or news to include": "Новости и главное",
   "Optional — one per line works best.": "Необязательно — лучше по одному в строке.",
@@ -186,7 +197,10 @@ const DICTIONARIES: Record<Locale, Record<string, string> | null> = { en: null, 
 /** One piece of catalog text in `locale`, or as it is when there's no entry. */
 export function localizeText(text: string, locale: Locale): string;
 export function localizeText(text: string | null, locale: Locale): string | null;
-export function localizeText(text: string | undefined, locale: Locale): string | undefined;
+export function localizeText(
+  text: string | undefined,
+  locale: Locale,
+): string | undefined;
 export function localizeText(text: string | null | undefined, locale: Locale) {
   if (!text) return text;
   return DICTIONARIES[locale]?.[text] ?? text;
@@ -201,7 +215,10 @@ export function localizeTool(tool: ToolListItem, locale: Locale): ToolListItem {
   };
 }
 
-export function localizeTemplate(template: TemplateListItem, locale: Locale): TemplateListItem {
+export function localizeTemplate(
+  template: TemplateListItem,
+  locale: Locale,
+): TemplateListItem {
   return {
     ...template,
     name: localizeText(template.name, locale),
@@ -211,7 +228,10 @@ export function localizeTemplate(template: TemplateListItem, locale: Locale): Te
 }
 
 /** A form's labels, hints, placeholders and choice labels — never its names or values. */
-export function localizeSchema(schema: ToolConfigSchema, locale: Locale): ToolConfigSchema {
+export function localizeSchema(
+  schema: ToolConfigSchema,
+  locale: Locale,
+): ToolConfigSchema {
   if (!DICTIONARIES[locale]) return schema;
   return {
     ...schema,
@@ -223,7 +243,13 @@ export function localizeSchema(schema: ToolConfigSchema, locale: Locale): ToolCo
         placeholder: localizeText(field.placeholder, locale),
       };
       return "options" in field
-        ? { ...localized, options: field.options.map((option) => ({ ...option, label: localizeText(option.label, locale) })) }
+        ? {
+            ...localized,
+            options: field.options.map((option) => ({
+              ...option,
+              label: localizeText(option.label, locale),
+            })),
+          }
         : localized;
     }) as ToolConfigSchema["fields"],
   };

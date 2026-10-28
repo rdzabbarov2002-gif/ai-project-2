@@ -45,7 +45,8 @@ export async function saveGeneration(
 ): Promise<SaveGenerationOutcome> {
   const row = {
     user_id: params.identity.type === "user" ? params.identity.userId : null,
-    guest_session_id: params.identity.type === "guest" ? params.identity.guestSessionId : null,
+    guest_session_id:
+      params.identity.type === "guest" ? params.identity.guestSessionId : null,
     company_profile_id: params.companyProfileId,
     tool_id: params.tool.id,
     template_id: params.template?.id ?? null,
@@ -58,7 +59,11 @@ export async function saveGeneration(
     duration_ms: params.durationMs,
   };
 
-  const { data, error } = await params.adminClient.from("generations").insert(row).select("id").single();
+  const { data, error } = await params.adminClient
+    .from("generations")
+    .insert(row)
+    .select("id")
+    .single();
 
   if (error || !data) {
     logger.error("generations: save failed", { error: error ?? "no row returned" });

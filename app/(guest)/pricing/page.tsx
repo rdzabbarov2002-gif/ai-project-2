@@ -35,16 +35,24 @@ export default async function PricingPage() {
       : {
           kind: "checkout",
           trialDays: paid?.any ? null : TRIAL_DAYS,
-          paying: ["active", "trialing", "past_due", "unpaid"].includes(paid?.latest?.status ?? ""),
+          paying: ["active", "trialing", "past_due", "unpaid"].includes(
+            paid?.latest?.status ?? "",
+          ),
         };
 
   return (
     <main className="mx-auto max-w-5xl space-y-8 px-4 py-12 sm:px-6">
       <header className="space-y-2">
-        <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-950">{t.pricing.title}</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-950">
+          {t.pricing.title}
+        </h1>
         <p className="text-ink-600">{t.pricing.lead(TRIAL_DAYS)}</p>
       </header>
-      <PlanComparison plans={plans} currentSlug={current?.planSlug ?? null} actions={actions} />
+      <PlanComparison
+        plans={plans}
+        currentSlug={current?.planSlug ?? null}
+        actions={actions}
+      />
       <p className="text-sm text-ink-600">{t.pricing.footnote}</p>
     </main>
   );

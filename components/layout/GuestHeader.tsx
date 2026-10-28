@@ -26,13 +26,28 @@ export async function GuestHeader() {
         <div className="flex items-center gap-4">
           <Logo />
           <nav aria-label={t.nav.main} className="hidden items-center gap-1 md:flex">
-            <NavLink href="/tools" className={linkClasses} activeClassName={active} inactiveClassName={inactive}>
+            <NavLink
+              href="/tools"
+              className={linkClasses}
+              activeClassName={active}
+              inactiveClassName={inactive}
+            >
               {t.nav.tools}
             </NavLink>
-            <NavLink href="/templates" className={linkClasses} activeClassName={active} inactiveClassName={inactive}>
+            <NavLink
+              href="/templates"
+              className={linkClasses}
+              activeClassName={active}
+              inactiveClassName={inactive}
+            >
               {t.nav.templates}
             </NavLink>
-            <NavLink href="/pricing" className={linkClasses} activeClassName={active} inactiveClassName={inactive}>
+            <NavLink
+              href="/pricing"
+              className={linkClasses}
+              activeClassName={active}
+              inactiveClassName={inactive}
+            >
               {t.nav.pricing}
             </NavLink>
           </nav>
@@ -40,13 +55,25 @@ export async function GuestHeader() {
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
           <LanguageSwitcher />
-          <Link href="/login" className={buttonClasses("primary", "rounded-full px-4 py-1.5 md:hidden")}>
+          <Link
+            href="/login"
+            className={buttonClasses("primary", "rounded-full px-4 py-1.5 md:hidden")}
+          >
             {t.nav.signIn}
           </Link>
-          <Link href="/login" className="hidden px-2 py-1 text-sm text-ink-600 hover:text-ink-950 md:inline">
+          <Link
+            href="/login"
+            className="hidden px-2 py-1 text-sm text-ink-600 hover:text-ink-950 md:inline"
+          >
             {t.nav.signIn}
           </Link>
-          <Link href="/register" className={buttonClasses("primary", "hidden rounded-full px-4 py-1.5 md:inline-flex")}>
+          <Link
+            href="/register"
+            className={buttonClasses(
+              "primary",
+              "hidden rounded-full px-4 py-1.5 md:inline-flex",
+            )}
+          >
             {t.nav.signUpToSave}
           </Link>
         </div>

@@ -61,11 +61,7 @@ const manropeCyrillic = localFont({
  */
 const themeScript = `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark")}catch(e){}})();`;
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // This request's CSP nonce (middleware.ts): without it the browser
   // won't run the two inline scripts below.
   const nonce = (await headers()).get("x-nonce") ?? undefined;
@@ -75,7 +71,11 @@ export default async function RootLayout({
     // suppressHydrationWarning: the theme script above may add `dark` to
     // this element before React hydrates — an expected, one-attribute
     // difference, not a mismatch worth warning about.
-    <html lang={locale} className={`${manrope.variable} ${manropeCyrillic.variable}`} suppressHydrationWarning>
+    <html
+      lang={locale}
+      className={`${manrope.variable} ${manropeCyrillic.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

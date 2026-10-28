@@ -16,8 +16,21 @@ const freeRow = {
 describe("resolvePlanLimits", () => {
   it("reads a user's plan and normalizes its limits", async () => {
     const { client } = fakeSupabase({
-      subscriptions: () => ({ data: [{ plans: { slug: "free" } }, { plans: { slug: "pro" } }] }),
-      plans: () => ({ data: { ...freeRow, slug: "pro", plan_limits: { ...freeRow.plan_limits, max_generations_per_month: 500, allowed_tool_ids: "all", premium_templates: true } } }),
+      subscriptions: () => ({
+        data: [{ plans: { slug: "free" } }, { plans: { slug: "pro" } }],
+      }),
+      plans: () => ({
+        data: {
+          ...freeRow,
+          slug: "pro",
+          plan_limits: {
+            ...freeRow.plan_limits,
+            max_generations_per_month: 500,
+            allowed_tool_ids: "all",
+            premium_templates: true,
+          },
+        },
+      }),
     });
     expect(await resolvePlanLimits(client, { type: "user", userId: "u" })).toEqual({
       planSlug: "pro",
@@ -31,7 +44,9 @@ describe("resolvePlanLimits", () => {
 
   it("takes the plan from the subscriptions in force, never from anything else", async () => {
     const { client, queries } = fakeSupabase({
-      subscriptions: () => ({ data: [{ plans: { slug: "pro" } }, { plans: { slug: "free" } }] }),
+      subscriptions: () => ({
+        data: [{ plans: { slug: "pro" } }, { plans: { slug: "free" } }],
+      }),
       plans: () => ({ data: { ...freeRow, slug: "pro" } }),
     });
     await resolvePlanLimits(client, { type: "user", userId: "u" });
@@ -39,7 +54,11 @@ describe("resolvePlanLimits", () => {
     expect(subs.calls).toContainEqual(["eq", "user_id", "u"]);
     // past_due, unpaid, canceled… don't count: they fall back to Free.
     expect(subs.calls).toContainEqual(["in", "status", ["active", "trialing"]]);
-    expect(queries.find((q) => q.table === "plans")!.calls).toContainEqual(["eq", "slug", "pro"]);
+    expect(queries.find((q) => q.table === "plans")!.calls).toContainEqual([
+      "eq",
+      "slug",
+      "pro",
+    ]);
   });
 
   it("is Free when no paid subscription is in force", async () => {
@@ -48,7 +67,11 @@ describe("resolvePlanLimits", () => {
       plans: () => ({ data: freeRow }),
     });
     await resolvePlanLimits(client, { type: "user", userId: "u" });
-    expect(queries.find((q) => q.table === "plans")!.calls).toContainEqual(["eq", "slug", "free"]);
+    expect(queries.find((q) => q.table === "plans")!.calls).toContainEqual([
+      "eq",
+      "slug",
+      "free",
+    ]);
   });
 
   it("caps a guest at the guest allowance (architecture doc §8)", async () => {
@@ -59,7 +82,10 @@ describe("resolvePlanLimits", () => {
   });
 
   it("fails closed on a read error or an empty plan_limits embed", async () => {
-    for (const result of [{ error: { message: "down" } }, { data: { slug: "free", plan_limits: [] } }]) {
+    for (const result of [
+      { error: { message: "down" } },
+      { data: { slug: "free", plan_limits: [] } },
+    ]) {
       const { client } = fakeSupabase({ plans: () => result });
       const limits = await resolvePlanLimits(client, { type: "guest" });
       expect(limits.maxGenerationsPerMonth).toBe(0);

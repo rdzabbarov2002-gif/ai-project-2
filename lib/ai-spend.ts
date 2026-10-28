@@ -24,11 +24,18 @@ export interface AiSpend {
 }
 
 export function costUsd(inputTokens: number, outputTokens: number) {
-  return (inputTokens * AI_PRICE_PER_MILLION.input + outputTokens * AI_PRICE_PER_MILLION.output) / 1_000_000;
+  return (
+    (inputTokens * AI_PRICE_PER_MILLION.input +
+      outputTokens * AI_PRICE_PER_MILLION.output) /
+    1_000_000
+  );
 }
 
 /** Tokens and cost of every generation (guests' too) since `since`. */
-export async function aiSpendSince(admin: SupabaseClient<Database>, since: Date): Promise<AiSpend> {
+export async function aiSpendSince(
+  admin: SupabaseClient<Database>,
+  since: Date,
+): Promise<AiSpend> {
   const spend = { generations: 0, inputTokens: 0, outputTokens: 0 };
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await admin
@@ -45,5 +52,8 @@ export async function aiSpendSince(admin: SupabaseClient<Database>, since: Date)
     }
     if (!data || data.length < PAGE) break;
   }
-  return { ...spend, costUsd: Math.round(costUsd(spend.inputTokens, spend.outputTokens) * 100) / 100 };
+  return {
+    ...spend,
+    costUsd: Math.round(costUsd(spend.inputTokens, spend.outputTokens) * 100) / 100,
+  };
 }

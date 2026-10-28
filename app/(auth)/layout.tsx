@@ -12,11 +12,7 @@ import { AppShell } from "@/components/layout/AppShell";
  * Stage 14: also where the signed-in navigation frame (AppShell — sidebar
  * on desktop, bottom tabs on phones) wraps every protected page.
  */
-export default async function AuthedLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AuthedLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   return <AppShell user={user}>{children}</AppShell>;
 }

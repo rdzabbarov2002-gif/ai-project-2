@@ -62,31 +62,55 @@ function toErrorResponse(error: unknown, locale: Locale): NextResponse {
       kind: error.kind,
     });
     return NextResponse.json(
-      { error: { code: "ai_provider_error", message: translated[`ai:${publicKind(error.kind)}`] ?? message } },
+      {
+        error: {
+          code: "ai_provider_error",
+          message: translated[`ai:${publicKind(error.kind)}`] ?? message,
+        },
+      },
       { status },
     );
   }
 
   logger.error("api/generate: unhandled error", { error });
   return NextResponse.json(
-    { error: { code: "internal_error", message: translated.internal_error ?? "Something went wrong. Please try again." } },
+    {
+      error: {
+        code: "internal_error",
+        message: translated.internal_error ?? "Something went wrong. Please try again.",
+      },
+    },
     { status: 500 },
   );
 }
 
 /** The provider failures a visitor gets a specific message for; the rest are "other". */
 function publicKind(kind: AIProviderErrorKind): string {
-  return ["rate_limited", "overloaded", "network", "timeout"].includes(kind) ? kind : "other";
+  return ["rate_limited", "overloaded", "network", "timeout"].includes(kind)
+    ? kind
+    : "other";
 }
 
-function mapProviderError(kind: AIProviderErrorKind): { status: number; message: string } {
+function mapProviderError(kind: AIProviderErrorKind): {
+  status: number;
+  message: string;
+} {
   switch (kind) {
     case "rate_limited":
-      return { status: 503, message: "The AI provider is busy right now. Please try again shortly." };
+      return {
+        status: 503,
+        message: "The AI provider is busy right now. Please try again shortly.",
+      };
     case "overloaded":
-      return { status: 503, message: "The AI provider is temporarily unavailable. Please try again shortly." };
+      return {
+        status: 503,
+        message: "The AI provider is temporarily unavailable. Please try again shortly.",
+      };
     case "network":
-      return { status: 503, message: "Couldn't reach the AI provider. Please try again shortly." };
+      return {
+        status: 503,
+        message: "Couldn't reach the AI provider. Please try again shortly.",
+      };
     case "timeout":
       return { status: 504, message: "The request took too long. Please try again." };
     // configuration / authentication / invalid_request / not_implemented /
@@ -94,6 +118,9 @@ function mapProviderError(kind: AIProviderErrorKind): { status: number; message:
     // same generic message and status for all of them so nothing about
     // our setup is distinguishable from the outside.
     default:
-      return { status: 500, message: "Something went wrong generating your content. Please try again." };
+      return {
+        status: 500,
+        message: "Something went wrong generating your content. Please try again.",
+      };
   }
 }

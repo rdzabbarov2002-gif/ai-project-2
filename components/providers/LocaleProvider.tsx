@@ -12,7 +12,13 @@ const LocaleContext = createContext<Locale>(DEFAULT_LOCALE);
  * dictionaries themselves are imported here, because their functions
  * ("3 generations left") can't cross from server to client as props.
  */
-export function LocaleProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
+export function LocaleProvider({
+  locale,
+  children,
+}: {
+  locale: Locale;
+  children: ReactNode;
+}) {
   return <LocaleContext.Provider value={locale}>{children}</LocaleContext.Provider>;
 }
 

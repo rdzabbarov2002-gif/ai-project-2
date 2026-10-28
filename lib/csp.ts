@@ -33,7 +33,9 @@ export function cspMode(env: Record<string, string | undefined> = process.env): 
 }
 
 export function cspHeaderName(mode: CspMode) {
-  return mode === "enforce" ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only";
+  return mode === "enforce"
+    ? "Content-Security-Policy"
+    : "Content-Security-Policy-Report-Only";
 }
 
 /** A fresh, unguessable nonce for one response. */
@@ -63,7 +65,13 @@ export function buildCsp({ nonce, dev = false, supabaseUrl, sentryDsn }: CspOpti
   const connect = ["'self'", originOf(supabaseUrl), originOf(sentryDsn)].filter(Boolean);
   const directives: [string, ...string[]][] = [
     ["default-src", "'self'"],
-    ["script-src", "'self'", `'nonce-${nonce}'`, "'strict-dynamic'", ...(dev ? ["'unsafe-eval'"] : [])],
+    [
+      "script-src",
+      "'self'",
+      `'nonce-${nonce}'`,
+      "'strict-dynamic'",
+      ...(dev ? ["'unsafe-eval'"] : []),
+    ],
     ["style-src", "'self'", "'unsafe-inline'"],
     ["img-src", "'self'", "data:", "blob:"],
     ["font-src", "'self'"],
@@ -72,7 +80,12 @@ export function buildCsp({ nonce, dev = false, supabaseUrl, sentryDsn }: CspOpti
     ["manifest-src", "'self'"],
     ["object-src", "'none'"],
     ["base-uri", "'none'"],
-    ["form-action", "'self'", "https://checkout.stripe.com", "https://billing.stripe.com"],
+    [
+      "form-action",
+      "'self'",
+      "https://checkout.stripe.com",
+      "https://billing.stripe.com",
+    ],
     ["frame-ancestors", "'none'"],
     ["report-uri", CSP_REPORT_PATH],
     ["report-to", "csp"],

@@ -34,10 +34,14 @@ export async function GET(request: Request) {
   const fixed: string[] = [];
   try {
     const seen = new Set<string>();
-    for await (const subscription of stripe().subscriptions.list({ status: "all", limit: 100 })) {
+    for await (const subscription of stripe().subscriptions.list({
+      status: "all",
+      limit: 100,
+    })) {
       checked += 1;
       seen.add(subscription.id);
-      if ((await syncSubscription(admin, subscription)) === "updated") fixed.push(subscription.id);
+      if ((await syncSubscription(admin, subscription)) === "updated")
+        fixed.push(subscription.id);
     }
 
     const { data: stored, error } = await admin
@@ -52,7 +56,8 @@ export async function GET(request: Request) {
           .from("subscriptions")
           .update({ status: "canceled" })
           .eq("provider_ref", ref);
-        if (closeError) throw new Error(`Subscription ${ref} not closed: ${closeError.message}`);
+        if (closeError)
+          throw new Error(`Subscription ${ref} not closed: ${closeError.message}`);
         fixed.push(ref);
       }
     }
@@ -63,7 +68,9 @@ export async function GET(request: Request) {
 
   await admin.from("billing_reconciliations").insert({ checked, fixed: fixed.length });
   if (fixed.length > 0) {
-    logger.error("billing: reconciliation corrected subscriptions", { fixed: fixed.slice(0, 20) });
+    logger.error("billing: reconciliation corrected subscriptions", {
+      fixed: fixed.slice(0, 20),
+    });
   } else {
     logger.info("billing: reconciliation found no differences", { checked });
   }

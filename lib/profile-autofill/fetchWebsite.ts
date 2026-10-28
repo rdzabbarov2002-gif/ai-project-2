@@ -45,7 +45,9 @@ const MAX_TEXT_CHARS = 6_000;
 export function normalizeWebsiteUrl(input: string): URL {
   const trimmed = input.trim();
   if (!trimmed) throw new WebsiteFetchError("Enter your website address.");
-  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
 
   let url: URL;
   try {
@@ -83,7 +85,9 @@ export async function fetchWebsiteSummary(input: string): Promise<WebsiteSummary
   throw new WebsiteFetchError("That website redirects too many times.");
 }
 
-async function resolvePublicAddress(hostname: string): Promise<{ address: string; family: 4 | 6 }> {
+async function resolvePublicAddress(
+  hostname: string,
+): Promise<{ address: string; family: 4 | 6 }> {
   const host = hostname.replace(/^\[|\]$/g, "");
   const candidates = isIP(host)
     ? [{ address: host, family: isIP(host) as 4 | 6 }]
@@ -91,7 +95,8 @@ async function resolvePublicAddress(hostname: string): Promise<{ address: string
         throw new WebsiteFetchError("We couldn't find that website.");
       });
 
-  if (candidates.length === 0) throw new WebsiteFetchError("We couldn't find that website.");
+  if (candidates.length === 0)
+    throw new WebsiteFetchError("We couldn't find that website.");
   if (candidates.some((c) => !isPublicAddress(c.address))) {
     throw new WebsiteFetchError("That address isn't a public website.");
   }
@@ -145,7 +150,10 @@ function request(
 ): Promise<{ redirect: string | null; body: string }> {
   const client = url.protocol === "https:" ? https : http;
   const remaining = deadline - Date.now();
-  if (remaining <= 0) return Promise.reject(new WebsiteFetchError("That website took too long to respond."));
+  if (remaining <= 0)
+    return Promise.reject(
+      new WebsiteFetchError("That website took too long to respond."),
+    );
 
   return new Promise((resolve, reject) => {
     const req = client.request(
@@ -177,7 +185,11 @@ function request(
         }
         if (status < 200 || status >= 300) {
           res.resume();
-          reject(new WebsiteFetchError(`That website responded with an error (HTTP ${status}).`));
+          reject(
+            new WebsiteFetchError(
+              `That website responded with an error (HTTP ${status}).`,
+            ),
+          );
           return;
         }
         const type = String(res.headers["content-type"] ?? "");
@@ -199,8 +211,12 @@ function request(
           }
           chunks.push(chunk);
         });
-        res.on("end", () => resolve({ redirect: null, body: Buffer.concat(chunks).toString("utf8") }));
-        res.on("error", () => reject(new WebsiteFetchError("We couldn't read that website.")));
+        res.on("end", () =>
+          resolve({ redirect: null, body: Buffer.concat(chunks).toString("utf8") }),
+        );
+        res.on("error", () =>
+          reject(new WebsiteFetchError("We couldn't read that website.")),
+        );
       },
     );
     req.on("timeout", () => {
@@ -233,10 +249,9 @@ export function summarizeHtml(url: string, html: string): WebsiteSummary {
   };
 
   const title = between(html, /<title\b[^<>]*>/gi, /<\/title>/gi);
-  const text = clean(decodeEntities(withoutHiddenParts(html).replace(/<[^<>]*>/g, " "))).slice(
-    0,
-    MAX_TEXT_CHARS,
-  );
+  const text = clean(
+    decodeEntities(withoutHiddenParts(html).replace(/<[^<>]*>/g, " ")),
+  ).slice(0, MAX_TEXT_CHARS);
 
   return {
     url,
@@ -278,14 +293,23 @@ function clean(value: string): string {
 }
 
 function decodeEntities(value: string): string {
-  const named: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+  const named: Record<string, string> = {
+    amp: "&",
+    lt: "<",
+    gt: ">",
+    quot: '"',
+    apos: "'",
+    nbsp: " ",
+  };
   return value.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity: string) => {
     if (entity[0] === "#") {
       const code =
         entity[1]?.toLowerCase() === "x"
           ? Number.parseInt(entity.slice(2), 16)
           : Number.parseInt(entity.slice(1), 10);
-      return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+      return Number.isFinite(code) && code > 0 && code <= 0x10ffff
+        ? String.fromCodePoint(code)
+        : match;
     }
     return named[entity.toLowerCase()] ?? match;
   });

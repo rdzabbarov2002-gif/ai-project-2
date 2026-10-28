@@ -40,7 +40,11 @@ describe("logger", () => {
     expect(new Date(entry.time).toString()).not.toBe("Invalid Date");
 
     logger.warn("slow query", { ms: 900 });
-    expect(lastLine(warnSpy)).toMatchObject({ level: "warn", event: "slow query", ms: 900 });
+    expect(lastLine(warnSpy)).toMatchObject({
+      level: "warn",
+      event: "slow query",
+      ms: 900,
+    });
   });
 
   it("does not report info or warn to Sentry", () => {
@@ -64,7 +68,10 @@ describe("logger", () => {
     expect(entry.error.stack).toContain("boom");
 
     expect(sentry.captureException).toHaveBeenCalledWith(error);
-    expect(sentry.scope.setTag).toHaveBeenCalledWith("event", "api/generate: unhandled error");
+    expect(sentry.scope.setTag).toHaveBeenCalledWith(
+      "event",
+      "api/generate: unhandled error",
+    );
     expect(sentry.scope.setExtras).toHaveBeenCalledWith({ route: "/api/generate" });
   });
 
@@ -89,6 +96,9 @@ describe("logger", () => {
   it("reports an error entry without an error value by its event name", () => {
     logger.error("tool-config: invalid config_schema");
     expect(lastLine(errorSpy)).not.toHaveProperty("error");
-    expect(sentry.captureMessage).toHaveBeenCalledWith("tool-config: invalid config_schema", "error");
+    expect(sentry.captureMessage).toHaveBeenCalledWith(
+      "tool-config: invalid config_schema",
+      "error",
+    );
   });
 });

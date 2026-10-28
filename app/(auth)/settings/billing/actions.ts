@@ -6,7 +6,13 @@ import type { User } from "@supabase/supabase-js";
 import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { billingEnabled, CHECKOUT_PRICE, stripe, TRIAL_DAYS, type PaidPlanSlug } from "@/lib/billing/stripe";
+import {
+  billingEnabled,
+  CHECKOUT_PRICE,
+  stripe,
+  TRIAL_DAYS,
+  type PaidPlanSlug,
+} from "@/lib/billing/stripe";
 import { getSiteUrl } from "@/lib/site-url";
 import { logger } from "@/lib/logger";
 import { track } from "@/lib/analytics";
@@ -83,13 +89,19 @@ export async function startCheckout(formData: FormData): Promise<void> {
     .select("status")
     .eq("user_id", user.id)
     .not("provider_ref", "is", null);
-  if (subscriptions?.some((row) => ["active", "trialing", "past_due", "unpaid"].includes(row.status))) {
+  if (
+    subscriptions?.some((row) =>
+      ["active", "trialing", "past_due", "unpaid"].includes(row.status),
+    )
+  ) {
     return openBillingPortal();
   }
 
   let url: string | null;
   try {
-    const [price] = (await stripe().prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 })).data;
+    const [price] = (
+      await stripe().prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 })
+    ).data;
     if (!price) throw new Error(`No active Stripe price with lookup key ${lookupKey}`);
     const origin = await getSiteUrl();
     const session = await stripe().checkout.sessions.create({
@@ -163,6 +175,7 @@ async function customerFor(user: User): Promise<string> {
   const { error } = await admin
     .from("billing_customers")
     .insert({ user_id: user.id, stripe_customer_id: customer.id });
-  if (error && error.code !== "23505") throw new Error(`Customer link not saved: ${error.message}`);
+  if (error && error.code !== "23505")
+    throw new Error(`Customer link not saved: ${error.message}`);
   return customer.id;
 }

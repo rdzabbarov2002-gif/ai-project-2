@@ -31,7 +31,10 @@ export async function createUser(email: string, password: string): Promise<strin
 }
 
 /** Adds a row as the service role — past the client privileges and RLS. */
-export async function adminInsert(table: string, row: Record<string, unknown>): Promise<void> {
+export async function adminInsert(
+  table: string,
+  row: Record<string, unknown>,
+): Promise<void> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
     method: "POST",
     headers: adminHeaders,
@@ -41,7 +44,11 @@ export async function adminInsert(table: string, row: Record<string, unknown>): 
 }
 
 /** Changes rows as the service role (PostgREST filter in `query`). */
-export async function adminUpdate(table: string, query: string, values: Record<string, unknown>): Promise<void> {
+export async function adminUpdate(
+  table: string,
+  query: string,
+  values: Record<string, unknown>,
+): Promise<void> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
     method: "PATCH",
     headers: adminHeaders,
@@ -52,16 +59,19 @@ export async function adminUpdate(table: string, query: string, values: Record<s
 
 /** Rows of a table as the service role sees them (PostgREST query string). */
 export async function adminSelect<T>(table: string, query: string): Promise<T[]> {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers: adminHeaders });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+    headers: adminHeaders,
+  });
   expect(res.ok, `reading ${table}: ${res.status}`).toBe(true);
   return (await res.json()) as T[];
 }
 
-
 /** The Auth link (confirmation or reset) from the newest email to `email`. */
 export async function emailLink(email: string): Promise<string> {
   for (let attempt = 0; attempt < 30; attempt++) {
-    const search = await fetch(`${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`);
+    const search = await fetch(
+      `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`,
+    );
     const { messages } = (await search.json()) as { messages?: { ID: string }[] };
     if (messages?.length) {
       const message = await fetch(`${MAILPIT_URL}/api/v1/message/${messages[0]!.ID}`);

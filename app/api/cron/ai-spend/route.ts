@@ -24,9 +24,14 @@ export async function GET(request: Request) {
   }
 
   const override = new URL(request.url).searchParams.get("budget");
-  const budgetUsd = Number(override ?? process.env.AI_DAILY_BUDGET_USD ?? DEFAULT_DAILY_BUDGET_USD);
+  const budgetUsd = Number(
+    override ?? process.env.AI_DAILY_BUDGET_USD ?? DEFAULT_DAILY_BUDGET_USD,
+  );
   if (!Number.isFinite(budgetUsd) || budgetUsd < 0) {
-    return NextResponse.json({ error: "budget must be a number of dollars." }, { status: 400 });
+    return NextResponse.json(
+      { error: "budget must be a number of dollars." },
+      { status: 400 },
+    );
   }
 
   let spend;

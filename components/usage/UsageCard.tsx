@@ -39,7 +39,9 @@ export async function UsageCard({ planSlug, used, limit }: UsageCardProps) {
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="font-medium text-ink-950">{t.usage.plan(t.plans.names[planSlug] ?? planSlug)}</h2>
+        <h2 className="font-medium text-ink-950">
+          {t.usage.plan(t.plans.names[planSlug] ?? planSlug)}
+        </h2>
       </div>
 
       <dl className="grid grid-cols-3 gap-2 text-sm">
@@ -49,11 +51,15 @@ export async function UsageCard({ planSlug, used, limit }: UsageCardProps) {
         </div>
         <div>
           <dt className="text-ink-600">{t.usage.limit}</dt>
-          <dd className="font-medium text-ink-950">{isUnlimited ? t.usage.unlimited : limit}</dd>
+          <dd className="font-medium text-ink-950">
+            {isUnlimited ? t.usage.unlimited : limit}
+          </dd>
         </div>
         <div>
           <dt className="text-ink-600">{t.usage.remaining}</dt>
-          <dd className="font-medium text-ink-950">{isUnlimited ? t.usage.unlimited : remaining}</dd>
+          <dd className="font-medium text-ink-950">
+            {isUnlimited ? t.usage.unlimited : remaining}
+          </dd>
         </div>
       </dl>
 

@@ -8,7 +8,13 @@ import { getMessages } from "@/lib/i18n/server";
  * HistoryItem rather than inside it: HistoryItem is a link, and a button
  * nested in a link is invalid, unpredictable markup.
  */
-export async function FavoriteButton({ id, isFavorite }: { id: string; isFavorite: boolean }) {
+export async function FavoriteButton({
+  id,
+  isFavorite,
+}: {
+  id: string;
+  isFavorite: boolean;
+}) {
   const t = await getMessages();
   const label = isFavorite ? t.history.removeFavorite : t.history.addFavorite;
   return (

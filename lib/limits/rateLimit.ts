@@ -73,7 +73,10 @@ function network(ip: string): string {
   const [head = "", tail] = ip.toLowerCase().split("::");
   const headParts = head ? head.split(":") : [];
   const tailParts = tail ? tail.split(":") : [];
-  const zeros = tail === undefined ? [] : Array(Math.max(8 - headParts.length - tailParts.length, 0)).fill("0");
+  const zeros =
+    tail === undefined
+      ? []
+      : Array(Math.max(8 - headParts.length - tailParts.length, 0)).fill("0");
   const hextets = [...headParts, ...zeros, ...tailParts].slice(0, 4);
   return `${hextets.map((part) => part.replace(/^0+(?=.)/, "")).join(":")}::/64`;
 }

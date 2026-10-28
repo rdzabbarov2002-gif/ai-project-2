@@ -5,7 +5,12 @@ import { FieldWrapper } from "./FieldWrapper";
 import type { FieldComponentProps } from "./types";
 import type { TextFieldConfig } from "@/lib/tool-config/schema";
 
-export function TextField({ field, value, onChange, error }: FieldComponentProps<TextFieldConfig>) {
+export function TextField({
+  field,
+  value,
+  onChange,
+  error,
+}: FieldComponentProps<TextFieldConfig>) {
   return (
     <FieldWrapper
       label={field.label}

@@ -15,7 +15,9 @@ import { ToolConfigSchemaSchema } from "@/lib/tool-config/schema";
 
 const MIGRATIONS = join(__dirname, "..", "supabase", "migrations");
 const read = (file: string) => readFileSync(join(MIGRATIONS, file), "utf8");
-const migrationFiles = readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).sort();
+const migrationFiles = readdirSync(MIGRATIONS)
+  .filter((f) => f.endsWith(".sql"))
+  .sort();
 const allSql = migrationFiles.map(read).join("\n");
 
 interface SeededTemplate {
@@ -87,10 +89,22 @@ describe("seeded tools and templates", () => {
   it("covers all 16 Templates Library categories from the architecture doc (§15)", () => {
     const categories = new Set(templates.map((t) => t.category));
     for (const category of [
-      "Facebook Ads", "Google Ads", "Instagram Ads", "LinkedIn", "X",
-      "Product Launch", "SaaS", "Ecommerce", "B2B", "Cold Email",
-      "Newsletter", "Landing Page", "SEO Article", "Blog Post",
-      "YouTube Script", "Product Description",
+      "Facebook Ads",
+      "Google Ads",
+      "Instagram Ads",
+      "LinkedIn",
+      "X",
+      "Product Launch",
+      "SaaS",
+      "Ecommerce",
+      "B2B",
+      "Cold Email",
+      "Newsletter",
+      "Landing Page",
+      "SEO Article",
+      "Blog Post",
+      "YouTube Script",
+      "Product Description",
     ]) {
       expect(categories).toContain(category);
     }
@@ -119,8 +133,14 @@ describe("seeded tools and templates", () => {
       const placeholders = new Set(
         [...template.prompt.matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((m) => m[1]!),
       );
-      expect([...placeholders].filter((p) => !fields.has(p)), "orphan placeholders").toEqual([]);
-      expect([...fields].filter((f) => !placeholders.has(f)), "unused fields").toEqual([]);
+      expect(
+        [...placeholders].filter((p) => !fields.has(p)),
+        "orphan placeholders",
+      ).toEqual([]);
+      expect(
+        [...fields].filter((f) => !placeholders.has(f)),
+        "unused fields",
+      ).toEqual([]);
     });
 
     it("lists exactly its form's required fields in required_fields", () => {
@@ -148,11 +168,35 @@ describe("combined SQL files", () => {
 
   it("schema.sql is exactly the structural migrations", () => {
     expect(body("schema.sql")).toBe(
-      combined(["0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0011", "0012", "0016", "0018", "0019", "0020", "0021", "0022", "0023", "0024", "0026", "0027"]),
+      combined([
+        "0001",
+        "0002",
+        "0003",
+        "0004",
+        "0005",
+        "0006",
+        "0007",
+        "0008",
+        "0009",
+        "0011",
+        "0012",
+        "0016",
+        "0018",
+        "0019",
+        "0020",
+        "0021",
+        "0022",
+        "0023",
+        "0024",
+        "0026",
+        "0027",
+      ]),
     );
   });
 
   it("seed.sql is exactly the data migrations", () => {
-    expect(body("seed.sql")).toBe(combined(["0010", "0013", "0014", "0015", "0017", "0025"]));
+    expect(body("seed.sql")).toBe(
+      combined(["0010", "0013", "0014", "0015", "0017", "0025"]),
+    );
   });
 });

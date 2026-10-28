@@ -5,7 +5,12 @@ import { FieldWrapper } from "./FieldWrapper";
 import type { FieldComponentProps } from "./types";
 import type { EmailFieldConfig } from "@/lib/tool-config/schema";
 
-export function EmailField({ field, value, onChange, error }: FieldComponentProps<EmailFieldConfig>) {
+export function EmailField({
+  field,
+  value,
+  onChange,
+  error,
+}: FieldComponentProps<EmailFieldConfig>) {
   return (
     <FieldWrapper
       label={field.label}

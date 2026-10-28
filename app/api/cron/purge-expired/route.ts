@@ -41,7 +41,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Purge failed." }, { status: 500 });
   }
 
-  const deleted = { guestSessions: sessions.count ?? 0, rateLimitEvents: events.count ?? 0 };
+  const deleted = {
+    guestSessions: sessions.count ?? 0,
+    rateLimitEvents: events.count ?? 0,
+  };
   logger.info("purge: expired data deleted", deleted);
   return NextResponse.json(deleted);
 }

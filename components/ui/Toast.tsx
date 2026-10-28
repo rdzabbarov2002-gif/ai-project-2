@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 type ToastTone = "success" | "error";
 
@@ -19,7 +27,9 @@ const DISMISS_AFTER_MS = 3000;
  * AppProviders (the place its comment reserved for "theme, toasts, etc.").
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [current, setCurrent] = useState<{ message: string; tone: ToastTone } | null>(null);
+  const [current, setCurrent] = useState<{ message: string; tone: ToastTone } | null>(
+    null,
+  );
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const toast = useCallback((message: string, tone: ToastTone = "success") => {

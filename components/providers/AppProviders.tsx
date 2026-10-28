@@ -13,7 +13,13 @@ import type { Locale } from "@/lib/i18n/config";
  * (theme, toasts, etc.) have one obvious place to be added rather than
  * accumulating ad hoc wrappers in layout.tsx itself.
  */
-export function AppProviders({ locale, children }: { locale: Locale; children: ReactNode }) {
+export function AppProviders({
+  locale,
+  children,
+}: {
+  locale: Locale;
+  children: ReactNode;
+}) {
   return (
     <LocaleProvider locale={locale}>
       <GuestSessionProvider>

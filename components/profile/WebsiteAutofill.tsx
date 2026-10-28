@@ -27,7 +27,10 @@ export function WebsiteAutofill({
 }) {
   const t = useMessages();
   const [url, setUrl] = useState(defaultUrl);
-  const [message, setMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    kind: "error" | "success";
+    text: string;
+  } | null>(null);
   const [isPending, startTransition] = useTransition();
   // useId: the component appears in two different forms (wizard, /profile).
   const inputId = useId();
@@ -43,8 +46,7 @@ export function WebsiteAutofill({
       onFill(result.profile);
       setMessage({
         kind: "success",
-        text:
-          result.source === "ai" ? t.profile.filledAi : t.profile.filledBasic,
+        text: result.source === "ai" ? t.profile.filledAi : t.profile.filledBasic,
       });
     });
   }
@@ -90,7 +92,11 @@ export function WebsiteAutofill({
       </FieldWrapper>
       <div aria-live="polite">
         {message && (
-          <p className={message.kind === "error" ? "text-sm text-danger" : "text-sm text-success"}>
+          <p
+            className={
+              message.kind === "error" ? "text-sm text-danger" : "text-sm text-success"
+            }
+          >
             {message.text}
           </p>
         )}

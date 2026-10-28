@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeSupabase, type RecordedQuery } from "./helpers/fakeSupabase";
 
 const createAdminClient = vi.hoisted(() => vi.fn());
-const plansQuery = vi.hoisted(() => ({ result: { error: null as { message: string } | null }, delay: 0 }));
+const plansQuery = vi.hoisted(() => ({
+  result: { error: null as { message: string } | null },
+  delay: 0,
+}));
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient }));
 vi.mock("@supabase/supabase-js", () => ({
@@ -47,14 +50,23 @@ describe("GET /api/health", () => {
 describe("GET /api/cron/ai-spend", () => {
   const call = (auth?: string, query = "") =>
     aiSpend(
-      new Request(`http://localhost/api/cron/ai-spend${query}`, auth ? { headers: { authorization: auth } } : {}),
+      new Request(
+        `http://localhost/api/cron/ai-spend${query}`,
+        auth ? { headers: { authorization: auth } } : {},
+      ),
     );
 
   /** The generations table, answering each page from `rows`. */
-  function generations(rows: { input_tokens: number | null; output_tokens: number | null }[]) {
+  function generations(
+    rows: { input_tokens: number | null; output_tokens: number | null }[],
+  ) {
     return fakeSupabase({
       generations: (q: RecordedQuery) => {
-        const [, from, to] = q.calls.find((call) => call[0] === "range") as [string, number, number];
+        const [, from, to] = q.calls.find((call) => call[0] === "range") as [
+          string,
+          number,
+          number,
+        ];
         return { data: rows.slice(from, to + 1) };
       },
     });
@@ -81,10 +93,8 @@ describe("GET /api/cron/ai-spend", () => {
   });
 
   it("adds up the last day's generations across pages, within the default $10 budget", async () => {
-    const rows: { input_tokens: number | null; output_tokens: number | null }[] = Array.from(
-      { length: 1500 },
-      () => ({ input_tokens: 1000, output_tokens: 300 }),
-    );
+    const rows: { input_tokens: number | null; output_tokens: number | null }[] =
+      Array.from({ length: 1500 }, () => ({ input_tokens: 1000, output_tokens: 300 }));
     rows.push({ input_tokens: null, output_tokens: null });
     const { client, queries } = generations(rows);
     createAdminClient.mockReturnValue(client);
@@ -101,28 +111,44 @@ describe("GET /api/cron/ai-spend", () => {
     expect(queries).toHaveLength(2);
     const since = queries[0]!.calls.find((call) => call[0] === "gte")!;
     expect(since[1]).toBe("created_at");
-    expect(Date.now() - new Date(since[2] as string).getTime()).toBeCloseTo(86_400_000, -4);
+    expect(Date.now() - new Date(since[2] as string).getTime()).toBeCloseTo(
+      86_400_000,
+      -4,
+    );
     expect(console.error).not.toHaveBeenCalled();
   });
 
   it("raises an error, for the alert, once spend reaches the budget", async () => {
     process.env.AI_DAILY_BUDGET_USD = "5";
-    const { client } = generations(Array.from({ length: 1000 }, () => ({ input_tokens: 1000, output_tokens: 400 })));
+    const { client } = generations(
+      Array.from({ length: 1000 }, () => ({ input_tokens: 1000, output_tokens: 400 })),
+    );
     createAdminClient.mockReturnValue(client);
 
-    expect(await (await call("Bearer cron-secret")).json()).toMatchObject({ costUsd: 6, budgetUsd: 5, over: true });
-    expect(String(vi.mocked(console.error).mock.calls[0]?.[0])).toContain("ai: daily spend over budget");
+    expect(await (await call("Bearer cron-secret")).json()).toMatchObject({
+      costUsd: 6,
+      budgetUsd: 5,
+      over: true,
+    });
+    expect(String(vi.mocked(console.error).mock.calls[0]?.[0])).toContain(
+      "ai: daily spend over budget",
+    );
   });
 
   it("fires the alert by hand with ?budget=0, even with no spend", async () => {
     const { client } = generations([]);
     createAdminClient.mockReturnValue(client);
-    expect(await (await call("Bearer cron-secret", "?budget=0")).json()).toMatchObject({ costUsd: 0, over: true });
+    expect(await (await call("Bearer cron-secret", "?budget=0")).json()).toMatchObject({
+      costUsd: 0,
+      over: true,
+    });
     expect((await call("Bearer cron-secret", "?budget=lots")).status).toBe(400);
   });
 
   it("answers 500 when the generations can't be read", async () => {
-    const { client } = fakeSupabase({ generations: () => ({ error: { message: "down" } }) });
+    const { client } = fakeSupabase({
+      generations: () => ({ error: { message: "down" } }),
+    });
     createAdminClient.mockReturnValue(client);
     expect((await call("Bearer cron-secret")).status).toBe(500);
   });

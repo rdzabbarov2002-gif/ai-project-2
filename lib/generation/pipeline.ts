@@ -85,10 +85,14 @@ export async function runGeneration(
   // 1b. Burst protection (Stage 15, architecture doc §17) — before any
   // lookup or AI call is spent on a caller who's going too fast.
   if (
-    await isOverRateLimit(adminClient, `generate:${identity.type}:${distinctId(identity)}`, {
-      max: appSettings.maxGenerationsPerMinute,
-      windowSeconds: 60,
-    })
+    await isOverRateLimit(
+      adminClient,
+      `generate:${identity.type}:${distinctId(identity)}`,
+      {
+        max: appSettings.maxGenerationsPerMinute,
+        windowSeconds: 60,
+      },
+    )
   ) {
     throw new GenerationError(
       "rate_limited",
@@ -109,7 +113,11 @@ export async function runGeneration(
     ? await resolveTemplate(userClient, body.templateSlug, tool.id)
     : null;
   if (body.templateSlug && !template) {
-    throw new GenerationError("template_unavailable", 404, "This template is not available.");
+    throw new GenerationError(
+      "template_unavailable",
+      404,
+      "This template is not available.",
+    );
   }
 
   // 4. Resolve the caller's plan limits (free plan for every guest).
@@ -137,7 +145,10 @@ export async function runGeneration(
       identity.type === "guest" && reason === "monthly_limit_reached"
         ? GUEST_LIMIT_REJECTION
         : USAGE_REJECTIONS[reason];
-    await track("generation_blocked", distinctId(identity), { reason: rejection.code, tool: tool.slug });
+    await track("generation_blocked", distinctId(identity), {
+      reason: rejection.code,
+      tool: tool.slug,
+    });
     throw new GenerationError(rejection.code, rejection.status, rejection.message);
   }
 
@@ -248,7 +259,8 @@ const USAGE_REJECTIONS: Record<
 const GUEST_LIMIT_REJECTION = {
   code: "guest_limit_reached",
   status: 429,
-  message: "You've used all your free guest generations. Create a free account to keep going.",
+  message:
+    "You've used all your free guest generations. Create a free account to keep going.",
 };
 
 /**
@@ -273,7 +285,9 @@ function selectProviderAndModel(planLimits: {
   allowedAiModels: "all" | AIProviderName[];
 }): { providerName: AIProviderName; model: string } {
   const allowed =
-    planLimits.allowedAiModels === "all" ? IMPLEMENTED_PROVIDERS : planLimits.allowedAiModels;
+    planLimits.allowedAiModels === "all"
+      ? IMPLEMENTED_PROVIDERS
+      : planLimits.allowedAiModels;
 
   const preferred = appSettings.defaultAIProvider as AIProviderName;
   const candidates = IMPLEMENTED_PROVIDERS.includes(preferred)

@@ -6,8 +6,16 @@ import type { TemplateListItem } from "@/lib/templates/types";
  * first, so the first cards open for everyone. Each opens its tool with
  * the template chosen, like a card in the Templates library.
  */
-export function TemplateStrip({ templates, limit = 8 }: { templates: TemplateListItem[]; limit?: number }) {
-  const shown = [...templates].sort((a, b) => Number(a.isPremium) - Number(b.isPremium)).slice(0, limit);
+export function TemplateStrip({
+  templates,
+  limit = 8,
+}: {
+  templates: TemplateListItem[];
+  limit?: number;
+}) {
+  const shown = [...templates]
+    .sort((a, b) => Number(a.isPremium) - Number(b.isPremium))
+    .slice(0, limit);
 
   return (
     <ul className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:scroll-px-6 sm:px-6">
@@ -27,7 +35,9 @@ export function TemplateStrip({ templates, limit = 8 }: { templates: TemplateLis
                 </span>
               )}
             </span>
-            <span className="mt-2 font-extrabold leading-snug text-ink-950">{template.name}</span>
+            <span className="mt-2 font-extrabold leading-snug text-ink-950">
+              {template.name}
+            </span>
             <span className="mt-1 text-[13px] text-ink-600">{template.toolName}</span>
           </Link>
         </li>

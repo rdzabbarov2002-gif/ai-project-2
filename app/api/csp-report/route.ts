@@ -36,7 +36,13 @@ export async function POST(request: Request) {
 
   const violations = parseViolations(body);
   if (violations.length === 0) return new Response(null, { status: 204 });
-  if (await isOverRateLimit(createAdminClient(), ipSubject("csp", clientIp(request.headers)), REPORT_LIMIT)) {
+  if (
+    await isOverRateLimit(
+      createAdminClient(),
+      ipSubject("csp", clientIp(request.headers)),
+      REPORT_LIMIT,
+    )
+  ) {
     return new Response(null, { status: 204 });
   }
 
@@ -47,7 +53,12 @@ export async function POST(request: Request) {
       scope.setTag("event", "csp: violation");
       scope.setFingerprint(["csp", violation.directive, violation.blocked]);
       scope.setExtras({ ...violation });
-      Sentry.captureMessage(`CSP ${violation.disposition ?? ""} ${violation.directive} blocked ${violation.blocked}`.replace(/\s+/g, " "));
+      Sentry.captureMessage(
+        `CSP ${violation.disposition ?? ""} ${violation.directive} blocked ${violation.blocked}`.replace(
+          /\s+/g,
+          " ",
+        ),
+      );
     });
   }
   return new Response(null, { status: 204 });

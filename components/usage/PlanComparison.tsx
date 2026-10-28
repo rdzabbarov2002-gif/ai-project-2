@@ -57,11 +57,16 @@ export async function PlanComparison({
         return (
           <Card
             key={plan.slug}
-            className={clsx("flex flex-col gap-4", isCurrent && "border-accent ring-1 ring-accent")}
+            className={clsx(
+              "flex flex-col gap-4",
+              isCurrent && "border-accent ring-1 ring-accent",
+            )}
           >
             <div className="space-y-1">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="font-medium text-ink-950">{t.plans.names[plan.slug] ?? plan.name}</h3>
+                <h3 className="font-medium text-ink-950">
+                  {t.plans.names[plan.slug] ?? plan.name}
+                </h3>
                 {isCurrent && <Badge>{t.plans.current}</Badge>}
               </div>
               <p className="text-lg font-semibold text-ink-950">
@@ -79,7 +84,9 @@ export async function PlanComparison({
                   ? t.plans.unlimited
                   : t.plans.generationsPerMonth(plan.generationsPerMonth)}
               </li>
-              <li>{plan.tools === "all" ? t.plans.everyTool : t.plans.tools(plan.tools)}</li>
+              <li>
+                {plan.tools === "all" ? t.plans.everyTool : t.plans.tools(plan.tools)}
+              </li>
               <li>
                 {plan.premiumTemplates ? t.plans.fullLibrary : t.plans.standardLibrary}
               </li>
@@ -146,8 +153,13 @@ function PlanButton({
       );
     case "signup":
       return (
-        <Link href="/register" className={buttonClasses(plan.priceMonth === 0 ? "secondary" : "upgrade")}>
-          {plan.priceMonth === 0 ? t.plans.startFree : t.plans.startTrial(actions.trialDays)}
+        <Link
+          href="/register"
+          className={buttonClasses(plan.priceMonth === 0 ? "secondary" : "upgrade")}
+        >
+          {plan.priceMonth === 0
+            ? t.plans.startFree
+            : t.plans.startTrial(actions.trialDays)}
         </Link>
       );
     case "checkout":
@@ -155,7 +167,9 @@ function PlanButton({
         <form action={startCheckout}>
           <input type="hidden" name="plan" value={plan.slug} />
           <Button type="submit" variant="upgrade" className="w-full">
-            {actions.trialDays ? t.plans.startTrial(actions.trialDays) : t.plans.upgradeTo(name)}
+            {actions.trialDays
+              ? t.plans.startTrial(actions.trialDays)
+              : t.plans.upgradeTo(name)}
           </Button>
         </form>
       );

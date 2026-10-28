@@ -47,7 +47,11 @@ export function TemplateGallery({
           ariaLabel={t.templates.searchLabel}
         />
         {categories.length > 0 && (
-          <CategoryFilter categories={categories} value={category} onChange={setCategory} />
+          <CategoryFilter
+            categories={categories}
+            value={category}
+            onChange={setCategory}
+          />
         )}
       </div>
 

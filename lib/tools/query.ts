@@ -30,7 +30,10 @@ export interface ToolQueryParams {
  * memory"), and the current catalog is a handful of rows fetched in one
  * request by `listActiveTools()` — there's nothing to optimize yet.
  */
-export function queryTools(tools: ToolListItem[], params: ToolQueryParams): ToolListItem[] {
+export function queryTools(
+  tools: ToolListItem[],
+  params: ToolQueryParams,
+): ToolListItem[] {
   let result = tools;
 
   const search = params.search?.trim().toLowerCase();

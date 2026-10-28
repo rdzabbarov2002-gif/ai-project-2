@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fakeSupabase, type FakeResult, type RecordedQuery } from "./helpers/fakeSupabase";
+import {
+  fakeSupabase,
+  type FakeResult,
+  type RecordedQuery,
+} from "./helpers/fakeSupabase";
 
 const requireUser = vi.fn();
 const createAdminClient = vi.fn();
@@ -40,20 +44,34 @@ describe("sendFeedback", () => {
       sent: true,
     });
     const insert = queries.find((q) => q.calls[0]?.[0] === "insert")!;
-    expect(insert.calls[0]).toEqual(["insert", { user_id: "user-1", message: "The ad tool is great" }]);
+    expect(insert.calls[0]).toEqual([
+      "insert",
+      { user_id: "user-1", message: "The ad tool is great" },
+    ]);
     expect(track).toHaveBeenCalledWith("feedback_sent", "user-1");
   });
 
   it.each([
     ["an empty message", "   ", "Write a few words first."],
-    ["a message over 2,000 characters", "x".repeat(2001), "Keep it under 2,000 characters."],
-  ])("refuses %s without saving, and gives it back to the form", async (_label, message, error) => {
-    const { client, queries } = fakeSupabase({ feedback: feedbackTable(0) });
-    createAdminClient.mockReturnValue(client);
+    [
+      "a message over 2,000 characters",
+      "x".repeat(2001),
+      "Keep it under 2,000 characters.",
+    ],
+  ])(
+    "refuses %s without saving, and gives it back to the form",
+    async (_label, message, error) => {
+      const { client, queries } = fakeSupabase({ feedback: feedbackTable(0) });
+      createAdminClient.mockReturnValue(client);
 
-    expect(await sendFeedback(initial, form(message))).toEqual({ error, sent: false, message });
-    expect(queries).toHaveLength(0);
-  });
+      expect(await sendFeedback(initial, form(message))).toEqual({
+        error,
+        sent: false,
+        message,
+      });
+      expect(queries).toHaveLength(0);
+    },
+  );
 
   it("refuses the 11th message within an hour", async () => {
     const { client, queries } = fakeSupabase({ feedback: feedbackTable(10) });
@@ -66,7 +84,9 @@ describe("sendFeedback", () => {
     expect(queries.some((q) => q.calls[0]?.[0] === "insert")).toBe(false);
     // Counted per user, over the last hour.
     expect(queries[0]!.calls).toContainEqual(["eq", "user_id", "user-1"]);
-    expect(queries[0]!.calls.some((call) => call[0] === "gte" && call[1] === "created_at")).toBe(true);
+    expect(
+      queries[0]!.calls.some((call) => call[0] === "gte" && call[1] === "created_at"),
+    ).toBe(true);
   });
 
   it("says so when the save fails, without the database's message", async () => {

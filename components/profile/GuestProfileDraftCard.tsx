@@ -33,7 +33,9 @@ export function GuestProfileDraftCard() {
   const t = useMessages();
   const { session, setProfileDraft } = useGuestSession();
   const draft = session?.companyProfileDraft ?? null;
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "local-only">("idle");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "local-only">(
+    "idle",
+  );
   // Collapsed until the guest opens it: the tool itself comes first
   // (architecture doc §10 — value before anything else), and the summary
   // line is the invitation. It also collapses again after a save.

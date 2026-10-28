@@ -31,7 +31,9 @@ import { INTL_LOCALE } from "@/lib/i18n/config";
  * needs a Client Component; the shared CopyButton (components/ui) is that
  * component now, so a saved result copies the same way a fresh one does.
  */
-export default async function HistoryDetailPage(props: { params: Promise<{ id: string }> }) {
+export default async function HistoryDetailPage(props: {
+  params: Promise<{ id: string }>;
+}) {
   const params = await props.params;
   const user = await requireUser();
   const supabase = await createClient();
@@ -39,7 +41,9 @@ export default async function HistoryDetailPage(props: { params: Promise<{ id: s
 
   const { data } = await supabase
     .from("generations")
-    .select("id, output, created_at, is_favorite, tools(name, slug), templates(name, slug)")
+    .select(
+      "id, output, created_at, is_favorite, tools(name, slug), templates(name, slug)",
+    )
     .eq("id", params.id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -55,7 +59,9 @@ export default async function HistoryDetailPage(props: { params: Promise<{ id: s
   // Cast kept on purpose — same embed-shape normalization as the list
   // (lib/history/generations.ts) and every other embedded-select site.
   const tool = firstEmbed(data.tools as unknown as Embed<{ name: string; slug: string }>);
-  const template = firstEmbed(data.templates as unknown as Embed<{ name: string; slug: string }>);
+  const template = firstEmbed(
+    data.templates as unknown as Embed<{ name: string; slug: string }>,
+  );
 
   const repeatParams = new URLSearchParams({ from: data.id });
   if (template?.slug) repeatParams.set("template", template.slug);
@@ -68,14 +74,20 @@ export default async function HistoryDetailPage(props: { params: Promise<{ id: s
             {tool?.name ? localizeText(tool.name, locale) : t.history.unknownTool}
           </h1>
           <div className="flex items-center gap-2 text-xs text-ink-600">
-            <time dateTime={data.created_at}>{new Date(data.created_at).toLocaleString(INTL_LOCALE[locale], { timeZone: "UTC" })}</time>
+            <time dateTime={data.created_at}>
+              {new Date(data.created_at).toLocaleString(INTL_LOCALE[locale], {
+                timeZone: "UTC",
+              })}
+            </time>
             {template?.name && <Badge>{localizeText(template.name, locale)}</Badge>}
           </div>
         </div>
         <FavoriteButton id={data.id} isFavorite={data.is_favorite} />
       </div>
 
-      <p className="whitespace-pre-wrap text-sm text-ink-950">{data.output || t.common.emptyResult}</p>
+      <p className="whitespace-pre-wrap text-sm text-ink-950">
+        {data.output || t.common.emptyResult}
+      </p>
 
       <div className="flex flex-wrap gap-3">
         {data.output && <CopyButton text={data.output} />}

@@ -6,7 +6,11 @@ import type { GuestCompanyProfileDraft } from "@/lib/guest-session/types";
 
 export type Identity =
   | { type: "user"; userId: string }
-  | { type: "guest"; guestSessionId: string; companyProfileDraft: GuestCompanyProfileDraft | null };
+  | {
+      type: "guest";
+      guestSessionId: string;
+      companyProfileDraft: GuestCompanyProfileDraft | null;
+    };
 
 /**
  * The two functions here are the one place that decides "who is making
@@ -21,7 +25,9 @@ export type Identity =
  * evaluated as a guest. The pipeline asks for the user first and only
  * resolves a guest session when there's none.
  */
-export async function signedInUserId(userClient: SupabaseClient<Database>): Promise<string | null> {
+export async function signedInUserId(
+  userClient: SupabaseClient<Database>,
+): Promise<string | null> {
   const {
     data: { user },
   } = await userClient.auth.getUser();
@@ -58,7 +64,10 @@ export async function resolveGuestIdentity(
 
   const { data, error } = await adminClient
     .from("guest_sessions")
-    .upsert({ session_token: sessionToken, expires_at: expiresAt }, { onConflict: "session_token" })
+    .upsert(
+      { session_token: sessionToken, expires_at: expiresAt },
+      { onConflict: "session_token" },
+    )
     .select("id, company_profile_draft")
     .single();
 
@@ -67,12 +76,15 @@ export async function resolveGuestIdentity(
     // swallowed into a silent "treat as no identity" here, since that
     // would look to the caller like an invalid token rather than a real
     // server-side failure.
-    throw new Error(`Failed to resolve guest session: ${error?.message ?? "no row returned"}`);
+    throw new Error(
+      `Failed to resolve guest session: ${error?.message ?? "no row returned"}`,
+    );
   }
 
   return {
     type: "guest",
     guestSessionId: data.id,
-    companyProfileDraft: (data.company_profile_draft as GuestCompanyProfileDraft | null) ?? null,
+    companyProfileDraft:
+      (data.company_profile_draft as GuestCompanyProfileDraft | null) ?? null,
   };
 }

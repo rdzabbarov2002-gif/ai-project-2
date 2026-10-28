@@ -12,7 +12,11 @@ export const metadata = pageMetadata(
 
 /** Questions and answers (content/faq.ts), with the numbers the app uses. */
 export default async function FaqPage() {
-  const [facts, locale, t] = await Promise.all([faqFacts(await createClient()), getLocale(), getMessages()]);
+  const [facts, locale, t] = await Promise.all([
+    faqFacts(await createClient()),
+    getLocale(),
+    getMessages(),
+  ]);
   const entries = faq(facts, locale);
   const email = supportEmail();
 

@@ -7,7 +7,10 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldWrapper } from "@/components/tools/fields/FieldWrapper";
-import { saveCompanyProfile, type CompanyProfileFormState } from "@/app/(auth)/profile/actions";
+import {
+  saveCompanyProfile,
+  type CompanyProfileFormState,
+} from "@/app/(auth)/profile/actions";
 import { WebsiteAutofill } from "./WebsiteAutofill";
 import { useMessages } from "@/components/providers/LocaleProvider";
 import type { SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
@@ -86,7 +89,8 @@ export function CompanyProfileForm({
   const [formKey, setFormKey] = useState(0);
   const [overrides, setOverrides] = useState<Partial<Record<EditableField, string>>>({});
 
-  const valueOf = (name: EditableField) => overrides[name] ?? initialProfile?.[name] ?? "";
+  const valueOf = (name: EditableField) =>
+    overrides[name] ?? initialProfile?.[name] ?? "";
 
   /** What the form holds right now, field by field. */
   function typedValues() {
@@ -111,7 +115,10 @@ export function CompanyProfileForm({
 
   return (
     <Card className="space-y-6">
-      <WebsiteAutofill defaultUrl={initialProfile?.websiteUrl ?? ""} onFill={applySuggestions} />
+      <WebsiteAutofill
+        defaultUrl={initialProfile?.websiteUrl ?? ""}
+        onFill={applySuggestions}
+      />
 
       <form
         key={formKey}
@@ -120,7 +127,9 @@ export function CompanyProfileForm({
         onSubmit={() => setOverrides(typedValues())}
         className="space-y-4"
       >
-        {initialProfile?.id && <input type="hidden" name="id" value={initialProfile.id} />}
+        {initialProfile?.id && (
+          <input type="hidden" name="id" value={initialProfile.id} />
+        )}
 
         <FieldWrapper label={t.profile.companyName} required htmlFor="profile-name">
           <Input
@@ -133,7 +142,12 @@ export function CompanyProfileForm({
         </FieldWrapper>
 
         <FieldWrapper label={t.profile.niche} htmlFor="profile-niche">
-          <Input id="profile-niche" name="niche" defaultValue={valueOf("niche")} maxLength={200} />
+          <Input
+            id="profile-niche"
+            name="niche"
+            defaultValue={valueOf("niche")}
+            maxLength={200}
+          />
         </FieldWrapper>
 
         <FieldWrapper

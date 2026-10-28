@@ -22,7 +22,8 @@ import { AI_PROVIDER_NAMES, type AIProviderName } from "@/lib/ai-provider/types"
 
 const blankAsUndefined = (value: unknown) => (value === "" ? undefined : value);
 
-const required = <T extends z.ZodTypeAny>(schema: T) => z.preprocess(blankAsUndefined, schema);
+const required = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess(blankAsUndefined, schema);
 const optional = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess(blankAsUndefined, schema.optional());
 
@@ -30,85 +31,99 @@ const url = z.string().url("must be a full URL (https://…)");
 const positiveInt = z.string().regex(/^[1-9]\d*$/, "must be a positive whole number");
 
 /** The variable holding each implemented AI provider's key. */
-const AI_KEY_BY_PROVIDER: Partial<Record<AIProviderName, "OPENAI_API_KEY" | "ANTHROPIC_API_KEY">> = {
+const AI_KEY_BY_PROVIDER: Partial<
+  Record<AIProviderName, "OPENAI_API_KEY" | "ANTHROPIC_API_KEY">
+> = {
   openai: "OPENAI_API_KEY",
   "openai-compatible": "OPENAI_API_KEY",
   claude: "ANTHROPIC_API_KEY",
 };
 
-const envSchema = z.object({
-  // Required — see .env.example for where each value comes from.
-  NEXT_PUBLIC_SUPABASE_URL: required(url),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: required(z.string()),
-  SUPABASE_SERVICE_ROLE_KEY: required(z.string()),
+const envSchema = z
+  .object({
+    // Required — see .env.example for where each value comes from.
+    NEXT_PUBLIC_SUPABASE_URL: required(url),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: required(z.string()),
+    SUPABASE_SERVICE_ROLE_KEY: required(z.string()),
 
-  // Optional — the app has a default for each.
-  NEXT_PUBLIC_SITE_URL: optional(url),
-  // The generating provider's key is required in production (below).
-  OPENAI_API_KEY: optional(z.string()),
-  ANTHROPIC_API_KEY: optional(z.string()),
-  DEFAULT_AI_PROVIDER: optional(z.enum(AI_PROVIDER_NAMES)),
-  DEFAULT_AI_MODEL: optional(z.string()),
-  GUEST_GENERATION_LIMIT: optional(positiveInt),
-  MAX_GENERATIONS_PER_MINUTE: optional(positiveInt),
-  GUEST_GENERATIONS_PER_IP_PER_DAY: optional(positiveInt),
-  NEXT_PUBLIC_SENTRY_DSN: optional(url),
-  POSTHOG_KEY: optional(z.string()),
-  POSTHOG_HOST: optional(url),
-  // Payments (Phase 6): on when the secret key is set — see the check below.
-  STRIPE_SECRET_KEY: optional(z.string()),
-  STRIPE_WEBHOOK_SECRET: optional(z.string()),
-  STRIPE_API_BASE: optional(url),
-  CRON_SECRET: optional(z.string()),
-  // Alert threshold for the daily AI spend check (app/api/cron/ai-spend).
-  AI_DAILY_BUDGET_USD: optional(z.string().regex(/^\d+(\.\d+)?$/, "must be a number of dollars")),
-  // "true": the Content Security Policy only reports (lib/csp.ts).
-  CSP_REPORT_ONLY: optional(z.enum(["true", "false"])),
-  // Where people write to us (config/site.ts): the footer, FAQ, legal pages.
-  NEXT_PUBLIC_SUPPORT_EMAIL: optional(z.string().email("must be an email address")),
-  // Who runs the service, for the Privacy Policy and Terms (config/site.ts).
-  LEGAL_OPERATOR: optional(z.string()),
-  LEGAL_COUNTRY: optional(z.string()),
-  EMAIL_PROVIDER: optional(z.string()),
-  // Set by Vercel: production, preview or development.
-  VERCEL_ENV: optional(z.string()),
-}).superRefine((env, ctx) => {
-  // Production can't launch without a way for people to reach us, with
-  // placeholders in its Privacy Policy and Terms, with email links built
-  // from whatever host a request names (lib/site-url.ts), or without the
-  // nightly jobs — the clean-up the Privacy Policy promises among them.
-  if (env.VERCEL_ENV === "production") {
-    for (const name of [
-      "NEXT_PUBLIC_SUPPORT_EMAIL",
-      "LEGAL_OPERATOR",
-      "LEGAL_COUNTRY",
-      "EMAIL_PROVIDER",
-      "NEXT_PUBLIC_SITE_URL",
-      "CRON_SECRET",
-    ] as const) {
-      if (!env[name]) {
-        ctx.addIssue({ code: "custom", path: [name], message: "is required in production" });
+    // Optional — the app has a default for each.
+    NEXT_PUBLIC_SITE_URL: optional(url),
+    // The generating provider's key is required in production (below).
+    OPENAI_API_KEY: optional(z.string()),
+    ANTHROPIC_API_KEY: optional(z.string()),
+    DEFAULT_AI_PROVIDER: optional(z.enum(AI_PROVIDER_NAMES)),
+    DEFAULT_AI_MODEL: optional(z.string()),
+    GUEST_GENERATION_LIMIT: optional(positiveInt),
+    MAX_GENERATIONS_PER_MINUTE: optional(positiveInt),
+    GUEST_GENERATIONS_PER_IP_PER_DAY: optional(positiveInt),
+    NEXT_PUBLIC_SENTRY_DSN: optional(url),
+    POSTHOG_KEY: optional(z.string()),
+    POSTHOG_HOST: optional(url),
+    // Payments (Phase 6): on when the secret key is set — see the check below.
+    STRIPE_SECRET_KEY: optional(z.string()),
+    STRIPE_WEBHOOK_SECRET: optional(z.string()),
+    STRIPE_API_BASE: optional(url),
+    CRON_SECRET: optional(z.string()),
+    // Alert threshold for the daily AI spend check (app/api/cron/ai-spend).
+    AI_DAILY_BUDGET_USD: optional(
+      z.string().regex(/^\d+(\.\d+)?$/, "must be a number of dollars"),
+    ),
+    // "true": the Content Security Policy only reports (lib/csp.ts).
+    CSP_REPORT_ONLY: optional(z.enum(["true", "false"])),
+    // Where people write to us (config/site.ts): the footer, FAQ, legal pages.
+    NEXT_PUBLIC_SUPPORT_EMAIL: optional(z.string().email("must be an email address")),
+    // Who runs the service, for the Privacy Policy and Terms (config/site.ts).
+    LEGAL_OPERATOR: optional(z.string()),
+    LEGAL_COUNTRY: optional(z.string()),
+    EMAIL_PROVIDER: optional(z.string()),
+    // Set by Vercel: production, preview or development.
+    VERCEL_ENV: optional(z.string()),
+  })
+  .superRefine((env, ctx) => {
+    // Production can't launch without a way for people to reach us, with
+    // placeholders in its Privacy Policy and Terms, with email links built
+    // from whatever host a request names (lib/site-url.ts), or without the
+    // nightly jobs — the clean-up the Privacy Policy promises among them.
+    if (env.VERCEL_ENV === "production") {
+      for (const name of [
+        "NEXT_PUBLIC_SUPPORT_EMAIL",
+        "LEGAL_OPERATOR",
+        "LEGAL_COUNTRY",
+        "EMAIL_PROVIDER",
+        "NEXT_PUBLIC_SITE_URL",
+        "CRON_SECRET",
+      ] as const) {
+        if (!env[name]) {
+          ctx.addIssue({
+            code: "custom",
+            path: [name],
+            message: "is required in production",
+          });
+        }
       }
     }
-  }
-  // Nor without the key of the provider that writes the content (OpenAI
-  // unless DEFAULT_AI_PROVIDER says otherwise). Previews and local
-  // development run without it — every page works, a generation fails
-  // with a configuration error — so a deployment can be set up before
-  // the key exists.
-  const aiKey = AI_KEY_BY_PROVIDER[env.DEFAULT_AI_PROVIDER ?? "openai"];
-  if (env.VERCEL_ENV === "production" && aiKey && !env[aiKey]) {
-    ctx.addIssue({ code: "custom", path: [aiKey], message: "is required in production" });
-  }
-  // Payments half set up would take money without ever hearing back.
-  if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["STRIPE_WEBHOOK_SECRET"],
-      message: "is required when STRIPE_SECRET_KEY is set",
-    });
-  }
-});
+    // Nor without the key of the provider that writes the content (OpenAI
+    // unless DEFAULT_AI_PROVIDER says otherwise). Previews and local
+    // development run without it — every page works, a generation fails
+    // with a configuration error — so a deployment can be set up before
+    // the key exists.
+    const aiKey = AI_KEY_BY_PROVIDER[env.DEFAULT_AI_PROVIDER ?? "openai"];
+    if (env.VERCEL_ENV === "production" && aiKey && !env[aiKey]) {
+      ctx.addIssue({
+        code: "custom",
+        path: [aiKey],
+        message: "is required in production",
+      });
+    }
+    // Payments half set up would take money without ever hearing back.
+    if (env.STRIPE_SECRET_KEY && !env.STRIPE_WEBHOOK_SECRET) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["STRIPE_WEBHOOK_SECRET"],
+        message: "is required when STRIPE_SECRET_KEY is set",
+      });
+    }
+  });
 
 type EnvSource = Record<string, string | undefined>;
 
@@ -119,7 +134,8 @@ export function checkEnv(env: EnvSource): string[] {
 
   return result.error.issues.map((issue) => {
     const name = issue.path.join(".");
-    const missing = issue.code === "invalid_type" && blankAsUndefined(env[name]) === undefined;
+    const missing =
+      issue.code === "invalid_type" && blankAsUndefined(env[name]) === undefined;
     return `${name}: ${missing ? "is required" : issue.message}`;
   });
 }

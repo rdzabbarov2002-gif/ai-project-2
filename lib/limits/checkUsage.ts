@@ -65,7 +65,10 @@ export async function checkUsage(params: {
   // here reports what the caller will have left once it goes through
   // (returned with the generated result). Passive "left right now"
   // displays use resolveUsageSummary (./usageSummary.ts) instead.
-  return { allowed: true, remaining: planLimits.maxGenerationsPerMonth - currentCount - 1 };
+  return {
+    allowed: true,
+    remaining: planLimits.maxGenerationsPerMonth - currentCount - 1,
+  };
 }
 
 async function countUserGenerationsThisPeriod(

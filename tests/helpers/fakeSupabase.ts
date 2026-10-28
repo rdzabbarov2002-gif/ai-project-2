@@ -21,7 +21,9 @@ export interface RecordedQuery {
  * queries themselves are exercised for real by the end-to-end runs against
  * a local Supabase stack (see docs/stage8-15-completion-report.md).
  */
-export function fakeSupabase(handlers: Record<string, (query: RecordedQuery) => FakeResult>) {
+export function fakeSupabase(
+  handlers: Record<string, (query: RecordedQuery) => FakeResult>,
+) {
   const queries: RecordedQuery[] = [];
 
   const client = {

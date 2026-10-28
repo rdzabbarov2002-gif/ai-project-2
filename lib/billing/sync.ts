@@ -28,7 +28,9 @@ export async function syncSubscription(
   subscription: Stripe.Subscription,
 ): Promise<SyncResult> {
   const customerId =
-    typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer.id;
   const { data: customer } = await admin
     .from("billing_customers")
     .select("user_id")
@@ -41,7 +43,10 @@ export async function syncSubscription(
     : { data: null };
   if (!user) {
     // An ended subscription of a deleted account is expected, not a fault.
-    if (subscription.status !== "canceled" && subscription.status !== "incomplete_expired") {
+    if (
+      subscription.status !== "canceled" &&
+      subscription.status !== "incomplete_expired"
+    ) {
       logger.error("billing: subscription of an unknown customer", {
         subscription: subscription.id,
         customer: customerId,
@@ -70,7 +75,8 @@ export async function syncSubscription(
     provider_ref: subscription.id,
     period_end: iso(item.current_period_end),
     trial_end: iso(subscription.trial_end),
-    cancel_at_period_end: subscription.cancel_at_period_end || subscription.cancel_at !== null,
+    cancel_at_period_end:
+      subscription.cancel_at_period_end || subscription.cancel_at !== null,
   };
 
   const { data: stored } = await admin
@@ -90,7 +96,12 @@ export async function syncSubscription(
     return "unchanged";
   }
 
-  const { error } = await admin.from("subscriptions").upsert(row, { onConflict: "provider_ref" });
-  if (error) throw new Error(`billing: saving subscription ${subscription.id} failed: ${error.message}`);
+  const { error } = await admin
+    .from("subscriptions")
+    .upsert(row, { onConflict: "provider_ref" });
+  if (error)
+    throw new Error(
+      `billing: saving subscription ${subscription.id} failed: ${error.message}`,
+    );
   return "updated";
 }

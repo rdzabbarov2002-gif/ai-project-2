@@ -20,14 +20,19 @@ export const GenerateRequestSchema = z
     guestSessionToken: z.string().trim().min(10).max(200).optional(),
     inputParams: z.record(z.string(), z.unknown()).default({}),
   })
-  .refine((body) => JSON.stringify(body.inputParams).length <= MAX_INPUT_PARAMS_JSON_LENGTH, {
-    message: `inputParams is too large (max ${MAX_INPUT_PARAMS_JSON_LENGTH} JSON characters).`,
-    path: ["inputParams"],
-  });
+  .refine(
+    (body) => JSON.stringify(body.inputParams).length <= MAX_INPUT_PARAMS_JSON_LENGTH,
+    {
+      message: `inputParams is too large (max ${MAX_INPUT_PARAMS_JSON_LENGTH} JSON characters).`,
+      path: ["inputParams"],
+    },
+  );
 
 export type GenerateRequestBody = z.infer<typeof GenerateRequestSchema>;
 
-export async function parseGenerateRequest(request: Request): Promise<GenerateRequestBody> {
+export async function parseGenerateRequest(
+  request: Request,
+): Promise<GenerateRequestBody> {
   let json: unknown;
   try {
     json = await request.json();
@@ -44,7 +49,9 @@ export async function parseGenerateRequest(request: Request): Promise<GenerateRe
     throw new GenerationError(
       "validation_error",
       400,
-      firstIssue ? `${firstIssue.path.join(".")}: ${firstIssue.message}` : "Invalid request body.",
+      firstIssue
+        ? `${firstIssue.path.join(".")}: ${firstIssue.message}`
+        : "Invalid request body.",
     );
   }
 

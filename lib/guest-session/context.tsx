@@ -33,9 +33,7 @@ interface GuestSessionContextValue {
   clear: () => void;
 }
 
-const GuestSessionContext = createContext<GuestSessionContextValue | null>(
-  null,
-);
+const GuestSessionContext = createContext<GuestSessionContextValue | null>(null);
 
 export function GuestSessionProvider({ children }: { children: ReactNode }) {
   // Starts null so server-rendered and first-client-render markup match
@@ -87,18 +85,14 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <GuestSessionContext.Provider value={value}>
-      {children}
-    </GuestSessionContext.Provider>
+    <GuestSessionContext.Provider value={value}>{children}</GuestSessionContext.Provider>
   );
 }
 
 export function useGuestSession(): GuestSessionContextValue {
   const ctx = useContext(GuestSessionContext);
   if (!ctx) {
-    throw new Error(
-      "useGuestSession must be used within <GuestSessionProvider>",
-    );
+    throw new Error("useGuestSession must be used within <GuestSessionProvider>");
   }
   return ctx;
 }

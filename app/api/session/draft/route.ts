@@ -70,7 +70,13 @@ export async function POST(request: Request) {
   // No account needed, and a new token is a new row: limited per IP
   // address (lib/limits/rateLimit.ts), so a script can't fill the table.
   const admin = createAdminClient();
-  if (await isOverRateLimit(admin, ipSubject("draft", clientIp(request.headers)), DRAFT_LIMIT)) {
+  if (
+    await isOverRateLimit(
+      admin,
+      ipSubject("draft", clientIp(request.headers)),
+      DRAFT_LIMIT,
+    )
+  ) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
@@ -88,16 +94,14 @@ export async function POST(request: Request) {
   // hasn't generated anything yet (identity.ts creates it lazily too), and
   // otherwise updates the draft and slides the TTL, same as a generation
   // does.
-  const { error } = await admin
-    .from("guest_sessions")
-    .upsert(
-      {
-        session_token: parsed.data.guestSessionToken,
-        company_profile_draft: Object.keys(draft).length > 0 ? { ...draft } : null,
-        expires_at: expiresAt,
-      },
-      { onConflict: "session_token" },
-    );
+  const { error } = await admin.from("guest_sessions").upsert(
+    {
+      session_token: parsed.data.guestSessionToken,
+      company_profile_draft: Object.keys(draft).length > 0 ? { ...draft } : null,
+      expires_at: expiresAt,
+    },
+    { onConflict: "session_token" },
+  );
 
   if (error) {
     logger.error("session/draft: saving draft failed", { error });

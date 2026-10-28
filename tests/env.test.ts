@@ -32,7 +32,13 @@ describe("checkEnv", () => {
     expect(checkEnv({ ...valid, STRIPE_SECRET_KEY: "sk_test_x" })).toEqual([
       "STRIPE_WEBHOOK_SECRET: is required when STRIPE_SECRET_KEY is set",
     ]);
-    expect(checkEnv({ ...valid, STRIPE_SECRET_KEY: "sk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x" })).toEqual([]);
+    expect(
+      checkEnv({
+        ...valid,
+        STRIPE_SECRET_KEY: "sk_test_x",
+        STRIPE_WEBHOOK_SECRET: "whsec_x",
+      }),
+    ).toEqual([]);
   });
 
   it("wants a support address, who runs the service, its address and the cron secret in production only", () => {
@@ -77,10 +83,20 @@ describe("checkEnv", () => {
     // OpenAI unless DEFAULT_AI_PROVIDER says otherwise.
     expect(checkEnv(launched)).toEqual(["OPENAI_API_KEY: is required in production"]);
     expect(checkEnv({ ...launched, OPENAI_API_KEY: "sk-proj-secret" })).toEqual([]);
-    expect(checkEnv({ ...launched, DEFAULT_AI_PROVIDER: "claude", OPENAI_API_KEY: "sk-proj-secret" })).toEqual([
-      "ANTHROPIC_API_KEY: is required in production",
-    ]);
-    expect(checkEnv({ ...launched, DEFAULT_AI_PROVIDER: "claude", ANTHROPIC_API_KEY: "sk-ant-secret" })).toEqual([]);
+    expect(
+      checkEnv({
+        ...launched,
+        DEFAULT_AI_PROVIDER: "claude",
+        OPENAI_API_KEY: "sk-proj-secret",
+      }),
+    ).toEqual(["ANTHROPIC_API_KEY: is required in production"]);
+    expect(
+      checkEnv({
+        ...launched,
+        DEFAULT_AI_PROVIDER: "claude",
+        ANTHROPIC_API_KEY: "sk-ant-secret",
+      }),
+    ).toEqual([]);
     // A preview runs without one: pages work, a generation reports the key missing.
     expect(checkEnv({ ...valid, VERCEL_ENV: "preview" })).toEqual([]);
   });
@@ -114,7 +130,9 @@ describe("checkEnv", () => {
     expect(problems[0]).toMatch(/^NEXT_PUBLIC_SUPABASE_URL: must be a full URL/);
     expect(problems[1]).toMatch(/^DEFAULT_AI_PROVIDER: /);
     expect(problems[2]).toBe("GUEST_GENERATION_LIMIT: must be a positive whole number");
-    expect(problems[3]).toBe("MAX_GENERATIONS_PER_MINUTE: must be a positive whole number");
+    expect(problems[3]).toBe(
+      "MAX_GENERATIONS_PER_MINUTE: must be a positive whole number",
+    );
   });
 });
 
@@ -124,7 +142,11 @@ describe("assertEnv", () => {
   });
 
   it("throws one error that names the variables but never prints values", () => {
-    const env = { ...valid, NEXT_PUBLIC_SUPABASE_ANON_KEY: "", NEXT_PUBLIC_SUPABASE_URL: "not a url" };
+    const env = {
+      ...valid,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "",
+      NEXT_PUBLIC_SUPABASE_URL: "not a url",
+    };
     let message = "";
     try {
       assertEnv(env);

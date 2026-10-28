@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { adminInsert, adminSelect, createUser, emailLink, signIn, uniqueEmail } from "./helpers";
+import {
+  adminInsert,
+  adminSelect,
+  createUser,
+  emailLink,
+  signIn,
+  uniqueEmail,
+} from "./helpers";
 
 /**
  * In a browser, against the local Supabase stack and a stand-in for the
@@ -14,7 +21,11 @@ import { adminInsert, adminSelect, createUser, emailLink, signIn, uniqueEmail } 
  */
 
 const MOCK_OUTPUT = "E2E mock copy: fresh roasted coffee, delivered weekly.";
-const AD_INPUTS = { platform: "Facebook", productOrService: "Coffee beans", callToAction: "Shop Now" };
+const AD_INPUTS = {
+  platform: "Facebook",
+  productOrService: "Coffee beans",
+  callToAction: "Shop Now",
+};
 
 test("sign up, confirm the email, sign out and sign back in", async ({ page }) => {
   const email = uniqueEmail("signup");
@@ -122,7 +133,10 @@ test("send feedback from the footer", async ({ page }) => {
   await page.getByRole("button", { name: "Send feedback" }).click();
   await expect(page.getByText("your message reached us")).toBeVisible();
 
-  const rows = await adminSelect<{ message: string }>("feedback", `user_id=eq.${userId}&select=message`);
+  const rows = await adminSelect<{ message: string }>(
+    "feedback",
+    `user_id=eq.${userId}&select=message`,
+  );
   expect(rows).toEqual([{ message: "The ad tool saved me an hour." }]);
 });
 
@@ -136,20 +150,26 @@ test("generate a result and find it in history", async ({ page }) => {
   await expect(page).toHaveURL(/\/tools\/ad-generator$/);
 
   await page.getByLabel("Platform").selectOption(AD_INPUTS.platform);
-  await page.getByLabel("Product or service being advertised").fill(AD_INPUTS.productOrService);
+  await page
+    .getByLabel("Product or service being advertised")
+    .fill(AD_INPUTS.productOrService);
   await page.getByLabel("Call to action").selectOption(AD_INPUTS.callToAction);
   await page.getByRole("button", { name: /Generate with/ }).click();
   await expect(page.getByText(MOCK_OUTPUT)).toBeVisible();
 
   await page.goto("/history");
-  await page.getByRole("link", { name: /AI Ad Generator/ }).first().click();
+  await page
+    .getByRole("link", { name: /AI Ad Generator/ })
+    .first()
+    .click();
   await expect(page.getByText(MOCK_OUTPUT)).toBeVisible();
 
   // Saved with what it cost and how long the AI call took.
-  const [row] = await adminSelect<{ input_tokens: number; output_tokens: number; duration_ms: number }>(
-    "generations",
-    `user_id=eq.${userId}&select=input_tokens,output_tokens,duration_ms`,
-  );
+  const [row] = await adminSelect<{
+    input_tokens: number;
+    output_tokens: number;
+    duration_ms: number;
+  }>("generations", `user_id=eq.${userId}&select=input_tokens,output_tokens,duration_ms`);
   expect(row).toMatchObject({ input_tokens: 812, output_tokens: 64 });
   expect(row!.duration_ms).toBeGreaterThanOrEqual(0);
 
@@ -166,7 +186,9 @@ test("generate a result and find it in history", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Remove from favorites" })).toBeVisible();
 });
 
-test("the server refuses a generation over the plan's monthly limit", async ({ page }) => {
+test("the server refuses a generation over the plan's monthly limit", async ({
+  page,
+}) => {
   const email = uniqueEmail("limit");
   const password = "e2e-password-1";
   const userId = await createUser(email, password);
@@ -178,7 +200,9 @@ test("the server refuses a generation over the plan's monthly limit", async ({ p
   );
   const now = new Date();
   const month = (offset: number) =>
-    new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1)).toISOString().slice(0, 10);
+    new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1))
+      .toISOString()
+      .slice(0, 10);
   await adminInsert("usage_counters", {
     user_id: userId,
     period_start: month(0),

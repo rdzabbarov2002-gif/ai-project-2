@@ -2,12 +2,18 @@ import { describe, expect, it } from "vitest";
 import { buildSystemPrompt, buildUserPrompt } from "@/lib/generation/prompt";
 import type { ResolvedTemplate, ResolvedTool } from "@/lib/generation/catalog";
 
-const tool: ResolvedTool = { id: "t1", slug: "ad-generator", name: "AI Ad Generator", configSchema: {} };
+const tool: ResolvedTool = {
+  id: "t1",
+  slug: "ad-generator",
+  name: "AI Ad Generator",
+  configSchema: {},
+};
 const template: ResolvedTemplate = {
   id: "tpl1",
   slug: "facebook-ad",
   name: "Facebook Ad",
-  promptTemplate: "Ad for {{ productOrService }} — offer: {{offerDetails}} — CTA: {{callToAction}}",
+  promptTemplate:
+    "Ad for {{ productOrService }} — offer: {{offerDetails}} — CTA: {{callToAction}}",
   requiredFields: ["productOrService", "callToAction"],
   configSchema: null,
   isPremium: false,
@@ -18,7 +24,11 @@ describe("buildUserPrompt", () => {
     const prompt = buildUserPrompt({
       tool,
       template,
-      inputParams: { productOrService: "Sourdough", offerDetails: "10% off", callToAction: "Shop Now" },
+      inputParams: {
+        productOrService: "Sourdough",
+        offerDetails: "10% off",
+        callToAction: "Shop Now",
+      },
     });
     expect(prompt).toBe("Ad for Sourdough — offer: 10% off — CTA: Shop Now");
   });
@@ -49,7 +59,9 @@ describe("buildSystemPrompt", () => {
 
   it("tells the model not to invent company facts when there is no profile", () => {
     for (const context of [null, { name: "  " }]) {
-      expect(buildSystemPrompt(context, tool)).toContain("avoid inventing specific company facts");
+      expect(buildSystemPrompt(context, tool)).toContain(
+        "avoid inventing specific company facts",
+      );
     }
   });
 });

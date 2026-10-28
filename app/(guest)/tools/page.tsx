@@ -23,7 +23,11 @@ export const metadata = pageMetadata(
  */
 export default async function ToolsGalleryPage() {
   const supabase = await createClient();
-  const [tools, locale, t] = await Promise.all([listActiveTools(supabase), getLocale(), getMessages()]);
+  const [tools, locale, t] = await Promise.all([
+    listActiveTools(supabase),
+    getLocale(),
+    getMessages(),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 p-6">

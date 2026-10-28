@@ -29,14 +29,22 @@ export async function POST(request: Request) {
   const body = await request.text();
   let event: Stripe.Event;
   try {
-    event = stripe().webhooks.constructEvent(body, request.headers.get("stripe-signature") ?? "", secret);
+    event = stripe().webhooks.constructEvent(
+      body,
+      request.headers.get("stripe-signature") ?? "",
+      secret,
+    );
   } catch {
     logger.warn("billing: webhook with an invalid signature");
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
   const admin = createAdminClient();
-  const { data: seen } = await admin.from("stripe_events").select("id").eq("id", event.id).maybeSingle();
+  const { data: seen } = await admin
+    .from("stripe_events")
+    .select("id")
+    .eq("id", event.id)
+    .maybeSingle();
   if (seen) return NextResponse.json({ received: true, duplicate: true });
 
   const subscriptions: Stripe.Subscription[] = [];
@@ -47,12 +55,18 @@ export async function POST(request: Request) {
       subscriptions.push(subscription);
     }
   } catch (error) {
-    logger.error("billing: webhook event failed", { error, event: event.id, type: event.type });
+    logger.error("billing: webhook event failed", {
+      error,
+      event: event.id,
+      type: event.type,
+    });
     return NextResponse.json({ error: "Not processed." }, { status: 500 });
   }
   await trackPayment(admin, event, subscriptions);
 
-  const { error } = await admin.from("stripe_events").insert({ id: event.id, type: event.type });
+  const { error } = await admin
+    .from("stripe_events")
+    .insert({ id: event.id, type: event.type });
   // 23505: the same event, handled at the same moment by another delivery.
   if (error && error.code !== "23505") {
     logger.error("billing: webhook event not recorded", { error, event: event.id });
@@ -60,14 +74,17 @@ export async function POST(request: Request) {
   return NextResponse.json({ received: true });
 }
 
-const idOf = (value: string | { id: string }) => (typeof value === "string" ? value : value.id);
+const idOf = (value: string | { id: string }) =>
+  typeof value === "string" ? value : value.id;
 
 /** The subscriptions an event is about; none for the ones we don't use. */
 function subscriptionIds(event: Stripe.Event): string[] {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object;
-      return session.mode === "subscription" && session.subscription ? [idOf(session.subscription)] : [];
+      return session.mode === "subscription" && session.subscription
+        ? [idOf(session.subscription)]
+        : [];
     }
     case "customer.subscription.created":
     case "customer.subscription.updated":
@@ -92,7 +109,11 @@ function subscriptionIds(event: Stripe.Event): string[] {
  * invoice doesn't count. Sent once: a redelivered event stops at the
  * `stripe_events` check above.
  */
-async function trackPayment(admin: SupabaseClient<Database>, event: Stripe.Event, subscriptions: Stripe.Subscription[]) {
+async function trackPayment(
+  admin: SupabaseClient<Database>,
+  event: Stripe.Event,
+  subscriptions: Stripe.Subscription[],
+) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const [subscription] = subscriptions;
@@ -120,4 +141,3 @@ async function trackPayment(admin: SupabaseClient<Database>, event: Stripe.Event
     });
   }
 }
-

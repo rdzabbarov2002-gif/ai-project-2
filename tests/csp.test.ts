@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const sentry = vi.hoisted(() => {
-  const scope = { setLevel: vi.fn(), setTag: vi.fn(), setFingerprint: vi.fn(), setExtras: vi.fn() };
+  const scope = {
+    setLevel: vi.fn(),
+    setTag: vi.fn(),
+    setFingerprint: vi.fn(),
+    setExtras: vi.fn(),
+  };
   return {
     scope,
     withScope: vi.fn((callback: (s: typeof scope) => void) => callback(scope)),
@@ -38,7 +43,11 @@ describe("buildCsp", () => {
   );
 
   it("runs only scripts with this response's nonce, and what they load", () => {
-    expect(policy.get("script-src")).toEqual(["'self'", "'nonce-abc123'", "'strict-dynamic'"]);
+    expect(policy.get("script-src")).toEqual([
+      "'self'",
+      "'nonce-abc123'",
+      "'strict-dynamic'",
+    ]);
     expect(policy.get("script-src")).not.toContain("'unsafe-inline'");
     expect(policy.get("object-src")).toEqual(["'none'"]);
     expect(policy.get("base-uri")).toEqual(["'none'"]);
@@ -70,7 +79,9 @@ describe("buildCsp", () => {
     const bare = directives(buildCsp({ nonce: "n" }));
     expect(bare.get("connect-src")).toEqual(["'self'"]);
     expect(bare.get("script-src")).not.toContain("'unsafe-eval'");
-    expect(directives(buildCsp({ nonce: "n", dev: true })).get("script-src")).toContain("'unsafe-eval'");
+    expect(directives(buildCsp({ nonce: "n", dev: true })).get("script-src")).toContain(
+      "'unsafe-eval'",
+    );
   });
 });
 
@@ -121,17 +132,32 @@ describe("parseViolations", () => {
       { type: "deprecation", body: {} },
       {
         type: "csp-violation",
-        body: { documentURL: "https://app.example/", effectiveDirective: "script-src-elem", blockedURL: "inline", disposition: "report" },
+        body: {
+          documentURL: "https://app.example/",
+          effectiveDirective: "script-src-elem",
+          blockedURL: "inline",
+          disposition: "report",
+        },
       },
     ]);
     expect(violations).toEqual([
-      { document: "https://app.example/", directive: "script-src-elem", blocked: "inline", disposition: "report" },
+      {
+        document: "https://app.example/",
+        directive: "script-src-elem",
+        blocked: "inline",
+        disposition: "report",
+      },
     ]);
   });
 
   it("ignores what browser extensions trip, and junk", () => {
     expect(
-      parseViolations({ "csp-report": { "document-uri": "https://app.example/", "blocked-uri": "chrome-extension://abc/x.js" } }),
+      parseViolations({
+        "csp-report": {
+          "document-uri": "https://app.example/",
+          "blocked-uri": "chrome-extension://abc/x.js",
+        },
+      }),
     ).toEqual([]);
     expect(parseViolations(null)).toEqual([]);
     expect(parseViolations({ hello: "world" })).toEqual([]);
@@ -146,16 +172,29 @@ describe("POST /api/csp-report", () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
-  const post = (body: string) => POST(new Request("http://localhost/api/csp-report", { method: "POST", body }));
+  const post = (body: string) =>
+    POST(new Request("http://localhost/api/csp-report", { method: "POST", body }));
 
   it("logs each violation and sends it to Sentry as a grouped warning", async () => {
     const res = await post(
-      JSON.stringify({ "csp-report": { "document-uri": "https://app.example/", "effective-directive": "connect-src", "blocked-uri": "https://api.other.example/v1" } }),
+      JSON.stringify({
+        "csp-report": {
+          "document-uri": "https://app.example/",
+          "effective-directive": "connect-src",
+          "blocked-uri": "https://api.other.example/v1",
+        },
+      }),
     );
     expect(res.status).toBe(204);
     expect(sentry.scope.setLevel).toHaveBeenCalledWith("warning");
-    expect(sentry.scope.setFingerprint).toHaveBeenCalledWith(["csp", "connect-src", "https://api.other.example/v1"]);
-    expect(sentry.captureMessage).toHaveBeenCalledWith("CSP connect-src blocked https://api.other.example/v1");
+    expect(sentry.scope.setFingerprint).toHaveBeenCalledWith([
+      "csp",
+      "connect-src",
+      "https://api.other.example/v1",
+    ]);
+    expect(sentry.captureMessage).toHaveBeenCalledWith(
+      "CSP connect-src blocked https://api.other.example/v1",
+    );
   });
 
   it("answers 204 to anything else without reporting it", async () => {
@@ -169,10 +208,19 @@ describe("POST /api/csp-report", () => {
   it("stops sending a caller's reports to Sentry past the per-IP limit", async () => {
     rateLimit.rpc.mockResolvedValue({ data: false, error: null });
     const res = await post(
-      JSON.stringify({ "csp-report": { "document-uri": "https://app.example/", "effective-directive": "connect-src", "blocked-uri": "https://x.example/" } }),
+      JSON.stringify({
+        "csp-report": {
+          "document-uri": "https://app.example/",
+          "effective-directive": "connect-src",
+          "blocked-uri": "https://x.example/",
+        },
+      }),
     );
     expect(res.status).toBe(204);
-    expect(rateLimit.rpc).toHaveBeenCalledWith("take_rate_limit", expect.objectContaining({ p_max: 20, p_window_seconds: 3600 }));
+    expect(rateLimit.rpc).toHaveBeenCalledWith(
+      "take_rate_limit",
+      expect.objectContaining({ p_max: 20, p_window_seconds: 3600 }),
+    );
     expect(sentry.captureMessage).not.toHaveBeenCalled();
   });
 });

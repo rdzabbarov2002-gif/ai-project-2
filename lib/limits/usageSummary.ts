@@ -43,5 +43,9 @@ export async function resolveUsageSummary(
   const used = usage?.generations_count ?? 0;
   const limit = planLimits.maxGenerationsPerMonth;
 
-  return { planLimits, used, remaining: limit === null ? null : Math.max(0, limit - used) };
+  return {
+    planLimits,
+    used,
+    remaining: limit === null ? null : Math.max(0, limit - used),
+  };
 }

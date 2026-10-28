@@ -278,7 +278,9 @@ export function ToolRunner({
             )}
             {result.remaining !== "unlimited" && (
               <p className="text-xs text-ink-600">
-                {isGuest ? t.runner.guestLeft(result.remaining) : t.runner.periodLeft(result.remaining)}
+                {isGuest
+                  ? t.runner.guestLeft(result.remaining)
+                  : t.runner.periodLeft(result.remaining)}
               </p>
             )}
             {isGuest && (
@@ -286,10 +288,7 @@ export function ToolRunner({
               // offered right where the result is, not as a blocking modal.
               <div className="rounded-md bg-accent-subtle p-3 text-sm text-ink-950">
                 {t.runner.keepBefore}{" "}
-                <Link
-                  href="/register"
-                  className="font-medium text-accent underline"
-                >
+                <Link href="/register" className="font-medium text-accent underline">
                   {t.runner.keepLink}
                 </Link>{" "}
                 {t.runner.keepAfter}

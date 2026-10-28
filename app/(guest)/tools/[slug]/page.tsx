@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/supabase/auth";
-import { resolveTool, resolveTemplate, resolveDefaultTemplate } from "@/lib/generation/catalog";
+import {
+  resolveTool,
+  resolveTemplate,
+  resolveDefaultTemplate,
+} from "@/lib/generation/catalog";
 import { resolvePlanLimits } from "@/lib/generation/plan";
 import { resolveUsageSummary } from "@/lib/limits/usageSummary";
 import { parseToolConfigSchema } from "@/lib/tool-config/validate";
@@ -70,7 +74,11 @@ export default async function ToolPage(props: {
 }) {
   const [params, searchParams] = await Promise.all([props.params, props.searchParams]);
   const supabase = await createClient();
-  const [tool, locale, t] = await Promise.all([resolveTool(supabase, params.slug), getLocale(), getMessages()]);
+  const [tool, locale, t] = await Promise.all([
+    resolveTool(supabase, params.slug),
+    getLocale(),
+    getMessages(),
+  ]);
 
   if (!tool) {
     return (
@@ -90,11 +98,15 @@ export default async function ToolPage(props: {
       : resolveDefaultTemplate(supabase, tool.id),
     getUser(),
   ]);
-  const schema = localizeSchema(parseToolConfigSchema(template?.configSchema ?? tool.configSchema), locale);
+  const schema = localizeSchema(
+    parseToolConfigSchema(template?.configSchema ?? tool.configSchema),
+    locale,
+  );
   const templateName = template ? localizeText(template.name, locale) : null;
   const isGuest = !user;
 
-  const fromId = searchParams.from && UUID.test(searchParams.from) ? searchParams.from : null;
+  const fromId =
+    searchParams.from && UUID.test(searchParams.from) ? searchParams.from : null;
   const [usage, previous] = await Promise.all([
     user ? resolveUsageSummary(supabase, user.id) : null,
     user && fromId
@@ -106,7 +118,9 @@ export default async function ToolPage(props: {
           .maybeSingle()
           .then(({ data }) =>
             // Always an object — written by lib/generation/save.ts.
-            data && data.tool_id === tool.id ? (data.input_params as Record<string, unknown>) : null,
+            data && data.tool_id === tool.id
+              ? (data.input_params as Record<string, unknown>)
+              : null,
           )
       : null,
   ]);
@@ -114,7 +128,8 @@ export default async function ToolPage(props: {
   let premiumLocked = false;
   if (template?.isPremium) {
     // A signed-in visitor's plan already came with the usage summary.
-    const planLimits = usage?.planLimits ?? (await resolvePlanLimits(supabase, { type: "guest" }));
+    const planLimits =
+      usage?.planLimits ?? (await resolvePlanLimits(supabase, { type: "guest" }));
     premiumLocked = !planLimits.premiumTemplates;
   }
 
@@ -123,10 +138,16 @@ export default async function ToolPage(props: {
       <div className="space-y-1">
         <h1 className="font-display text-xl font-semibold text-ink-950">{toolName}</h1>
         {template && searchParams.template && (
-          <p className="text-sm text-ink-600">{t.tools.template(templateName ?? template.name)}</p>
+          <p className="text-sm text-ink-600">
+            {t.tools.template(templateName ?? template.name)}
+          </p>
         )}
         {usage && usage.remaining !== null && (
-          <p className={usage.remaining <= 2 ? "text-sm text-danger" : "text-sm text-ink-600"}>
+          <p
+            className={
+              usage.remaining <= 2 ? "text-sm text-danger" : "text-sm text-ink-600"
+            }
+          >
             {t.tools.left(usage.remaining, usage.planLimits.maxGenerationsPerMonth)}{" "}
             {usage.remaining <= 2 && (
               <Link href="/settings/billing" className="text-accent underline">
@@ -138,7 +159,10 @@ export default async function ToolPage(props: {
       </div>
       {template && premiumLocked ? (
         <div className="max-w-2xl">
-          <PremiumTemplateNotice toolSlug={tool.slug} templateName={templateName ?? template.name} />
+          <PremiumTemplateNotice
+            toolSlug={tool.slug}
+            templateName={templateName ?? template.name}
+          />
         </div>
       ) : (
         <>

@@ -45,7 +45,11 @@ export async function listTemplates(
   return (data ?? []).map((row) => {
     // Cast, not inferred — same approach as lib/generation/plan.ts: the
     // embed's shape is asserted here rather than trusted from inference.
-    const tool = row.tools as unknown as { slug: string; name: string; is_active: boolean };
+    const tool = row.tools as unknown as {
+      slug: string;
+      name: string;
+      is_active: boolean;
+    };
     return {
       slug: row.slug,
       name: row.name,

@@ -10,7 +10,10 @@ export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       aria-hidden="true"
-      className={clsx("animate-pulse rounded-md bg-ink-200 motion-reduce:animate-none", className)}
+      className={clsx(
+        "animate-pulse rounded-md bg-ink-200 motion-reduce:animate-none",
+        className,
+      )}
     />
   );
 }

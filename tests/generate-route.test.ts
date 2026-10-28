@@ -17,7 +17,10 @@ function post(body: string) {
   );
 }
 
-const validBody = JSON.stringify({ toolSlug: "ad-generator", guestSessionToken: "guest-token-123" });
+const validBody = JSON.stringify({
+  toolSlug: "ad-generator",
+  guestSessionToken: "guest-token-123",
+});
 
 /**
  * What a person sees when generation fails: a status and a plain message,
@@ -31,16 +34,32 @@ describe("POST /api/generate errors", () => {
 
   it.each([
     ["rate_limited", 503, "The AI provider is busy right now. Please try again shortly."],
-    ["overloaded", 503, "The AI provider is temporarily unavailable. Please try again shortly."],
+    [
+      "overloaded",
+      503,
+      "The AI provider is temporarily unavailable. Please try again shortly.",
+    ],
     ["network", 503, "Couldn't reach the AI provider. Please try again shortly."],
     ["timeout", 504, "The request took too long. Please try again."],
-    ["authentication", 500, "Something went wrong generating your content. Please try again."],
+    [
+      "authentication",
+      500,
+      "Something went wrong generating your content. Please try again.",
+    ],
     // No key, or an account out of credit: our setup, never shown as such.
-    ["configuration", 500, "Something went wrong generating your content. Please try again."],
+    [
+      "configuration",
+      500,
+      "Something went wrong generating your content. Please try again.",
+    ],
     ["unknown", 500, "Something went wrong generating your content. Please try again."],
   ] as const)("provider %s → %i with a plain message", async (kind, status, message) => {
     runGeneration.mockRejectedValue(
-      new AIProviderError("claude", kind, "529 {\"type\":\"overloaded_error\"} sk-ant-secret"),
+      new AIProviderError(
+        "claude",
+        kind,
+        '529 {"type":"overloaded_error"} sk-ant-secret',
+      ),
     );
     const res = await post(validBody);
     const body = await res.json();
@@ -51,17 +70,26 @@ describe("POST /api/generate errors", () => {
 
   it("passes a limit rejection through unchanged", async () => {
     runGeneration.mockRejectedValue(
-      new GenerationError("usage_limit_reached", 429, "You've used all your generations for this month."),
+      new GenerationError(
+        "usage_limit_reached",
+        429,
+        "You've used all your generations for this month.",
+      ),
     );
     const res = await post(validBody);
     expect(res.status).toBe(429);
     expect(await res.json()).toEqual({
-      error: { code: "usage_limit_reached", message: "You've used all your generations for this month." },
+      error: {
+        code: "usage_limit_reached",
+        message: "You've used all your generations for this month.",
+      },
     });
   });
 
   it("answers an unexpected bug with a generic 500, no stack", async () => {
-    runGeneration.mockRejectedValue(new TypeError("Cannot read properties of undefined (reading 'id')"));
+    runGeneration.mockRejectedValue(
+      new TypeError("Cannot read properties of undefined (reading 'id')"),
+    );
     const res = await post(validBody);
     const text = await res.text();
     expect(res.status).toBe(500);

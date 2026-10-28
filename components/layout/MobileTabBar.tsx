@@ -6,7 +6,9 @@ import type { Messages } from "@/lib/i18n/messages";
 type Tab = { href: string; label: keyof Messages["nav"]; icon: ReactNode };
 
 const HOME = <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />;
-const TOOLS = <path d="M4 4h6.5v6.5H4zM13.5 4H20v6.5h-6.5zM4 13.5h6.5V20H4zM13.5 13.5H20V20h-6.5z" />;
+const TOOLS = (
+  <path d="M4 4h6.5v6.5H4zM13.5 4H20v6.5h-6.5zM4 13.5h6.5V20H4zM13.5 13.5H20V20h-6.5z" />
+);
 const TEMPLATES = <path d="m12 2 10 5-10 5L2 7l10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />;
 const PERSON = <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" />;
 
@@ -16,14 +18,24 @@ const TABS: Record<"guest" | "member", Tab[]> = {
     { href: "/", label: "home", icon: HOME },
     { href: "/tools", label: "tools", icon: TOOLS },
     { href: "/templates", label: "templates", icon: TEMPLATES },
-    { href: "/pricing", label: "pricing", icon: <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01" /> },
+    {
+      href: "/pricing",
+      label: "pricing",
+      icon: (
+        <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01" />
+      ),
+    },
     { href: "/register", label: "signUp", icon: PERSON },
   ],
   member: [
     { href: "/dashboard", label: "home", icon: HOME },
     { href: "/tools", label: "tools", icon: TOOLS },
     { href: "/templates", label: "templates", icon: TEMPLATES },
-    { href: "/history", label: "history", icon: <path d="M12 7v5l3 2M21 12a9 9 0 1 1-3-6.7M21 4v4h-4" /> },
+    {
+      href: "/history",
+      label: "history",
+      icon: <path d="M12 7v5l3 2M21 12a9 9 0 1 1-3-6.7M21 4v4h-4" />,
+    },
     { href: "/profile", label: "profile", icon: PERSON },
   ],
 };

@@ -19,7 +19,9 @@ let client: Stripe | undefined;
 
 export function stripe(): Stripe {
   if (!client) {
-    const base = process.env.STRIPE_API_BASE ? new URL(process.env.STRIPE_API_BASE) : undefined;
+    const base = process.env.STRIPE_API_BASE
+      ? new URL(process.env.STRIPE_API_BASE)
+      : undefined;
     client = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
       maxNetworkRetries: 2,
       ...(base && {
@@ -35,7 +37,9 @@ export function stripe(): Stripe {
 export type PaidPlanSlug = Exclude<PlanLimits["planSlug"], "free">;
 
 /** The price each self-serve plan is sold at, by lookup key. */
-export const CHECKOUT_PRICE: Partial<Record<PaidPlanSlug, string>> = { pro: "pro_monthly" };
+export const CHECKOUT_PRICE: Partial<Record<PaidPlanSlug, string>> = {
+  pro: "pro_monthly",
+};
 
 /** Days of free trial on a first subscription. */
 export const TRIAL_DAYS = 14;
@@ -46,7 +50,9 @@ export const TRIAL_DAYS = 14;
  * for a customer by hand — so the mapping lives in Stripe with the price
  * itself, the same in test and live mode.
  */
-export function planSlugForPrice(price: { lookup_key: string | null }): PaidPlanSlug | null {
+export function planSlugForPrice(price: {
+  lookup_key: string | null;
+}): PaidPlanSlug | null {
   const plan = price.lookup_key?.split("_")[0];
   return plan === "pro" || plan === "enterprise" ? plan : null;
 }

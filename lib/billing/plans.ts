@@ -13,10 +13,14 @@ const PLAN_ORDER: PlanOption["slug"][] = ["free", "pro", "enterprise"];
  * reference tables, migration 0002), so the comparison shows the real
  * limits rather than a hand-written copy of them.
  */
-export async function listPlanOptions(supabase: SupabaseClient<Database>): Promise<PlanOption[]> {
+export async function listPlanOptions(
+  supabase: SupabaseClient<Database>,
+): Promise<PlanOption[]> {
   const { data: plans } = await supabase
     .from("plans")
-    .select("slug, name, price_month, plan_limits(max_generations_per_month, allowed_tool_ids, premium_templates)")
+    .select(
+      "slug, name, price_month, plan_limits(max_generations_per_month, allowed_tool_ids, premium_templates)",
+    )
     .eq("is_active", true);
 
   return (plans ?? [])

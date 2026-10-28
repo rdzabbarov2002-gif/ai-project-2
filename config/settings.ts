@@ -46,7 +46,10 @@ export const appSettings = {
    *  token, so without this one visitor could start guests — and get
    *  their free generations — without end. A few people sharing a
    *  network fit in it; past it, a guest is asked to sign up. */
-  guestGenerationsPerIpPerDay: positiveIntFromEnv(process.env.GUEST_GENERATIONS_PER_IP_PER_DAY, 20),
+  guestGenerationsPerIpPerDay: positiveIntFromEnv(
+    process.env.GUEST_GENERATIONS_PER_IP_PER_DAY,
+    20,
+  ),
   /** Cap on AI response length (billed per token actually produced, so
    *  this is a ceiling, not a cost). Raised from 2048 in Phase 1: current
    *  GPT and Claude models reason before answering and those tokens count

@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 
 describe("safeRedirectPath", () => {
-  it.each(["/dashboard", "/history?page=2", "/tools/ad-generator?template=x"])("keeps same-origin path %s", (path) => {
-    expect(safeRedirectPath(path, "/dashboard")).toBe(path);
-  });
+  it.each(["/dashboard", "/history?page=2", "/tools/ad-generator?template=x"])(
+    "keeps same-origin path %s",
+    (path) => {
+      expect(safeRedirectPath(path, "/dashboard")).toBe(path);
+    },
+  );
 
   it.each([
     "https://evil.example",

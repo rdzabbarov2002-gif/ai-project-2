@@ -31,7 +31,11 @@ export interface FaqEntry {
 
 /** "20 generations a month", "unlimited generations", or the fallback when not known. */
 const allowance = (value: number | null | undefined, fallback: string) =>
-  value === undefined ? fallback : value === null ? "unlimited generations" : `${value} generations a month`;
+  value === undefined
+    ? fallback
+    : value === null
+      ? "unlimited generations"
+      : `${value} generations a month`;
 
 /** The FAQ in the interface's language (lib/i18n); English by default. */
 export function faq(facts: FaqFacts, locale: Locale = "en"): FaqEntry[] {
@@ -39,7 +43,10 @@ export function faq(facts: FaqFacts, locale: Locale = "en"): FaqEntry[] {
 }
 
 function faqEn(facts: FaqFacts): FaqEntry[] {
-  const pro = typeof facts.proPrice === "number" ? `Pro ($${Number(facts.proPrice)} a month)` : "Pro";
+  const pro =
+    typeof facts.proPrice === "number"
+      ? `Pro ($${Number(facts.proPrice)} a month)`
+      : "Pro";
   return [
     {
       id: "what",
@@ -124,8 +131,12 @@ const allowanceRu = (value: number | null | undefined, fallback: string) =>
       : `${plural("ru", value, { one: "генерацию", few: "генерации", many: "генераций", other: "генерации" })} в месяц`;
 
 function faqRu(facts: FaqFacts): FaqEntry[] {
-  const pro = typeof facts.proPrice === "number" ? `Pro ($${Number(facts.proPrice)} в месяц)` : "Pro";
-  const days = (count: number) => plural("ru", count, { one: "день", few: "дня", many: "дней", other: "дня" });
+  const pro =
+    typeof facts.proPrice === "number"
+      ? `Pro ($${Number(facts.proPrice)} в месяц)`
+      : "Pro";
+  const days = (count: number) =>
+    plural("ru", count, { one: "день", few: "дня", many: "дней", other: "дня" });
   return [
     {
       id: "what",
@@ -168,7 +179,8 @@ function faqRu(facts: FaqFacts): FaqEntry[] {
     {
       id: "ownership",
       question: "Кому принадлежат созданные тексты?",
-      answer: "Вам — используйте их как угодно. ИИ может ошибаться, поэтому перечитайте текст перед публикацией.",
+      answer:
+        "Вам — используйте их как угодно. ИИ может ошибаться, поэтому перечитайте текст перед публикацией.",
     },
     {
       id: "ai",

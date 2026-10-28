@@ -44,10 +44,7 @@ export async function POST(request: Request) {
   // (lib/generation/validate.ts, app/api/session/draft).
   const token = body.guestSessionToken;
   if (typeof token !== "string" || token.length < 10 || token.length > 200) {
-    return NextResponse.json(
-      { error: "missing_guest_session_token" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "missing_guest_session_token" }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -72,7 +69,11 @@ export async function POST(request: Request) {
   // the client a new state for no behavioral difference — the opposite
   // of the minimal, reuse-first change this stage calls for.
   if (!guestSession) {
-    return NextResponse.json({ status: "merged", generationsMerged: 0, companyProfileCreated: false });
+    return NextResponse.json({
+      status: "merged",
+      generationsMerged: 0,
+      companyProfileCreated: false,
+    });
   }
 
   // The reassignment itself: one UPDATE, admin client. The authenticated
@@ -93,7 +94,9 @@ export async function POST(request: Request) {
     // the guest token in place (AuthSyncListener's existing behavior for
     // any non-"merged" response) so a retry on the next sign-in can pick
     // this back up rather than silently losing the data.
-    logger.error("session/merge: reassigning generations failed", { error: reassignError });
+    logger.error("session/merge: reassigning generations failed", {
+      error: reassignError,
+    });
     return NextResponse.json({ error: "merge_failed" }, { status: 500 });
   }
 
@@ -107,9 +110,14 @@ export async function POST(request: Request) {
   // session itself goes (data minimization; the Privacy Policy says so).
   // A failure here loses nothing: the row expires and is deleted nightly
   // (app/api/cron/purge-expired).
-  const { error: deleteError } = await admin.from("guest_sessions").delete().eq("id", guestSession.id);
+  const { error: deleteError } = await admin
+    .from("guest_sessions")
+    .delete()
+    .eq("id", guestSession.id);
   if (deleteError) {
-    logger.error("session/merge: deleting the merged guest session failed", { error: deleteError });
+    logger.error("session/merge: deleting the merged guest session failed", {
+      error: deleteError,
+    });
   }
 
   // Links the guest's analytics events to the account: guest → sign-up

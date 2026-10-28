@@ -28,7 +28,8 @@ export const site = {
  */
 export function siteOrigin(env: Record<string, string | undefined> = process.env) {
   if (env.NEXT_PUBLIC_SITE_URL) return env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
-  if (env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  if (env.VERCEL_PROJECT_PRODUCTION_URL)
+    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
   return "http://localhost:3000";
 }
 
@@ -46,7 +47,12 @@ export function supportEmail() {
  * page's metadata: a page that sets its own `openGraph` doesn't inherit
  * the root's image.
  */
-export const previewImage = { url: "/opengraph-image", width: 1200, height: 630, alt: site.title };
+export const previewImage = {
+  url: "/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: site.title,
+};
 
 /**
  * A public page's title, description and canonical address, repeated in
@@ -65,7 +71,12 @@ export function pageMetadata(title: string, description: string, path: string) {
       url: path,
       images: [previewImage],
     },
-    twitter: { card: "summary_large_image" as const, title, description, images: [previewImage] },
+    twitter: {
+      card: "summary_large_image" as const,
+      title,
+      description,
+      images: [previewImage],
+    },
   };
 }
 

@@ -33,7 +33,10 @@ export function FeedbackForm() {
 
   return (
     <form action={formAction} className="space-y-3">
-      <label htmlFor="feedback-message" className="block text-sm font-medium text-ink-950">
+      <label
+        htmlFor="feedback-message"
+        className="block text-sm font-medium text-ink-950"
+      >
         {t.feedback.label}
       </label>
       <Textarea

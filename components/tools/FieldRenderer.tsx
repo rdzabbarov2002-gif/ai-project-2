@@ -23,7 +23,9 @@ export function FieldRenderer({ field, value, onChange, error }: FieldComponentP
 
   if (!Component) {
     return (
-      <p className="text-sm text-danger">{t.runner.unsupportedField(field.type, field.label)}</p>
+      <p className="text-sm text-danger">
+        {t.runner.unsupportedField(field.type, field.label)}
+      </p>
     );
   }
 

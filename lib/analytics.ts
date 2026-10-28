@@ -25,7 +25,8 @@ export async function track(
   const send = async () => {
     try {
       const res = await capture(event, distinctId, properties);
-      if (res && !res.ok) logger.warn("analytics: event refused", { event, status: res.status });
+      if (res && !res.ok)
+        logger.warn("analytics: event refused", { event, status: res.status });
     } catch (error) {
       logger.warn("analytics: event not sent", { event, error });
     }

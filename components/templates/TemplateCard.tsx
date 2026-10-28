@@ -12,7 +12,10 @@ import type { TemplateListItem } from "@/lib/templates/types";
  */
 export function TemplateCard({ template }: { template: TemplateListItem }) {
   return (
-    <Link href={`/tools/${template.toolSlug}?template=${template.slug}`} className="block h-full">
+    <Link
+      href={`/tools/${template.toolSlug}?template=${template.slug}`}
+      className="block h-full"
+    >
       <Card className="h-full space-y-2 transition-colors hover:border-accent">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-medium text-ink-950">{template.name}</h3>

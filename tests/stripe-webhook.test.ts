@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Stripe from "stripe";
-import { fakeSupabase, type FakeResult, type RecordedQuery } from "./helpers/fakeSupabase";
+import {
+  fakeSupabase,
+  type FakeResult,
+  type RecordedQuery,
+} from "./helpers/fakeSupabase";
 
 const state = vi.hoisted(() => ({ enabled: true, retrieve: vi.fn() }));
 const createAdminClient = vi.hoisted(() => vi.fn());
@@ -12,7 +16,10 @@ vi.mock("@/lib/billing/stripe", async (importOriginal) => {
   return {
     ...(await importOriginal<typeof import("@/lib/billing/stripe")>()),
     billingEnabled: () => state.enabled,
-    stripe: () => ({ webhooks: real.webhooks, subscriptions: { retrieve: state.retrieve } }),
+    stripe: () => ({
+      webhooks: real.webhooks,
+      subscriptions: { retrieve: state.retrieve },
+    }),
   };
 });
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient }));
@@ -28,7 +35,9 @@ function webhook(event: object, secret = SECRET) {
   return POST(
     new Request("http://localhost/api/stripe/webhook", {
       method: "POST",
-      headers: { "stripe-signature": signer.generateTestHeaderString({ payload, secret }) },
+      headers: {
+        "stripe-signature": signer.generateTestHeaderString({ payload, secret }),
+      },
       body: payload,
     }),
   );
@@ -44,7 +53,14 @@ function subscription(status: string, extra: Record<string, unknown> = {}) {
     trial_end: null,
     cancel_at_period_end: false,
     cancel_at: null,
-    items: { data: [{ current_period_end: 1_790_000_000, price: { id: "price_1", lookup_key: "pro_monthly" } }] },
+    items: {
+      data: [
+        {
+          current_period_end: 1_790_000_000,
+          price: { id: "price_1", lookup_key: "pro_monthly" },
+        },
+      ],
+    },
     ...extra,
   };
 }
@@ -60,7 +76,8 @@ const first = (q: RecordedQuery) => q.calls[0]?.[0];
 /** The database: whether the event was seen, and the stored subscription. */
 function database({ seen = false, stored = null as FakeResult["data"] } = {}) {
   return fakeSupabase({
-    stripe_events: (q) => (first(q) === "insert" ? {} : { data: seen ? { id: "evt_1" } : null }),
+    stripe_events: (q) =>
+      first(q) === "insert" ? {} : { data: seen ? { id: "evt_1" } : null },
     billing_customers: () => ({ data: { user_id: "user-1" } }),
     users: () => ({ data: { id: "user-1" } }),
     plans: () => ({ data: { id: "plan-pro" } }),
@@ -89,7 +106,10 @@ describe("POST /api/stripe/webhook", () => {
 
   it("answers 400 without a signature at all", async () => {
     const res = await POST(
-      new Request("http://localhost/api/stripe/webhook", { method: "POST", body: JSON.stringify(updated()) }),
+      new Request("http://localhost/api/stripe/webhook", {
+        method: "POST",
+        body: JSON.stringify(updated()),
+      }),
     );
     expect(res.status).toBe(400);
   });
@@ -172,7 +192,12 @@ describe("POST /api/stripe/webhook", () => {
     await webhook({
       id: "evt_2",
       type: "invoice.payment_failed",
-      data: { object: { id: "in_1", parent: { subscription_details: { subscription: "sub_1" } } } },
+      data: {
+        object: {
+          id: "in_1",
+          parent: { subscription_details: { subscription: "sub_1" } },
+        },
+      },
     });
     expect(state.retrieve).toHaveBeenCalledWith("sub_1");
   });
@@ -181,7 +206,11 @@ describe("POST /api/stripe/webhook", () => {
     const { client, queries } = database();
     createAdminClient.mockReturnValue(client);
 
-    const res = await webhook({ id: "evt_3", type: "customer.created", data: { object: { id: "cus_1" } } });
+    const res = await webhook({
+      id: "evt_3",
+      type: "customer.created",
+      data: { object: { id: "cus_1" } },
+    });
     expect(res.status).toBe(200);
     expect(state.retrieve).not.toHaveBeenCalled();
     expect(writes(queries, "stripe_events", "insert")).toHaveLength(1);
@@ -192,7 +221,11 @@ describe("POST /api/stripe/webhook", () => {
     createAdminClient.mockReturnValue(client);
     state.retrieve.mockResolvedValue(
       subscription("active", {
-        items: { data: [{ current_period_end: 1, price: { id: "price_x", lookup_key: "donation" } }] },
+        items: {
+          data: [
+            { current_period_end: 1, price: { id: "price_x", lookup_key: "donation" } },
+          ],
+        },
       }),
     );
 
@@ -214,9 +247,19 @@ describe("POST /api/stripe/webhook", () => {
       await webhook({
         id: "evt_c",
         type: "checkout.session.completed",
-        data: { object: { id: "cs_1", mode: "subscription", subscription: "sub_1", client_reference_id: "user-1" } },
+        data: {
+          object: {
+            id: "cs_1",
+            mode: "subscription",
+            subscription: "sub_1",
+            client_reference_id: "user-1",
+          },
+        },
       });
-      expect(track).toHaveBeenCalledWith("subscription_started", "user-1", { plan: "pro", trial: true });
+      expect(track).toHaveBeenCalledWith("subscription_started", "user-1", {
+        plan: "pro",
+        trial: true,
+      });
     });
 
     it("reports an invoice that took money as payment_succeeded, for the customer's account", async () => {
@@ -244,7 +287,11 @@ describe("POST /api/stripe/webhook", () => {
         currency: "usd",
         reason: "subscription_cycle",
       });
-      const lookup = queries.find((q) => q.table === "billing_customers" && q.calls.some((c) => c[1] === "stripe_customer_id"));
+      const lookup = queries.find(
+        (q) =>
+          q.table === "billing_customers" &&
+          q.calls.some((c) => c[1] === "stripe_customer_id"),
+      );
       expect(lookup?.calls).toContainEqual(["eq", "stripe_customer_id", "cus_1"]);
 
       track.mockClear();
@@ -261,7 +308,14 @@ describe("POST /api/stripe/webhook", () => {
       await webhook({
         id: "evt_c2",
         type: "checkout.session.completed",
-        data: { object: { id: "cs_1", mode: "subscription", subscription: "sub_1", client_reference_id: "user-1" } },
+        data: {
+          object: {
+            id: "cs_1",
+            mode: "subscription",
+            subscription: "sub_1",
+            client_reference_id: "user-1",
+          },
+        },
       });
       expect(track).not.toHaveBeenCalled();
     });

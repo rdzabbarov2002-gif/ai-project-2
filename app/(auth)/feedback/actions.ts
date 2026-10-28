@@ -41,7 +41,11 @@ export async function sendFeedback(
   const parsed = FeedbackSchema.safeParse({ message });
   if (!parsed.success) {
     const tooLong = parsed.error.issues.some((issue) => issue.code === "too_big");
-    return { error: tooLong ? t.feedback.tooLong : t.feedback.tooShort, sent: false, message };
+    return {
+      error: tooLong ? t.feedback.tooLong : t.feedback.tooShort,
+      sent: false,
+      message,
+    };
   }
 
   const admin = createAdminClient();

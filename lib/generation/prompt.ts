@@ -14,7 +14,10 @@ import type { ResolvedTemplate, ResolvedTool } from "./catalog";
  * proper prompt_template row instead.
  */
 
-export function buildSystemPrompt(context: CompanyContext | null, tool: ResolvedTool): string {
+export function buildSystemPrompt(
+  context: CompanyContext | null,
+  tool: ResolvedTool,
+): string {
   const lines = [
     `You are the "${tool.name}" tool inside AI Marketing Workspace, an AI marketing platform for small businesses. Write copy that is ready to use with minimal editing.`,
   ];
@@ -23,7 +26,8 @@ export function buildSystemPrompt(context: CompanyContext | null, tool: Resolved
     lines.push("", "Company context to tailor your output to:");
     if (context.name) lines.push(`- Company name: ${context.name}`);
     if (context.niche) lines.push(`- Niche/industry: ${context.niche}`);
-    if (context.targetAudience) lines.push(`- Target audience: ${context.targetAudience}`);
+    if (context.targetAudience)
+      lines.push(`- Target audience: ${context.targetAudience}`);
     if (context.toneOfVoice) lines.push(`- Tone of voice: ${context.toneOfVoice}`);
     if (context.usp) lines.push(`- Unique selling point: ${context.usp}`);
     if (context.websiteUrl) lines.push(`- Website: ${context.websiteUrl}`);

@@ -25,14 +25,20 @@ vi.mock("@/lib/supabase/admin", () => ({ createAdminClient }));
 const { GET } = await import("@/app/api/cron/reconcile-subscriptions/route");
 
 const call = (auth?: string) =>
-  GET(new Request("http://localhost/api/cron/reconcile-subscriptions", auth ? { headers: { authorization: auth } } : {}));
+  GET(
+    new Request(
+      "http://localhost/api/cron/reconcile-subscriptions",
+      auth ? { headers: { authorization: auth } } : {},
+    ),
+  );
 
 const first = (q: RecordedQuery) => q.calls[0]?.[0];
 
 /** Our database: the live subscriptions it holds. */
 function database(live: string[] = []) {
   return fakeSupabase({
-    subscriptions: (q) => (first(q) === "update" ? {} : { data: live.map((ref) => ({ provider_ref: ref })) }),
+    subscriptions: (q) =>
+      first(q) === "update" ? {} : { data: live.map((ref) => ({ provider_ref: ref })) },
     billing_reconciliations: () => ({}),
   });
 }
@@ -71,7 +77,10 @@ describe("GET /api/cron/reconcile-subscriptions", () => {
     state.subscriptions = [{ id: "sub_1" }, { id: "sub_2" }];
     state.sync.mockResolvedValueOnce("updated").mockResolvedValueOnce("unchanged");
 
-    expect(await (await call("Bearer cron-secret")).json()).toEqual({ checked: 2, fixed: 1 });
+    expect(await (await call("Bearer cron-secret")).json()).toEqual({
+      checked: 2,
+      fixed: 1,
+    });
   });
 
   it("closes a stored live subscription that Stripe doesn't have", async () => {
@@ -79,8 +88,13 @@ describe("GET /api/cron/reconcile-subscriptions", () => {
     createAdminClient.mockReturnValue(client);
     state.subscriptions = [];
 
-    expect(await (await call("Bearer cron-secret")).json()).toEqual({ checked: 0, fixed: 1 });
-    const close = queries.find((q) => q.table === "subscriptions" && first(q) === "update")!;
+    expect(await (await call("Bearer cron-secret")).json()).toEqual({
+      checked: 0,
+      fixed: 1,
+    });
+    const close = queries.find(
+      (q) => q.table === "subscriptions" && first(q) === "update",
+    )!;
     expect(close.calls).toEqual([
       ["update", { status: "canceled" }],
       ["eq", "provider_ref", "sub_gone"],
@@ -99,6 +113,8 @@ describe("GET /api/cron/reconcile-subscriptions", () => {
 
   it("does nothing while payments aren't set up", async () => {
     state.enabled = false;
-    expect(await (await call("Bearer cron-secret")).json()).toEqual({ skipped: "Payments are not set up." });
+    expect(await (await call("Bearer cron-secret")).json()).toEqual({
+      skipped: "Payments are not set up.",
+    });
   });
 });

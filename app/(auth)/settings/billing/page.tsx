@@ -2,7 +2,11 @@ import { requireUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { resolveUsageSummary } from "@/lib/limits/usageSummary";
 import { billingEnabled, TRIAL_DAYS } from "@/lib/billing/stripe";
-import { listPlanOptions, readPaidSubscriptions, type PaidSubscription } from "@/lib/billing/plans";
+import {
+  listPlanOptions,
+  readPaidSubscriptions,
+  type PaidSubscription,
+} from "@/lib/billing/plans";
 import { UsageCard } from "@/components/usage/UsageCard";
 import { PlanComparison, type PlanActions } from "@/components/usage/PlanComparison";
 import { DeleteAccountForm } from "@/components/account/DeleteAccountForm";
@@ -46,7 +50,9 @@ export default async function BillingSettingsPage(props: {
   return (
     <main className="mx-auto max-w-4xl space-y-8 p-6">
       <div className="max-w-2xl space-y-6">
-        <h1 className="font-display text-xl font-semibold text-ink-950">{t.billing.title}</h1>
+        <h1 className="font-display text-xl font-semibold text-ink-950">
+          {t.billing.title}
+        </h1>
         {searchParams.checkout === "success" && (
           <p role="status" className="text-sm text-ink-950">
             {t.billing.thanks}
@@ -63,7 +69,12 @@ export default async function BillingSettingsPage(props: {
           limit={summary.planLimits.maxGenerationsPerMonth}
         />
         {paid.latest && (
-          <SubscriptionCard subscription={paid.latest} manage={billingEnabled()} locale={locale} t={t} />
+          <SubscriptionCard
+            subscription={paid.latest}
+            manage={billingEnabled()}
+            locale={locale}
+            t={t}
+          />
         )}
       </div>
 
@@ -102,10 +113,14 @@ function SubscriptionCard({
 }) {
   const formatDate = (value: string | null) =>
     value
-      ? new Intl.DateTimeFormat(INTL_LOCALE[locale], { dateStyle: "medium", timeZone: "UTC" }).format(new Date(value))
+      ? new Intl.DateTimeFormat(INTL_LOCALE[locale], {
+          dateStyle: "medium",
+          timeZone: "UTC",
+        }).format(new Date(value))
       : t.billing.endOfPeriod;
   const { status, periodEnd, trialEnd, cancelAtPeriodEnd } = subscription;
-  const planName = t.plans.names[subscription.planName.toLowerCase()] ?? subscription.planName;
+  const planName =
+    t.plans.names[subscription.planName.toLowerCase()] ?? subscription.planName;
   let text: string;
   let problem = false;
   if (status === "trialing") {

@@ -8,7 +8,10 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FieldWrapper } from "@/components/tools/fields/FieldWrapper";
-import { saveCompanyProfile, type CompanyProfileFormState } from "@/app/(auth)/profile/actions";
+import {
+  saveCompanyProfile,
+  type CompanyProfileFormState,
+} from "@/app/(auth)/profile/actions";
 import type { SuggestedProfile } from "@/lib/profile-autofill/extractProfile";
 import { WebsiteAutofill } from "./WebsiteAutofill";
 import { useMessages } from "@/components/providers/LocaleProvider";

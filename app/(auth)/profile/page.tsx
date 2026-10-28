@@ -50,7 +50,9 @@ export default async function CompanyProfilePage() {
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <h1 className="font-display text-xl font-semibold text-ink-950">{t.profile.title}</h1>
+      <h1 className="font-display text-xl font-semibold text-ink-950">
+        {t.profile.title}
+      </h1>
       <CompanyProfileForm
         initialProfile={
           profile

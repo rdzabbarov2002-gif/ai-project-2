@@ -59,7 +59,12 @@ export function SignUpPrompt({
           <Link href="/login" className={buttonClasses("secondary", "w-full")}>
             {t.signUpPrompt.haveAccount}
           </Link>
-          <Button type="button" variant="secondary" className="w-full border-0" onClick={onClose}>
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full border-0"
+            onClick={onClose}
+          >
             {t.signUpPrompt.notNow}
           </Button>
         </div>

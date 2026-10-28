@@ -23,13 +23,14 @@ function SubmitButton() {
 }
 
 // `searchParams` as a prop, not useSearchParams() — see app/login/page.tsx.
-export default function ForgotPasswordPage(props: { searchParams: Promise<{ error?: string }> }) {
+export default function ForgotPasswordPage(props: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const t = useMessages();
   const searchParams = use(props.searchParams);
   const [state, formAction] = useActionState(requestPasswordReset, initialState);
   // Set by /auth/callback when a reset link can't be used any more.
-  const linkError =
-    searchParams.error === "expired" ? t.auth.badReset : null;
+  const linkError = searchParams.error === "expired" ? t.auth.badReset : null;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">

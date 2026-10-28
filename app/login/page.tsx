@@ -35,8 +35,7 @@ export default function LoginPage(props: {
   const searchParams = use(props.searchParams);
   const [state, formAction] = useActionState(signIn, initialState);
   const next = searchParams.next ?? "/dashboard";
-  const linkError =
-    searchParams.error === "confirmation" ? t.auth.badConfirmation : null;
+  const linkError = searchParams.error === "confirmation" ? t.auth.badConfirmation : null;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">

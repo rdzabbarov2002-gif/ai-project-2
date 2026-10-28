@@ -27,7 +27,9 @@ function clean(value: unknown) {
   const text = typeof value === "string" ? value : "";
   try {
     const url = new URL(text);
-    return url.protocol.startsWith("http") ? `${url.origin}${url.pathname}` : `${url.protocol}`;
+    return url.protocol.startsWith("http")
+      ? `${url.origin}${url.pathname}`
+      : `${url.protocol}`;
   } catch {
     return text.slice(0, 100);
   }
@@ -35,15 +37,22 @@ function clean(value: unknown) {
 
 function fromReport(report: Record<string, unknown>): Violation {
   // report-uri uses kebab-case keys, the Reporting API camelCase.
-  const pick = (...keys: string[]) => keys.map((key) => report[key]).find((value) => value !== undefined);
+  const pick = (...keys: string[]) =>
+    keys.map((key) => report[key]).find((value) => value !== undefined);
   const line = Number(pick("line-number", "lineNumber"));
   return {
     document: clean(pick("document-uri", "documentURL")),
-    directive: String(pick("effective-directive", "effectiveDirective", "violated-directive") ?? "unknown").split(" ")[0]!,
+    directive: String(
+      pick("effective-directive", "effectiveDirective", "violated-directive") ??
+        "unknown",
+    ).split(" ")[0]!,
     blocked: clean(pick("blocked-uri", "blockedURL")),
-    source: pick("source-file", "sourceFile") ? clean(pick("source-file", "sourceFile")) : undefined,
+    source: pick("source-file", "sourceFile")
+      ? clean(pick("source-file", "sourceFile"))
+      : undefined,
     line: Number.isFinite(line) && line > 0 ? line : undefined,
-    disposition: typeof pick("disposition") === "string" ? String(pick("disposition")) : undefined,
+    disposition:
+      typeof pick("disposition") === "string" ? String(pick("disposition")) : undefined,
   };
 }
 
@@ -52,8 +61,14 @@ export function parseViolations(body: unknown): Violation[] {
     ? body.filter((entry) => entry?.type === "csp-violation").map((entry) => entry.body)
     : [(body as Record<string, unknown> | null)?.["csp-report"]];
   return reports
-    .filter((report): report is Record<string, unknown> => Boolean(report) && typeof report === "object")
+    .filter(
+      (report): report is Record<string, unknown> =>
+        Boolean(report) && typeof report === "object",
+    )
     .slice(0, MAX_REPORTS)
     .map(fromReport)
-    .filter((violation) => !EXTENSION.test(violation.blocked) && !EXTENSION.test(violation.source ?? ""));
+    .filter(
+      (violation) =>
+        !EXTENSION.test(violation.blocked) && !EXTENSION.test(violation.source ?? ""),
+    );
 }

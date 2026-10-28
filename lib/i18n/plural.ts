@@ -19,6 +19,12 @@ export function plural(locale: string, count: number, forms: PluralForms): strin
   }
   const category = rule.select(count);
   const form =
-    category === "one" ? forms.one : category === "few" ? (forms.few ?? forms.other) : category === "many" ? (forms.many ?? forms.other) : forms.other;
+    category === "one"
+      ? forms.one
+      : category === "few"
+        ? (forms.few ?? forms.other)
+        : category === "many"
+          ? (forms.many ?? forms.other)
+          : forms.other;
   return `${count} ${form}`;
 }

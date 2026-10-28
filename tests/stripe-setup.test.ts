@@ -12,7 +12,10 @@ const read = (path: string) => readFileSync(join(__dirname, "..", path), "utf8")
 describe("Stripe webhook events", () => {
   it("are the same in the setup script and the webhook route", () => {
     const script = read("scripts/stripe-setup.mjs");
-    const list = script.slice(script.indexOf("const WEBHOOK_EVENTS"), script.indexOf("];", script.indexOf("const WEBHOOK_EVENTS")));
+    const list = script.slice(
+      script.indexOf("const WEBHOOK_EVENTS"),
+      script.indexOf("];", script.indexOf("const WEBHOOK_EVENTS")),
+    );
     const registered = [...list.matchAll(/"([a-z_.]+)"/g)].map((m) => m[1]).sort();
 
     const route = read("app/api/stripe/webhook/route.ts");

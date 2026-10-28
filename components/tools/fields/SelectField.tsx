@@ -6,7 +6,12 @@ import type { FieldComponentProps } from "./types";
 import type { SelectFieldConfig } from "@/lib/tool-config/schema";
 import { useMessages } from "@/components/providers/LocaleProvider";
 
-export function SelectField({ field, value, onChange, error }: FieldComponentProps<SelectFieldConfig>) {
+export function SelectField({
+  field,
+  value,
+  onChange,
+  error,
+}: FieldComponentProps<SelectFieldConfig>) {
   const t = useMessages();
   return (
     <FieldWrapper

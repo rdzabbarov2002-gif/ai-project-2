@@ -91,7 +91,8 @@ export async function resolvePlanLimits(
     maxGenerationsPerMonth: limits.max_generations_per_month,
     maxSavedResults: limits.max_saved_results,
     allowedToolSlugs: normalizeSlugList(limits.allowed_tool_ids),
-    allowedAiModels: normalizeSlugList(limits.allowed_ai_models) as "all" | AIProviderName[],
+    allowedAiModels: normalizeSlugList(limits.allowed_ai_models) as
+      "all" | AIProviderName[],
     premiumTemplates: limits.premium_templates === true,
   };
 
@@ -110,7 +111,11 @@ export async function resolvePlanLimits(
   return resolved;
 }
 
-const PLAN_RANK: Record<PlanLimits["planSlug"], number> = { free: 0, pro: 1, enterprise: 2 };
+const PLAN_RANK: Record<PlanLimits["planSlug"], number> = {
+  free: 0,
+  pro: 1,
+  enterprise: 2,
+};
 
 /**
  * The plan a user's subscriptions give them right now (migration 0024):
@@ -135,7 +140,11 @@ async function resolveUserPlanSlug(
     // Same caveat as above: cast, not inferred — see comment in resolvePlanLimits.
     const rawPlan = row.plans as unknown as { slug: string } | { slug: string }[] | null;
     const slug = (Array.isArray(rawPlan) ? rawPlan[0] : rawPlan)?.slug;
-    if (slug && slug in PLAN_RANK && PLAN_RANK[slug as PlanLimits["planSlug"]] > PLAN_RANK[best]) {
+    if (
+      slug &&
+      slug in PLAN_RANK &&
+      PLAN_RANK[slug as PlanLimits["planSlug"]] > PLAN_RANK[best]
+    ) {
       best = slug as PlanLimits["planSlug"];
     }
   }
@@ -144,6 +153,7 @@ async function resolveUserPlanSlug(
 
 function normalizeSlugList(value: unknown): "all" | string[] {
   if (value === "all") return "all";
-  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === "string");
+  if (Array.isArray(value))
+    return value.filter((v): v is string => typeof v === "string");
   return [];
 }

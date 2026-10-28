@@ -46,7 +46,9 @@ export default async function DashboardPage() {
   return (
     <main className="mx-auto max-w-4xl space-y-8 p-6">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="font-display text-xl font-semibold text-ink-950">{t.dashboard.title}</h1>
+        <h1 className="font-display text-xl font-semibold text-ink-950">
+          {t.dashboard.title}
+        </h1>
         {/* Desktop has sign-out in the sidebar (Stage 14); phones get it here. */}
         <div className="md:hidden">
           <SignOutButton />

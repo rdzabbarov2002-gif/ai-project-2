@@ -66,7 +66,9 @@ export default async function HistoryPage(props: {
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <h1 className="font-display text-xl font-semibold text-ink-950">{t.history.title}</h1>
+      <h1 className="font-display text-xl font-semibold text-ink-950">
+        {t.history.title}
+      </h1>
 
       <form method="get" className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Select
@@ -91,7 +93,10 @@ export default async function HistoryPage(props: {
             {t.common.apply}
           </Button>
           {filtered && (
-            <Link href="/history" className="self-center text-sm text-accent hover:underline">
+            <Link
+              href="/history"
+              className="self-center text-sm text-accent hover:underline"
+            >
               {t.common.clear}
             </Link>
           )}

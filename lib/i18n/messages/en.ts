@@ -80,7 +80,8 @@ export const en = {
     searchLabel: "Search templates",
     searchPlaceholder: "e.g. Instagram ad, newsletter…",
     search: "Search",
-    freeLine: (count: number) => `${plural("en", count, { one: "free generation", other: "free generations" })} · no sign-up needed`,
+    freeLine: (count: number) =>
+      `${plural("en", count, { one: "free generation", other: "free generations" })} · no sign-up needed`,
     toDashboard: "Go to your dashboard →",
     tools: "Tools",
     seeAll: "See all",
@@ -92,7 +93,9 @@ export const en = {
     compare: "Compare",
     free: "Free",
     freeAllowance: (count: number | null | undefined) =>
-      typeof count === "number" ? `${count} generations a month` : "A monthly allowance of generations",
+      typeof count === "number"
+        ? `${count} generations a month`
+        : "A monthly allowance of generations",
     perMonth: "/mo",
     proLine: (count: number | null | undefined, trialDays: number) =>
       `${typeof count === "number" ? `${count} a month` : "More generations"} · all templates · ${trialDays} days free`,
@@ -117,7 +120,8 @@ export const en = {
     loading: "Loading tools…",
     unavailable: "This tool isn't available.",
     template: (name: string) => `Template: ${name}`,
-    left: (remaining: number, limit: number | null) => `${remaining} of ${limit} generations left this month.`,
+    left: (remaining: number, limit: number | null) =>
+      `${remaining} of ${limit} generations left this month.`,
     seePlans: "See plans",
   },
 
@@ -132,7 +136,8 @@ export const en = {
     noInputs: "This tool has no configurable inputs — just generate.",
     generating: "Generating…",
     generateWith: (tool: string) => `Generate with ${tool}`,
-    guestHintBefore: (count: number) => `Guest mode — up to ${count} free generations, no sign-up needed.`,
+    guestHintBefore: (count: number) =>
+      `Guest mode — up to ${count} free generations, no sign-up needed.`,
     guestHintLink: "Create a free account",
     guestHintAfter: "to save your results and get more.",
     limitTitle: "You've used your free generations",
@@ -142,19 +147,23 @@ export const en = {
     placeholder: "Your result will appear here.",
     result: "Result",
     regenerate: "Regenerate",
-    notSaved: "This result wasn't saved to your history — copy it now if you want to keep it.",
+    notSaved:
+      "This result wasn't saved to your history — copy it now if you want to keep it.",
     guestLeft: (count: number) => `${count} free guest generations left.`,
     periodLeft: (count: number) => `${count} generations left this period.`,
     keepBefore: "Want to keep this?",
     keepLink: "Sign up free",
-    keepAfter: "to save it to your history — everything you've created as a guest carries over.",
-    unsupportedField: (type: string, label: string) => `Unsupported field type "${type}" for "${label}".`,
+    keepAfter:
+      "to save it to your history — everything you've created as a guest carries over.",
+    unsupportedField: (type: string, label: string) =>
+      `Unsupported field type "${type}" for "${label}".`,
   },
 
   guestDraft: {
     yourBusiness: (name: string) => `Your business: ${name}`,
     tellUs: "Tell us about your business (optional)",
-    explainer: "Results get tailored to your business. Saved on this device until you sign up — then it becomes your company profile.",
+    explainer:
+      "Results get tailored to your business. Saved on this device until you sign up — then it becomes your company profile.",
     name: "Business name",
     niche: "Niche / industry",
     audience: "Target audience",
@@ -166,7 +175,8 @@ export const en = {
   },
 
   signUpPrompt: {
-    carriesOver: "It's free, and everything you've created so far carries over to your account.",
+    carriesOver:
+      "It's free, and everything you've created so far carries over to your account.",
     haveAccount: "I already have an account",
     notNow: "Not now",
   },
@@ -189,11 +199,15 @@ export const en = {
     title: "Pricing",
     lead: (trialDays: number) =>
       `Start free. Upgrade when you need more — Pro starts with a ${trialDays}-day free trial, and you can cancel any time under Billing & Plan.`,
-    footnote: "Prices are in US dollars and exclude tax, which is added at checkout for your country. Payments are handled by Stripe.",
+    footnote:
+      "Prices are in US dollars and exclude tax, which is added at checkout for your country. Payments are handled by Stripe.",
   },
 
   plans: {
-    names: { free: "Free", pro: "Pro", enterprise: "Enterprise" } as Record<string, string>,
+    names: { free: "Free", pro: "Pro", enterprise: "Enterprise" } as Record<
+      string,
+      string
+    >,
     current: "Current plan",
     customPricing: "Custom pricing",
     free: "Free",
@@ -249,18 +263,23 @@ export const en = {
     forgot: "Forgot password?",
     noAccount: "No account yet?",
     createOne: "Create one",
-    badConfirmation: "That confirmation link is invalid or has expired. Sign in, or register again to get a new one.",
+    badConfirmation:
+      "That confirmation link is invalid or has expired. Sign in, or register again to get a new one.",
     registerTitle: "Create your account",
-    registerLead: "Your generations so far will carry over — nothing is lost by signing up.",
+    registerLead:
+      "Your generations so far will carry over — nothing is lost by signing up.",
     passwordMin: "Password (min. 8 characters)",
     creating: "Creating account…",
     create: "Create account",
     haveAccount: "Already have an account?",
     checkEmailTitle: "Check your email",
-    checkEmailText: "We sent you a confirmation link. Open it to finish creating your account — your existing generations will carry over automatically.",
+    checkEmailText:
+      "We sent you a confirmation link. Open it to finish creating your account — your existing generations will carry over automatically.",
     resetTitle: "Reset your password",
-    resetSent: "Check your email. If an account exists for that address, we sent a link to choose a new password.",
-    badReset: "That reset link is invalid or has expired. Enter your email to get a new one.",
+    resetSent:
+      "Check your email. If an account exists for that address, we sent a link to choose a new password.",
+    badReset:
+      "That reset link is invalid or has expired. Enter your email to get a new one.",
     sendReset: "Send reset link",
     backToSignIn: "Back to sign in",
     newPasswordTitle: "Choose a new password",
@@ -319,14 +338,17 @@ export const en = {
     nameRequired: "Company name is required.",
     saveFailed: "Something went wrong saving your profile. Please try again.",
     yourWebsite: "Your website",
-    websiteHelp: "We'll read your homepage and suggest a profile — you can edit everything.",
+    websiteHelp:
+      "We'll read your homepage and suggest a profile — you can edit everything.",
     reading: "Reading your website…",
     autofill: "Autofill from website",
     filledAi: "Filled in from your website — review everything before saving.",
-    filledBasic: "We could only read the basics from your website — please fill in the rest.",
+    filledBasic:
+      "We could only read the basics from your website — please fill in the rest.",
     enterWebsite: "Enter your website address.",
     readFailed: "We couldn't read that website. Please try again.",
-    autofillTooMany: "You've used autofill a lot in the last hour. Please try again later, or fill in the fields yourself.",
+    autofillTooMany:
+      "You've used autofill a lot in the last hour. Please try again later, or fill in the fields yourself.",
     /** lib/profile-autofill's messages, where a translation exists. */
     websiteErrors: {} as Record<string, string>,
   },
@@ -337,7 +359,8 @@ export const en = {
     skipForNow: "Skip for now",
     progress: "Onboarding progress",
     steps: ["Website", "Your business", "Audience & voice"],
-    intro: "Start from your website and we'll suggest the rest — or skip this and fill it in yourself.",
+    intro:
+      "Start from your website and we'll suggest the rest — or skip this and fill it in yourself.",
     nameRequired: "Please enter your company name.",
     skip: "Skip — I'll fill it in",
     finish: "Finish",
@@ -347,18 +370,25 @@ export const en = {
     title: "Billing & Plan",
     loadError: "Couldn't load your billing details right now. Please try again shortly.",
     loading: "Loading billing…",
-    thanks: "Thank you — your subscription is starting. It can take a few seconds to show here; refresh if it doesn't.",
-    unavailable: "Payments aren't available right now. Please try again in a few minutes.",
+    thanks:
+      "Thank you — your subscription is starting. It can take a few seconds to show here; refresh if it doesn't.",
+    unavailable:
+      "Payments aren't available right now. Please try again in a few minutes.",
     plans: "Plans",
-    footnote: "Prices exclude tax, which is added at checkout for your country. Usage resets at the start of each calendar month (UTC).",
+    footnote:
+      "Prices exclude tax, which is added at checkout for your country. Usage resets at the start of each calendar month (UTC).",
     deleteTitle: "Delete account",
-    deleteText: "Permanently deletes your account, company profile and generation history. This can't be undone.",
+    deleteText:
+      "Permanently deletes your account, company profile and generation history. This can't be undone.",
     endOfPeriod: "the end of the period",
-    trialEnding: (plan: string, date: string) => `${plan} free trial until ${date}. It ends then — you won't be charged.`,
-    trial: (plan: string, date: string) => `${plan} free trial until ${date}, then your card is charged.`,
+    trialEnding: (plan: string, date: string) =>
+      `${plan} free trial until ${date}. It ends then — you won't be charged.`,
+    trial: (plan: string, date: string) =>
+      `${plan} free trial until ${date}, then your card is charged.`,
     ending: (plan: string, date: string) => `${plan} until ${date}. It won't renew.`,
     renews: (plan: string, date: string) => `${plan}, renews on ${date}.`,
-    failed: (plan: string) => `Your last payment for ${plan} failed. Update your card to get ${plan} back — until then you're on the Free plan.`,
+    failed: (plan: string) =>
+      `Your last payment for ${plan} failed. Update your card to get ${plan} back — until then you're on the Free plan.`,
     incomplete: (plan: string) => `The first payment for ${plan} wasn't completed.`,
     ended: (plan: string) => `Your ${plan} subscription has ended.`,
     updatePayment: "Update payment method",
@@ -366,7 +396,8 @@ export const en = {
     deleting: "Deleting…",
     delete: "Delete account",
     confirmDelete: "Delete your account and all your data? This can't be undone.",
-    cancelFailed: "We couldn't cancel your subscription, so nothing was deleted. Please try again.",
+    cancelFailed:
+      "We couldn't cancel your subscription, so nothing was deleted. Please try again.",
     deleteFailed: "We couldn't delete your account. Please try again.",
   },
 

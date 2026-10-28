@@ -64,16 +64,20 @@ export class ClaudeProvider implements AIProvider {
     // reject a request carrying `temperature` with a 400. The field stays on
     // the provider-agnostic AIGenerateParams contract for providers that
     // still accept it.
-    const response = await withRetry(this.name, params.timeoutMs, classifyError, (timeLeftMs) =>
-      client.messages.create(
-        {
-          model: params.model,
-          max_tokens: params.maxTokens,
-          system: params.systemPrompt,
-          messages: [{ role: "user", content: params.userPrompt }],
-        },
-        { timeout: timeLeftMs, signal: params.signal },
-      ),
+    const response = await withRetry(
+      this.name,
+      params.timeoutMs,
+      classifyError,
+      (timeLeftMs) =>
+        client.messages.create(
+          {
+            model: params.model,
+            max_tokens: params.maxTokens,
+            system: params.systemPrompt,
+            messages: [{ role: "user", content: params.userPrompt }],
+          },
+          { timeout: timeLeftMs, signal: params.signal },
+        ),
     );
 
     // Thinking blocks (adaptive thinking is on by default for current

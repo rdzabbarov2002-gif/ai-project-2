@@ -14,7 +14,8 @@ const MOCK_OUTPUT = "E2E mock copy: fresh roasted coffee, delivered weekly.";
 function watchViolations(page: Page) {
   const violations: string[] = [];
   page.on("console", (message) => {
-    if (message.text().includes("Content Security Policy")) violations.push(`${page.url()}: ${message.text()}`);
+    if (message.text().includes("Content Security Policy"))
+      violations.push(`${page.url()}: ${message.text()}`);
   });
   return violations;
 }
@@ -40,7 +41,19 @@ test("every response carries an enforced policy with a fresh nonce", async ({ pa
 
 test("guest pages and a guest generation run without a violation", async ({ page }) => {
   const violations = watchViolations(page);
-  for (const path of ["/", "/tools", "/templates", "/pricing", "/faq", "/changelog", "/login", "/register", "/forgot-password", "/privacy", "/terms"]) {
+  for (const path of [
+    "/",
+    "/tools",
+    "/templates",
+    "/pricing",
+    "/faq",
+    "/changelog",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/privacy",
+    "/terms",
+  ]) {
     await visit(page, path);
   }
 
@@ -62,7 +75,14 @@ test("signed-in pages run without a violation", async ({ page }) => {
   await signIn(page, email, "e2e-password-1");
   await expect(page).toHaveURL(/\/dashboard$/);
 
-  for (const path of ["/dashboard", "/tools/content-generator", "/history", "/profile", "/settings/billing", "/feedback"]) {
+  for (const path of [
+    "/dashboard",
+    "/tools/content-generator",
+    "/history",
+    "/profile",
+    "/settings/billing",
+    "/feedback",
+  ]) {
     await visit(page, path);
   }
   // The theme toggle's saved choice is applied by the inline script on the next load.
@@ -84,6 +104,8 @@ test("injected markup can't run script", async ({ page }) => {
   });
 
   await expect.poll(() => violations.length).toBeGreaterThan(0);
-  expect(await page.evaluate(() => (window as { __injected?: boolean }).__injected)).toBeUndefined();
+  expect(
+    await page.evaluate(() => (window as { __injected?: boolean }).__injected),
+  ).toBeUndefined();
   expect(violations.join("\n")).toContain("script-src");
 });

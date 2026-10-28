@@ -37,11 +37,17 @@ export interface GenerationFilters {
 export async function listUserGenerations(
   supabase: SupabaseClient<Database>,
   userId: string,
-  { offset = 0, limit, filters = {} }: { offset?: number; limit: number; filters?: GenerationFilters },
+  {
+    offset = 0,
+    limit,
+    filters = {},
+  }: { offset?: number; limit: number; filters?: GenerationFilters },
 ): Promise<{ items: GenerationListItem[]; hasMore: boolean }> {
   let query = supabase
     .from("generations")
-    .select("id, output, created_at, is_favorite, tools!inner(name, slug), templates(name)")
+    .select(
+      "id, output, created_at, is_favorite, tools!inner(name, slug), templates(name)",
+    )
     .eq("user_id", userId);
 
   if (filters.toolSlug) query = query.eq("tools.slug", filters.toolSlug);
@@ -61,7 +67,9 @@ export async function listUserGenerations(
     hasMore: rows.length > limit,
     items: rows.slice(0, limit).map((row) => {
       // Cast + normalize — see lib/supabase/embed.ts.
-      const tool = firstEmbed(row.tools as unknown as Embed<{ name: string; slug: string }>);
+      const tool = firstEmbed(
+        row.tools as unknown as Embed<{ name: string; slug: string }>,
+      );
       const template = firstEmbed(row.templates as unknown as Embed<{ name: string }>);
       return {
         id: row.id,

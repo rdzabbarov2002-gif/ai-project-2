@@ -14,9 +14,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let slugs: string[] = [];
   try {
     // The public catalog, read as any visitor would (anon key, no cookies).
-    const supabase = createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    const supabase = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: { autoRefreshToken: false, persistSession: false },
+      },
+    );
     slugs = (await listActiveTools(supabase)).map((tool) => tool.slug);
   } catch (error) {
     // The fixed pages still make a useful sitemap.

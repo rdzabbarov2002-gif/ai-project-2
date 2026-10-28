@@ -6,9 +6,18 @@ import Link from "next/link";
  * — the mark alone below 380px; `compact` shows the mark alone on all
  * phones. The brand isn't translated.
  */
-export function Logo({ href = "/", compact = false }: { href?: string; compact?: boolean }) {
+export function Logo({
+  href = "/",
+  compact = false,
+}: {
+  href?: string;
+  compact?: boolean;
+}) {
   return (
-    <Link href={href} className="flex items-center gap-2 font-display font-bold tracking-tight text-ink-950">
+    <Link
+      href={href}
+      className="flex items-center gap-2 font-display font-bold tracking-tight text-ink-950"
+    >
       <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0" aria-hidden="true">
         <rect width="32" height="32" rx="9" className="fill-accent" />
         <path

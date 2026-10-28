@@ -31,15 +31,26 @@ const MOCK_OUTPUT_PREFIX = "E2E mock copy";
 const PASSWORD = "load-smoke-password-1";
 
 if (!SUPABASE_URL || !ANON_KEY || !SERVICE_ROLE_KEY) {
-  console.error("Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY.");
+  console.error(
+    "Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY.",
+  );
   process.exit(1);
 }
-if (!/^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(BASE_URL) && !args.includes("--allow-remote")) {
-  console.error(`${BASE_URL} isn't local. For a staging deployment with the AI stand-in, add --allow-remote.`);
+if (
+  !/^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(BASE_URL) &&
+  !args.includes("--allow-remote")
+) {
+  console.error(
+    `${BASE_URL} isn't local. For a staging deployment with the AI stand-in, add --allow-remote.`,
+  );
   process.exit(1);
 }
 
-const admin = { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}`, "content-type": "application/json" };
+const admin = {
+  apikey: SERVICE_ROLE_KEY,
+  Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+  "content-type": "application/json",
+};
 const run = Date.now().toString(36);
 
 async function createAccount(index) {
@@ -54,7 +65,10 @@ async function createAccount(index) {
 }
 
 async function deleteAccount(id) {
-  await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${id}`, { method: "DELETE", headers: admin });
+  await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${id}`, {
+    method: "DELETE",
+    headers: admin,
+  });
 }
 
 /** Signs in the way the app does and returns the session cookies it would hold. */
@@ -63,14 +77,21 @@ async function sessionCookie(email) {
   const supabase = createServerClient(SUPABASE_URL, ANON_KEY, {
     cookies: {
       getAll: () => [...jar].map(([name, value]) => ({ name, value })),
-      setAll: (cookies) => cookies.forEach(({ name, value }) => (value ? jar.set(name, value) : jar.delete(name))),
+      setAll: (cookies) =>
+        cookies.forEach(({ name, value }) =>
+          value ? jar.set(name, value) : jar.delete(name),
+        ),
     },
   });
   for (let attempt = 0; ; attempt++) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password: PASSWORD });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: PASSWORD,
+    });
     if (!error) break;
     // Auth limits sign-ins per IP; the sign-ins are setup, not the test.
-    if (error.status !== 429 || attempt > 30) throw new Error(`signing in ${email}: ${error.message}`);
+    if (error.status !== 429 || attempt > 30)
+      throw new Error(`signing in ${email}: ${error.message}`);
     await new Promise((resolve) => setTimeout(resolve, 10_000));
   }
   return [...jar].map(([name, value]) => `${name}=${value}`).join("; ");
@@ -100,10 +121,20 @@ async function step(name, cookie, path, init = {}, check = () => true) {
     });
     const body = await res.text();
     const ok = res.status === 200 && check(body);
-    record(name, ok, performance.now() - started, ok ? "" : `HTTP ${res.status} ${body.slice(0, 120)}`);
+    record(
+      name,
+      ok,
+      performance.now() - started,
+      ok ? "" : `HTTP ${res.status} ${body.slice(0, 120)}`,
+    );
     return body;
   } catch (error) {
-    record(name, false, performance.now() - started, String(error.cause?.code ?? error.message));
+    record(
+      name,
+      false,
+      performance.now() - started,
+      String(error.cause?.code ?? error.message),
+    );
     return "";
   }
 }
@@ -121,12 +152,17 @@ async function person(cookie) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           toolSlug: "ad-generator",
-          inputParams: { platform: "Facebook", productOrService: "Coffee beans", callToAction: "Shop Now" },
+          inputParams: {
+            platform: "Facebook",
+            productOrService: "Coffee beans",
+            callToAction: "Shop Now",
+          },
         }),
       },
       (body) => {
         const output = JSON.parse(body).output ?? "";
-        if (!output.startsWith(MOCK_OUTPUT_PREFIX)) aborted = "the app isn't using the AI stand-in";
+        if (!output.startsWith(MOCK_OUTPUT_PREFIX))
+          aborted = "the app isn't using the AI stand-in";
         return !aborted;
       },
     );
@@ -136,10 +172,14 @@ async function person(cookie) {
 
 const percentile = (values, p) => {
   const sorted = [...values].sort((a, b) => a - b);
-  return sorted[Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)] ?? 0;
+  return (
+    sorted[Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)] ?? 0
+  );
 };
 
-console.log(`Load smoke: ${USERS} people at once, ${ROUNDS} rounds each, against ${BASE_URL}`);
+console.log(
+  `Load smoke: ${USERS} people at once, ${ROUNDS} rounds each, against ${BASE_URL}`,
+);
 const accounts = [];
 try {
   for (let i = 0; i < USERS; i++) accounts.push(await createAccount(i));
@@ -151,12 +191,16 @@ try {
   const seconds = (performance.now() - started) / 1000;
 
   if (aborted) {
-    console.error(`Stopped: ${aborted}. Start the app with OPENAI_BASE_URL=http://127.0.0.1:4010/v1.`);
+    console.error(
+      `Stopped: ${aborted}. Start the app with OPENAI_BASE_URL=http://127.0.0.1:4010/v1.`,
+    );
     process.exitCode = 1;
   } else {
     let total = 0;
     let failed = 0;
-    console.log("\nstep                       requests  failed    p50 ms    p95 ms    max ms");
+    console.log(
+      "\nstep                       requests  failed    p50 ms    p95 ms    max ms",
+    );
     for (const [name, entry] of results) {
       total += entry.ok + entry.failed;
       failed += entry.failed;
@@ -164,21 +208,28 @@ try {
         name.padEnd(26),
         String(entry.ok + entry.failed).padStart(8),
         String(entry.failed).padStart(8),
-        ...[50, 95, 100].map((p) => String(Math.round(percentile(entry.ms, p))).padStart(10)),
+        ...[50, 95, 100].map((p) =>
+          String(Math.round(percentile(entry.ms, p))).padStart(10),
+        ),
       ];
       console.log(row.join(""));
       for (const [detail, count] of entry.errors) console.log(`    ${count}× ${detail}`);
     }
     const rate = (failed / total) * 100;
-    console.log(`\n${total} requests in ${seconds.toFixed(1)} s, ${failed} failed (${rate.toFixed(2)}%)`);
+    console.log(
+      `\n${total} requests in ${seconds.toFixed(1)} s, ${failed} failed (${rate.toFixed(2)}%)`,
+    );
 
     // Every generation the app answered is in the database.
     const generated = results.get("POST /api/generate")?.ok ?? 0;
     const ids = accounts.map(({ id }) => id).join(",");
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/generations?user_id=in.(${ids})&select=id`, {
-      method: "HEAD",
-      headers: { ...admin, Prefer: "count=exact" },
-    });
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/generations?user_id=in.(${ids})&select=id`,
+      {
+        method: "HEAD",
+        headers: { ...admin, Prefer: "count=exact" },
+      },
+    );
     const saved = Number(res.headers.get("content-range")?.split("/")[1]);
     console.log(`${generated} generations answered, ${saved} saved`);
 

@@ -7,7 +7,12 @@ vi.mock("@/lib/supabase/admin", () => ({ createAdminClient }));
 const { GET } = await import("@/app/api/cron/purge-expired/route");
 
 const call = (auth?: string) =>
-  GET(new Request("http://localhost/api/cron/purge-expired", auth ? { headers: { authorization: auth } } : {}));
+  GET(
+    new Request(
+      "http://localhost/api/cron/purge-expired",
+      auth ? { headers: { authorization: auth } } : {},
+    ),
+  );
 
 describe("GET /api/cron/purge-expired", () => {
   beforeEach(() => {

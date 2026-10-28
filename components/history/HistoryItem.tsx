@@ -43,7 +43,9 @@ export async function HistoryItem({
         <div className="flex items-center justify-between gap-3">
           <h3 className="font-medium text-ink-950">{generation.toolName}</h3>
           <time className="shrink-0 text-xs text-ink-600" dateTime={generation.createdAt}>
-            {new Date(generation.createdAt).toLocaleDateString(INTL_LOCALE[locale], { timeZone: "UTC" })}
+            {new Date(generation.createdAt).toLocaleDateString(INTL_LOCALE[locale], {
+              timeZone: "UTC",
+            })}
           </time>
         </div>
         {generation.templateName && <Badge>{generation.templateName}</Badge>}

@@ -1,6 +1,12 @@
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
-import { CSP_REPORT_PATH, buildCsp, createNonce, cspHeaderName, cspMode } from "@/lib/csp";
+import {
+  CSP_REPORT_PATH,
+  buildCsp,
+  createNonce,
+  cspHeaderName,
+  cspMode,
+} from "@/lib/csp";
 import { trackVisit } from "@/lib/visitor";
 
 /**
